@@ -201,14 +201,14 @@ namespace SoundMixer
 		return sessionNames;
 	}
 
-	void SetEndpointVolume(Napi::CallbackInfo const &info)
+	Napi::Number SetEndpointVolume(Napi::CallbackInfo const &info)
 	{
 		Napi::Env env = info.Env();
 
 		if (info.Length() != 3 || !info[2].IsNumber())
 		{
 			Napi::TypeError::New(env, "expected 3 numbers as arguments").ThrowAsJavaScriptException();
-			return;
+			return Napi::Number::New(env, -1);
 		}
 
 		// TODO : implement function parameters for {dataFlow} and {role}
@@ -239,6 +239,8 @@ namespace SoundMixer
 		}
 
 		CoUninitialize();
+
+		return Napi::Number::New(env, volume);
 	}
 
 	Napi::Number GetEndpointVolume(Napi::CallbackInfo const &info)
@@ -272,14 +274,14 @@ namespace SoundMixer
 		return Napi::Number::New(env, levelScalar);
 	}
 
-	void SetEndpointMute(Napi::CallbackInfo const &info)
+	Napi::Boolean SetEndpointMute(Napi::CallbackInfo const &info)
 	{
 		Napi::Env env = info.Env();
 
 		if (info.Length() != 3 || !info[2].IsBoolean())
 		{
 			Napi::TypeError::New(env, "expected {dataFlow: number}, {role: number},{mute: boolean} as arguments").ThrowAsJavaScriptException();
-			return;
+			return Napi::Boolean::New(env, false);
 		}
 
 		// TODO : implement function parameters for {dataFlow} and {role}
@@ -302,6 +304,8 @@ namespace SoundMixer
 		}
 
 		CoUninitialize();
+
+		return Napi::Boolean::New(env, mute);
 	}
 
 	Napi::Boolean GetEndpointMute(Napi::CallbackInfo const &info)
@@ -335,14 +339,14 @@ namespace SoundMixer
 		return Napi::Boolean::New(env, mute);
 	}
 
-	void SetAudioSessionVolume(Napi::CallbackInfo const &info)
+	Napi::Number SetAudioSessionVolume(Napi::CallbackInfo const &info)
 	{
 		Napi::Env env = info.Env();
 
 		if (info.Length() != 4 || !info[2].IsNumber() || !info[3].IsNumber())
 		{
 			Napi::TypeError::New(env, "expected 3 numbers as arguments").ThrowAsJavaScriptException();
-			return;
+			return Napi::Number::New(env, -1);
 		}
 
 		// TODO : implement function parameters for {dataFlow} and {role}
@@ -378,6 +382,8 @@ namespace SoundMixer
 		}
 
 		CoUninitialize();
+
+		return Napi::Number::New(env, volume);
 	}
 
 	Napi::Number GetAudioSessionVolume(Napi::CallbackInfo const &info)
@@ -417,13 +423,13 @@ namespace SoundMixer
 		return Napi::Number::New(env, volume);
 	}
 
-	void SetAudioSessionMute(Napi::CallbackInfo const &info)
+	Napi::Boolean SetAudioSessionMute(Napi::CallbackInfo const &info)
 	{
 		Napi::Env env = info.Env();
 		if (info.Length() != 4 || !info[2].IsNumber() || !info[3].IsBoolean())
 		{
 			Napi::TypeError::New(env, "expected 3 numbers as arguments").ThrowAsJavaScriptException();
-			return;
+			return Napi::Boolean::New(env, false);
 		}
 
 		// TODO : implement function parameters for {dataFlow} and {role}
@@ -451,6 +457,8 @@ namespace SoundMixer
 		}
 
 		CoUninitialize();
+
+		return Napi::Boolean::New(env, mute);
 	}
 
 	Napi::Boolean GetAudioSessionMute(Napi::CallbackInfo const &info)

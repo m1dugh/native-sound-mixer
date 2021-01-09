@@ -49,10 +49,13 @@ const GetSessions = (device) => {
 /**
  * @param {{deviceType?: Number, deviceRole?: Number}} device the device to mute
  * @param {boolean} mute the mute/unmute value for the device specified in device 
+ * @returns {boolean} the mute value
  */
 const SetEndpointMute = (device, mute) => {
 	const { deviceType, deviceRole } = getDeviceAttributes(device);
 	SoundMixer.SetEndpointMute(deviceType, deviceRole, mute);
+
+	return SoundMixer.GetEndpointMute(deviceType, deviceRole);
 }
 
 /**
@@ -67,10 +70,10 @@ const GetEndpointMute = (device) => {
 /**
  * @param {{deviceType?: Number, deviceRole?: Number}} device the device to toggle the mute on
  */
-const ChangeEndpointMute = (device) => {
+const ToggleEndpointMute = (device) => {
 	const { deviceType, deviceRole } = getDeviceAttributes(device);
 	const currentMute = SoundMixer.GetEndpointMute(deviceType, deviceRole);
-	SetEndpointMute(device, !currentMute);
+	return SetEndpointMute(device, !currentMute);
 }
 
 /**
@@ -80,7 +83,7 @@ const ChangeEndpointMute = (device) => {
 const SetEndpointVolume = (device, volume) => {
 	const { deviceType, deviceRole } = getDeviceAttributes(device);
 	const effectiveScalar = clamp(volume, .0, 1.0);
-	SoundMixer.SetEndpointVolume(deviceType, deviceRole, effectiveScalar);
+	return SoundMixer.SetEndpointVolume(deviceType, deviceRole, effectiveScalar);
 }
 
 /**
@@ -103,8 +106,7 @@ const ChangeEndpointVolume = (device, deltaVolume) => {
 	const { deviceType, deviceRole } = getDeviceAttributes(device);
 	const currentValue = SoundMixer.GetEndpointVolume(deviceType, deviceRole);
 	const newScalar = clamp(currentValue + deltaVolume, .0, 1.0);
-	SoundMixer.SetEndpointVolume(deviceType, deviceRole, newScalar);
-	return newScalar;
+	return SoundMixer.SetEndpointVolume(deviceType, deviceRole, newScalar);
 }
 
 /**
@@ -114,7 +116,7 @@ const ChangeEndpointVolume = (device, deltaVolume) => {
  */
 const SetAppMute = (device, processId, mute) => {
 	const { deviceType, deviceRole } = getDeviceAttributes(device);
-	SoundMixer.SetAudioSessionMute(deviceType, deviceRole, processId, mute);
+	return SoundMixer.SetAudioSessionMute(deviceType, deviceRole, processId, mute);
 }
 
 /**
@@ -138,11 +140,7 @@ const GetAppMute = (device, processId) => {
 const ToggleAppMute = (device, processId) => {
 	const { deviceType, deviceRole } = getDeviceAttributes(device);
 	const currentValue = SoundMixer.GetAudioSessionMute(deviceType, deviceRole, processId);
-
-	const newValue = !currentValue;
-	SoundMixer.SetAudioSessionMute(deviceType, deviceRole, processId, newValue);
-
-	return newValue;
+	return SoundMixer.SetAudioSessionMute(deviceType, deviceRole, processId, !currentValue);
 
 }
 
@@ -153,7 +151,7 @@ const ToggleAppMute = (device, processId) => {
  */
 const SetAppVolume = (device, processId, volume) => {
 	const { deviceType, deviceRole } = getDeviceAttributes(device);
-	SoundMixer.SetAudioSessionVolume(deviceType, deviceRole, processId, volume);
+	return SoundMixer.SetAudioSessionVolume(deviceType, deviceRole, processId, clamp(volume, 0, 1.0));
 }
 
 /**
@@ -176,11 +174,8 @@ const GetAppVolume = (device, processId) => {
 const ChangeAppVolume = (device, processId, deltaVolume) => {
 	const { deviceType, deviceRole } = getDeviceAttributes(device);
 	const currentValue = SoundMixer.GetAudioSessionVolume(deviceType, deviceRole, processId);
-	const newValue = clamp(currentValue + deltaVolume, 0, 1.0);
 
-	SoundMixer.SetAppVolume(deviceType, deviceRole, processId, newValue);
-
-	return newValue;
+	return SoundMixer.SetAppVolume(deviceType, deviceRole, processId, clamp(currentValue + deltaVolume, 0, 1.0));
 
 }
 
@@ -201,7 +196,7 @@ module.exports = {
 	GetSessions,
 	SetEndpointMute,
 	GetEndpointMute,
-	ChangeEndpointMute,
+	ToggleEndpointMute,
 
 	SetEndpointVolume,
 	GetEndpointVolume,

@@ -11,14 +11,14 @@ namespace SoundMixer
 
 	Napi::Array GetAudioSessionNames(Napi::CallbackInfo const &);
 
-	void SetEndpointVolume(Napi::CallbackInfo const &);
+	Napi::Number SetEndpointVolume(Napi::CallbackInfo const &);
 	Napi::Number GetEndpointVolume(Napi::CallbackInfo const &);
-	void SetEndpointMute(Napi::CallbackInfo const &);
+	Napi::Boolean SetEndpointMute(Napi::CallbackInfo const &);
 	Napi::Boolean GetEndpointMute(Napi::CallbackInfo const &);
 
-	void SetAudioSessionVolume(Napi::CallbackInfo const &);
+	Napi::Number SetAudioSessionVolume(Napi::CallbackInfo const &);
 	Napi::Number GetAudioSessionVolume(Napi::CallbackInfo const &);
-	void SetAudioSessionMute(Napi::CallbackInfo const &);
+	Napi::Boolean SetAudioSessionMute(Napi::CallbackInfo const &);
 	Napi::Boolean GetAudioSessionMute(Napi::CallbackInfo const &);
 
 	IMMDevice *GetDevice(EDataFlow, ERole);
