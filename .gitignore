@@ -8,7 +8,4 @@ package-lock.json
 #build files
 /build/
 
-#test files
-/tests/
-
 
