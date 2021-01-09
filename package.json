@@ -1,0 +1,22 @@
+{
+  "name": "nativesoundmixer",
+  "version": "1.0.0",
+  "description": "node js windows native sound mixer module",
+  "main": "soundmixer.js",
+  "gypfile": true,
+  "scripts": {
+    "build": "node-gyp rebuild",
+    "clean": "node-gyp clean",
+    "test": "jest"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^26.6.3",
+    "node-gyp": "^7.1.2"
+  },
+  "dependencies": {
+    "lodash": "^4.17.20",
+    "node-addon-api": "^3.0.2"
+  }
+}
