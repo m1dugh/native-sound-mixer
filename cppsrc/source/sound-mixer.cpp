@@ -172,12 +172,13 @@ namespace SoundMixer
 			Napi::TypeError::New(env, "expected {dataFlow: number}, {role: number as arguments").ThrowAsJavaScriptException();
 		}
 
-		// TODO : implement function parameters for {dataFlow} and {role}
 		CoInitialize(NULL);
-		EDataFlow dataFlow = EDataFlow::eRender;
-		ERole role = ERole::eConsole;
+		int dataFlow = info[0].As<Napi::Number>().Int32Value();
+		dataFlow = dataFlow >= 0 && dataFlow < EDataFlow::EDataFlow_enum_count ? dataFlow : EDataFlow::eRender;
 
-		IMMDevice *pDevice = GetDevice(dataFlow, role);
+		int role = info[1].As<Napi::Number>().Int32Value();
+		role = role >= 0 && role < ERole::ERole_enum_count ? role : ERole::eConsole;
+		IMMDevice *pDevice = GetDevice((EDataFlow)dataFlow, (ERole)role);
 
 		CHECK_PTR(env, pDevice);
 		std::vector<IAudioSessionControl2 *> sessions = GetAudioSessions(pDevice);
@@ -211,10 +212,12 @@ namespace SoundMixer
 			return Napi::Number::New(env, -1);
 		}
 
-		// TODO : implement function parameters for {dataFlow} and {role}
 		CoInitialize(NULL);
-		EDataFlow dataFlow = EDataFlow::eRender;
-		ERole role = ERole::eConsole;
+		int dataFlow = info[0].As<Napi::Number>().Int32Value();
+		dataFlow = dataFlow >= 0 && dataFlow < EDataFlow::EDataFlow_enum_count ? dataFlow : EDataFlow::eRender;
+
+		int role = info[1].As<Napi::Number>().Int32Value();
+		role = role >= 0 && role < ERole::ERole_enum_count ? role : ERole::eConsole;
 
 		float volume = info[2].As<Napi::Number>().FloatValue();
 		if (volume > 1.F)
@@ -252,10 +255,12 @@ namespace SoundMixer
 			return Napi::Number::New(env, 0.F);
 		}
 
-		// TODO : implement function parameters for {dataFlow} and {role}
 		CoInitialize(NULL);
-		EDataFlow dataFlow = EDataFlow::eRender;
-		ERole role = ERole::eConsole;
+		int dataFlow = info[0].As<Napi::Number>().Int32Value();
+		dataFlow = dataFlow >= 0 && dataFlow < EDataFlow::EDataFlow_enum_count ? dataFlow : EDataFlow::eRender;
+
+		int role = info[1].As<Napi::Number>().Int32Value();
+		role = role >= 0 && role < ERole::ERole_enum_count ? role : ERole::eConsole;
 
 		IMMDevice *pDevice = GetDevice(dataFlow, role);
 		CHECK_PTR(env, pDevice)
@@ -284,10 +289,12 @@ namespace SoundMixer
 			return Napi::Boolean::New(env, false);
 		}
 
-		// TODO : implement function parameters for {dataFlow} and {role}
 		CoInitialize(NULL);
-		EDataFlow dataFlow = EDataFlow::eRender;
-		ERole role = ERole::eConsole;
+		int dataFlow = info[0].As<Napi::Number>().Int32Value();
+		dataFlow = dataFlow >= 0 && dataFlow < EDataFlow::EDataFlow_enum_count ? dataFlow : EDataFlow::eRender;
+
+		int role = info[1].As<Napi::Number>().Int32Value();
+		role = role >= 0 && role < ERole::ERole_enum_count ? role : ERole::eConsole;
 
 		bool mute = info[2].As<Napi::Boolean>().Value();
 
@@ -317,10 +324,12 @@ namespace SoundMixer
 			return Napi::Boolean::New(env, false);
 		}
 
-		// TODO : implement function parameters for {dataFlow} and {role}
 		CoInitialize(NULL);
-		EDataFlow dataFlow = EDataFlow::eRender;
-		ERole role = ERole::eConsole;
+		int dataFlow = info[0].As<Napi::Number>().Int32Value();
+		dataFlow = dataFlow >= 0 && dataFlow < EDataFlow::EDataFlow_enum_count ? dataFlow : EDataFlow::eRender;
+
+		int role = info[1].As<Napi::Number>().Int32Value();
+		role = role >= 0 && role < ERole::ERole_enum_count ? role : ERole::eConsole;
 
 		IMMDevice *pDevice = GetDevice(dataFlow, role);
 		CHECK_PTR(env, pDevice)
@@ -349,10 +358,12 @@ namespace SoundMixer
 			return Napi::Number::New(env, -1);
 		}
 
-		// TODO : implement function parameters for {dataFlow} and {role}
 		CoInitialize(NULL);
-		EDataFlow dataFlow = EDataFlow::eRender;
-		ERole role = ERole::eConsole;
+		int dataFlow = info[0].As<Napi::Number>().Int32Value();
+		dataFlow = dataFlow >= 0 && dataFlow < EDataFlow::EDataFlow_enum_count ? dataFlow : EDataFlow::eRender;
+
+		int role = info[1].As<Napi::Number>().Int32Value();
+		role = role >= 0 && role < ERole::ERole_enum_count ? role : ERole::eConsole;
 
 		DWORD id = info[2].As<Napi::Number>().Int32Value();
 
@@ -395,10 +406,12 @@ namespace SoundMixer
 			return Napi::Number::New(env, 0.F);
 		}
 
-		// TODO : implement function parameters for {dataFlow} and {role}
 		CoInitialize(NULL);
-		EDataFlow dataFlow = EDataFlow::eRender;
-		ERole role = ERole::eConsole;
+		int dataFlow = info[0].As<Napi::Number>().Int32Value();
+		dataFlow = dataFlow >= 0 && dataFlow < EDataFlow::EDataFlow_enum_count ? dataFlow : EDataFlow::eRender;
+
+		int role = info[1].As<Napi::Number>().Int32Value();
+		role = role >= 0 && role < ERole::ERole_enum_count ? role : ERole::eConsole;
 
 		DWORD id = info[2].As<Napi::Number>().Int32Value();
 
@@ -432,10 +445,12 @@ namespace SoundMixer
 			return Napi::Boolean::New(env, false);
 		}
 
-		// TODO : implement function parameters for {dataFlow} and {role}
 		CoInitialize(NULL);
-		EDataFlow dataFlow = EDataFlow::eRender;
-		ERole role = ERole::eConsole;
+		int dataFlow = info[0].As<Napi::Number>().Int32Value();
+		dataFlow = dataFlow >= 0 && dataFlow < EDataFlow::EDataFlow_enum_count ? dataFlow : EDataFlow::eRender;
+
+		int role = info[1].As<Napi::Number>().Int32Value();
+		role = role >= 0 && role < ERole::ERole_enum_count ? role : ERole::eConsole;
 
 		DWORD id = info[2].As<Napi::Number>().Int32Value();
 
@@ -471,10 +486,12 @@ namespace SoundMixer
 			return Napi::Boolean::New(env, false);
 		}
 
-		// TODO : implement function parameters for {dataFlow} and {role}
 		CoInitialize(NULL);
-		EDataFlow dataFlow = EDataFlow::eRender;
-		ERole role = ERole::eConsole;
+		int dataFlow = info[0].As<Napi::Number>().Int32Value();
+		dataFlow = dataFlow >= 0 && dataFlow < EDataFlow::EDataFlow_enum_count ? dataFlow : EDataFlow::eRender;
+
+		int role = info[1].As<Napi::Number>().Int32Value();
+		role = role >= 0 && role < ERole::ERole_enum_count ? role : ERole::eConsole;
 
 		DWORD id = info[2].As<Napi::Number>().Int32Value();
 
