@@ -5,7 +5,8 @@
         "cflags_cc!": [ "-fno-exceptions" ],
         "sources": [
             "cppsrc/main.cpp",
-			"cppsrc/source/sound-mixer.cpp",
+            "cppsrc/source/sound-mixer-utils.cpp",
+			"cppsrc/source/sound-mixer.cpp"
         ],
         'include_dirs': [
             "<!@(node -p \"require('node-addon-api').include\")"
