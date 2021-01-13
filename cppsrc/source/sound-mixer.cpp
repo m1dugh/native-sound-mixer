@@ -43,6 +43,14 @@ inline std::string toString(LPWSTR str) {
 	return std::string(wstr.begin(), wstr.end());
 }
 
+inline Napi::Object& deviceToObject(SoundMixerUtils::DeviceDescriptor const& desc, Napi::Object & obj) {
+	obj.Set("id", desc.id);
+	obj.Set("name", desc.fullName);
+	obj.Set("render", (bool)(desc.dataFlow == EDataFlow::eRender));
+
+	return obj;
+}
+
 using namespace SoundMixerUtils;
 
 namespace SoundMixer
@@ -51,6 +59,7 @@ namespace SoundMixer
 	{
 		exports.Set("GetSessions", Napi::Function::New(env, GetAudioSessionNames));
 		exports.Set("GetDevices", Napi::Function::New(env, GetEndpoints));
+		exports.Set("GetDefaultDevice", Napi::Function::New(env, GetDefaultEndpoint));
 
 		exports.Set("SetEndpointVolume", Napi::Function::New(env, SetEndpointVolume));
 		exports.Set("GetEndpointVolume", Napi::Function::New(env, GetEndpointVolume));
@@ -111,13 +120,38 @@ namespace SoundMixer
 		int i = 0;
 		for (DeviceDescriptor const& desc : devices) {
 			Napi::Object obj = Napi::Object::New(env);
-			obj.Set(Napi::String::New(env, "id"), desc.id);
-			obj.Set(Napi::String::New(env, "name"), desc.fullName);
-			obj.Set(Napi::String::New(env, "render"), (bool)(desc.dataFlow == EDataFlow::eRender));
-			result.Set(i++, obj);
+			result.Set(i++, deviceToObject(desc, obj));
 
 		}
 		return result;
+	}
+
+	Napi::Object GetDefaultEndpoint(Napi::CallbackInfo const& info) {
+		Napi::Env env = info.Env();
+		Napi::Object obj = Napi::Object::New(env);
+		if (info.Length() != 1 || !info[0].IsNumber()) {
+			Napi::Error::New(env, "wrong argument passed, expected number").ThrowAsJavaScriptException();
+			return obj;
+		}
+
+		int val = info[0].As<Napi::Number>().Int32Value();
+		if (val < 0 || val >= EDataFlow::EDataFlow_enum_count) {
+			Napi::Error::New(env, "illegal argument passed, expected number ranged from 0 to 3").ThrowAsJavaScriptException();
+			return obj;
+		}
+
+		EDataFlow dataFlow = (EDataFlow)val;
+		try {
+			DeviceDescriptor desc = GetDevice(dataFlow);
+			deviceToObject(desc, obj);
+
+		}
+		catch (SoundMixerException const& e) {
+			Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+			return obj;
+		}
+
+		return obj;
 	}
 
 	Napi::Number SetEndpointVolume(Napi::CallbackInfo const& info)
@@ -224,9 +258,9 @@ namespace SoundMixer
 	Napi::Boolean GetEndpointMute(Napi::CallbackInfo const& info)
 	{
 		Napi::Env env = info.Env();
-		if (info.Length() != 1 || info[0].IsString())
+		if (info.Length() != 1 || !info[0].IsString())
 		{
-			Napi::TypeError::New(env, "expected 3 numbers as arguments").ThrowAsJavaScriptException();
+			Napi::TypeError::New(env, "device id as only argument").ThrowAsJavaScriptException();
 			return Napi::Boolean::New(env, false);
 		}
 

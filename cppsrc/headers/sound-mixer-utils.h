@@ -33,5 +33,6 @@ namespace SoundMixerUtils {
 	ISimpleAudioVolume* GetSessionVolume(IAudioSessionControl2*);
 	std::vector<IAudioSessionControl2*> GetAudioSessions(IMMDevice*);
 	std::vector<DeviceDescriptor> GetDevices();
+	DeviceDescriptor GetDevice(EDataFlow);
 	IMMDevice* GetDeviceById(LPWSTR);
 };

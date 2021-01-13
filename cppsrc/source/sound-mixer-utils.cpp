@@ -39,6 +39,61 @@ namespace SoundMixerUtils {
 		return pDevice;
 	}
 
+	DeviceDescriptor GetDevice(EDataFlow dataFlow) {
+		HRESULT res = CoInitialize(NULL);
+
+		IMMDeviceEnumerator* pDeviceEnumerator;
+		res = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (LPVOID*)&pDeviceEnumerator);
+		CHECK_RES(res, "create device enumerator instance");
+
+		IMMDevice* pDevice;
+
+
+		res = pDeviceEnumerator->GetDefaultAudioEndpoint(dataFlow, ERole::eConsole, &pDevice);
+		CHECK_RES(res, "create device enumerator instance");
+
+		LPWSTR id;
+		DeviceDescriptor descriptor;
+		res = pDevice->GetId(&id);
+		CHECK_RES(res, "get device id");
+
+		descriptor.id = toString(id);
+
+		IPropertyStore* pProperties;
+		if (pDevice->OpenPropertyStore(STGM_READ, &pProperties) == S_OK) {
+			std::string fullName;
+			PROPVARIANT prop;
+			if (pProperties->GetValue(PKEY_DeviceInterface_FriendlyName, &prop) == S_OK
+				) {
+				fullName = toString(prop.pwszVal);
+			}
+			else {
+				std::cerr << "failed getting friendly name for device " << toString(id) << std::endl;
+			}
+
+			if (pProperties->GetValue(PKEY_Device_DeviceDesc, &prop) == S_OK) {
+				fullName += (char)0x20 + toString(prop.pwszVal);
+			}
+			else {
+				std::cerr << "failed getting device desc for device " << toString(id) << std::endl;
+			}
+
+			descriptor.fullName = fullName;
+		}
+		else {
+			std::cerr << "failed opening property store for device " << toString(id) << std::endl;
+		}
+		descriptor.dataFlow = dataFlow;
+
+		SAFE_RELEASE(pDevice);
+		SAFE_RELEASE(pDeviceEnumerator);
+
+		CoUninitialize();
+
+
+		return descriptor;
+	}
+
 	std::vector<DeviceDescriptor> GetDevices() {
 
 		HRESULT res = CoInitialize(NULL);

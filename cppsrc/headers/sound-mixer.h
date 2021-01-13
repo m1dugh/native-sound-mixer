@@ -7,6 +7,7 @@ namespace SoundMixer
 
 	Napi::Array GetAudioSessionNames(Napi::CallbackInfo const &);
 	Napi::Array GetEndpoints(Napi::CallbackInfo const&);
+	Napi::Object GetDefaultEndpoint(Napi::CallbackInfo const&);
 
 	Napi::Number SetEndpointVolume(Napi::CallbackInfo const &);
 	Napi::Number GetEndpointVolume(Napi::CallbackInfo const &);
