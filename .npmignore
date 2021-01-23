@@ -1,0 +1,19 @@
+#node modules
+node_modules/
+
+#build
+build/
+
+#config files
+.vs/
+.vscode/
+
+#git files
+.git/
+.gitignore
+
+#test files
+test/
+
+#TypeScript declarations
+@types/
