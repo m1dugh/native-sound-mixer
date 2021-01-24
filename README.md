@@ -8,4 +8,4 @@ It's built on top of `windows desktop api` and uses the [windows core audio api]
 
 Please rebuild before use, using `npm run build`
 
-for documentation, please referer to their `JavaScript` implementation in `mixerWrapper.js`
+for documentation, please referer to their `JavaScript` implementation in `src/mixerWrapper.ts`
