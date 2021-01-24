@@ -7,4 +7,14 @@ package-lock.json
 .vs/
 
 #build files
-/build/
+build/
+addons/sound-mixer/*
+!addons/sound-mixer/*.ts
+!addons/sound-mixer/index.js
+!addons/sound-mixer/package.json
+dist/
+
+#test files
+test/
+jest.config.js
+coverage/

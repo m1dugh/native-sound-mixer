@@ -3,6 +3,11 @@ node_modules/
 
 #build
 build/
+addons/sound-mixer/*
+!addons/sound-mixer/package.json
+!addons/sound-mixer/index.js
+!addons/sound-mixer/*.ts
+dist/
 
 #config files
 .vs/
@@ -15,5 +20,3 @@ build/
 #test files
 test/
 
-#TypeScript declarations
-@types/
