@@ -19,4 +19,4 @@ dist/
 
 #test files
 test/
-
+coverage/

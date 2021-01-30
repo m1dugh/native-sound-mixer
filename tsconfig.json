@@ -1,7 +1,7 @@
 {
 	"compilerOptions": {
 		"lib": ["es5", "es6", "es2020", "esnext"],
-		"module": "es6",
+		"module": "esnext",
 		"target": "es6",
 		"moduleResolution": "node",
 		"outDir": "./dist",
@@ -10,7 +10,10 @@
 		"declaration": true,
 		"declarationMap": true,
 		"inlineSourceMap": true,
-		"inlineSources": true
+		"inlineSources": true,
+		"paths": {
+			"sound-mixer": ["/addons/sound-mixer/"]
+		}
 	},
 	"exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts", "test/*"],
 	"include": ["./src/**/*.ts"] 

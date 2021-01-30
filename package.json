@@ -1,32 +1,36 @@
 {
-  "name": "native-sound-mixer",
-  "version": "2.0.0",
-  "description": "node js windows native sound mixer module",
-  "main": "./dist/mixer-wrapper.js",
-  "type": "module",
-  "gypfile": true,
-  "scripts": {
-    "build": "node-gyp rebuild && npx typescript && node bin/build.js",
-    "clean": "node-gyp clean",
-    "test": "jest"
-  },
-  "author": "romlm",
-  "license": "ISC",
-  "devDependencies": {
-    "@types/jest": "^26.0.20",
-    "jest": "^26.6.3",
-    "node-gyp": "^7.1.2",
-    "ts-jest": "^26.4.4",
-    "ts-node": "^9.1.1",
-    "typescript": "^4.1.3"
-  },
-  "dependencies": {
-    "lodash": "^4.17.20",
-    "node-addon-api": "^3.0.2",
-    "sound-mixer": "file:./addons/sound-mixer"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/romlm/node-windows-soundmixer.git"
-  }
+  	"name": "native-sound-mixer",
+  	"version": "2.0.0",
+  	"description": "node js windows native sound mixer module",
+  	"main": "./dist/cjs/mixer-wrapper.js",
+	"module": "./dist/mixer-wrapper.js",
+  	"type": "module",
+  	"gypfile": true,
+  	"scripts": {
+    		"build": "node-gyp rebuild && node bin/build.js && npx tsc -p tsconfig.json && npx tsc tsconfig-cjs.json",
+    		"clean": "node-gyp clean",
+    		"test": "jest"
+  	},
+  	"author": "romlm",
+  	"license": "ISC",
+  	"devDependencies": {
+    		"@types/jest": "^26.0.20",
+    		"jest": "^26.6.3",
+    		"node-gyp": "^7.1.2",
+    		"ts-jest": "^26.4.4",
+    		"ts-node": "^9.1.1",
+    		"typescript": "^4.1.3"
+  	},
+  	"dependencies": {
+    		"lodash": "^4.17.20",
+    		"node-addon-api": "^3.0.2"
+  	},
+  	"repository": {
+    		"type": "git",
+    		"url": "https://github.com/romlm/node-windows-soundmixer.git"
+  	},
+	"files": [
+		"./dist",
+		"./addons"
+	]
 }
