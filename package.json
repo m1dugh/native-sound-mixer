@@ -1,6 +1,6 @@
 {
   	"name": "native-sound-mixer",
-  	"version": "2.0.0",
+  	"version": "2.0.1",
   	"description": "node js windows native sound mixer module",
   	"main": "./dist/cjs/mixer-wrapper.js",
 	"module": "./dist/mixer-wrapper.js",
