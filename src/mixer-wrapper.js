@@ -9,8 +9,7 @@ const EDATAFLOW_RENDER = 0, EDATAFLOW_CAPTURE = 1;
 /**
  * @returns {{id: string, name: string, render: boolean}} the default output device
  */
-const GetDefaultRenderDevice = () => SoundMixer.GetDefaultDevice(EDATAFLOW_RENDER);
-modules.exports.GetDefaultRenderDevice = GetDefaultRenderDevice;
+module.exports.GetDefaultRenderDevice = () => SoundMixer.GetDefaultDevice(EDATAFLOW_RENDER);
 
 /**
  * @returns {{id: string, name: string, render: boolean}} the default input device

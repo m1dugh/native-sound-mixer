@@ -1,6 +1,6 @@
 {
   	"name": "native-sound-mixer",
-  	"version": "2.1.0",
+  	"version": "2.1.1",
   	"description": "node js windows native sound mixer module",
   	"main": "./src/mixer-wrapper.js",
 	"type": "commonjs",
@@ -28,6 +28,7 @@
 	"files": [
 		"cppsrc",
 		"src",
-		"@types"
+		"@types",
+		"binding.gyp"
 	]
 }
