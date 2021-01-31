@@ -1,31 +1,33 @@
-import SoundMixer from 'sound-mixer';
-import lodash from "lodash";
-import Device from './model/device';
+const SoundMixer = require('../build/Release/SoundMixer.node');
+const lodash = require("lodash");
 
+
+const precision = 2;
 
 const EDATAFLOW_RENDER = 0, EDATAFLOW_CAPTURE = 1;
 
 /**
  * @returns {{id: string, name: string, render: boolean}} the default output device
  */
-export const getDefaultRenderDevice = (): Device => SoundMixer.GetDefaultDevice(EDATAFLOW_RENDER);
+const GetDefaultRenderDevice = () => SoundMixer.GetDefaultDevice(EDATAFLOW_RENDER);
+modules.exports.GetDefaultRenderDevice = GetDefaultRenderDevice;
 
 /**
  * @returns {{id: string, name: string, render: boolean}} the default input device
  */
-export const getDefaultCaptureDevice = (): Device => SoundMixer.GetDefaultDevice(EDATAFLOW_CAPTURE);
+module.exports.GetDefaultCaptureDevice = () => SoundMixer.GetDefaultDevice(EDATAFLOW_CAPTURE);
 
 /**
  * @returns {[{id: string, name: string, render: boolean}]} the list of all active devices
  */
-export const getDevices: () => Device[] = SoundMixer.GetDevices;
+module.exports.GetDevices = SoundMixer.GetDevices;
 
 /**
  * 
  * @param {string} deviceId the device id
  * @returns {[{path: string, processIds: Number[]}]} the list of appNames
  */
-export const getSessions = (deviceId: string) => {
+module.exports.GetSessions = (deviceId) => {
 	const knownPaths = {};
 	const provider = [];
 	SoundMixer.GetSessions(deviceId).forEach(({ path, id }) => {
@@ -45,7 +47,7 @@ export const getSessions = (deviceId: string) => {
  * @param {boolean} mute the mute/unmute value for the device specified in device 
  * @returns {boolean} the mute value
  */
-export const setDeviceMute = (deviceId, mute) => {
+module.exports.SetDeviceMute = (deviceId, mute) => {
 	return SoundMixer.SetEndpointMute(deviceId, mute);
 }
 
@@ -53,14 +55,14 @@ export const setDeviceMute = (deviceId, mute) => {
  * @param {string} deviceId the device id
  * @returns {float} the endpoint volume scalar
  */
-export const getDeviceMute = (deviceId) => {
+module.exports.GetDeviceMute = (deviceId) => {
 	return SoundMixer.GetEndpointMute(deviceId);
 }
 
 /**
  * @param {string} deviceId the device id
  */
-export const toggleDeviceMute = (deviceId) => {
+module.exports.ToggleDeviceMute = (deviceId) => {
 	const currentMute = SoundMixer.GetEndpointMute(deviceId);
 	return SoundMixer.SetEndpointMute(deviceId, !currentMute);
 }
@@ -69,17 +71,17 @@ export const toggleDeviceMute = (deviceId) => {
  * @param {string} deviceId the device id
  * @param {float} volume the volume scalar ranged from 0 to 1 to set
  */
-export const setDeviceVolume = (deviceId, volume) => {
+module.exports.SetDeviceVolume = (deviceId, volume) => {
 	const effectiveScalar = lodash.clamp(volume, .0, 1.0);
-	return SoundMixer.SetEndpointVolume(deviceId, effectiveScalar);
+	return lodash.round(SoundMixer.SetEndpointVolume(deviceId, effectiveScalar), precision);
 }
 
 /**
  * @param {string} deviceId the device id
  * @returns {float} the volume scalar ranged from 0 to 1 for the device
  */
-export const getDeviceVolume = (deviceId) => {
-	return SoundMixer.GetEndpointVolume(deviceId);
+module.exports.GetDeviceVolume = (deviceId) => {
+	return lodash.round(SoundMixer.GetEndpointVolume(deviceId), precision);
 }
 
 /**
@@ -88,10 +90,10 @@ export const getDeviceVolume = (deviceId) => {
  * @param {float} deltaVolume - the volume delta ranged from -1 to 1
  * @returns {float} the new volume scalar
  */
-export const changeDeviceVolume = (deviceId, deltaVolume) => {
+module.exports.ChangeDeviceVolume = (deviceId, deltaVolume) => {
 	const currentValue = SoundMixer.GetEndpointVolume(deviceId);
 	const newScalar = lodash.clamp(currentValue + deltaVolume, .0, 1.0);
-	return SoundMixer.SetEndpointVolume(deviceId, newScalar);
+	return lodash.round(SoundMixer.SetEndpointVolume(deviceId, newScalar), precision);
 }
 
 /**
@@ -99,7 +101,7 @@ export const changeDeviceVolume = (deviceId, deltaVolume) => {
  * @param {int} processId the session process ids
  * @param {boolean} mute the value to set for the specified session 
  */
-export const setAppMute = (deviceId, processId, mute) => {
+module.exports.SetAppMute = (deviceId, processId, mute) => {
 	return SoundMixer.SetAudioSessionMute(deviceId, processId, mute);
 }
 
@@ -109,7 +111,7 @@ export const setAppMute = (deviceId, processId, mute) => {
  * @param {int} processId - the session processId
  * @returns {boolean} the mute value
  */
-export const getAppMute = (deviceId, processId) => {
+module.exports.GetAppMute = (deviceId, processId) => {
 	return SoundMixer.GetAudioSessionMute(deviceId, processId);
 
 }
@@ -120,7 +122,7 @@ export const getAppMute = (deviceId, processId) => {
  * @param {int} processId - the processId of the audio session
  * @returns {boolean} - the new mute value for the specified audio session
  */
-export const toggleAppMute = (deviceId, processId) => {
+module.exports.ToggleAppMute = (deviceId, processId) => {
 	const currentValue = SoundMixer.GetAudioSessionMute(deviceId, processId);
 	return SoundMixer.SetAudioSessionMute(deviceId, processId, !currentValue);
 
@@ -131,8 +133,8 @@ export const toggleAppMute = (deviceId, processId) => {
  * @param {int} processId the session process id
  * @param {float} volume the volume scalar ranged from 0 to 1 to set for the specified session 
  */
-export const setAppVolume = (deviceId, processId, volume) => {
-	return SoundMixer.SetAudioSessionVolume(deviceId, processId, lodash.clamp(volume, 0, 1.0));
+module.exports.SetAppVolume = (deviceId, processId, volume) => {
+	return lodash.round(SoundMixer.SetAudioSessionVolume(deviceId, processId, lodash.clamp(volume, 0, 1.0)), precision);
 }
 
 /**
@@ -140,8 +142,8 @@ export const setAppVolume = (deviceId, processId, volume) => {
  * @param {int} processId the session process id
  * @returns {float} - the app volume scalar
  */
-export const getAppVolume = (deviceId, processId) => {
-	return SoundMixer.GetAudioSessionVolume(deviceId, processId);
+module.exports.GetAppVolume = (deviceId, processId) => {
+	return lodash.round(SoundMixer.GetAudioSessionVolume(deviceId, processId), precision);
 
 }
 
@@ -151,10 +153,10 @@ export const getAppVolume = (deviceId, processId) => {
  * @param {float} deltaVolume the volume change ranged from -1.0 to 1.0 to add for the specified session
  * @returns {float} the new volume scalar
  */
-export const changeAppVolume = (deviceId, processId, deltaVolume) => {
+module.exports.ChangeAppVolume = (deviceId, processId, deltaVolume) => {
 	const currentValue = SoundMixer.GetAudioSessionVolume(deviceId, processId);
 
-	return SoundMixer.SetAudioSessionVolume(deviceId, processId, lodash.clamp(currentValue + deltaVolume, 0, 1.0));
+	return lodash.round(SoundMixer.SetAudioSessionVolume(deviceId, processId, lodash.clamp(currentValue + deltaVolume, 0, 1.0)), precision);
 
 }
 

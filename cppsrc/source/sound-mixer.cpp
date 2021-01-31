@@ -334,7 +334,7 @@ namespace SoundMixer
 		Napi::Env env = info.Env();
 		if (info.Length() != 2 || !info[1].IsNumber() || !info[0].IsString())
 		{
-			Napi::TypeError::New(env, "expected 3 numbers as arguments").ThrowAsJavaScriptException();
+			Napi::TypeError::New(env, "expected {deviceId: string}, {processId: number} as arguments").ThrowAsJavaScriptException();
 			return Napi::Number::New(env, 0.F);
 		}
 
