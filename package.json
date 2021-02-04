@@ -12,7 +12,7 @@
   	},
 	"typings": "@types/mixer-wrapper.d.ts",
   	"author": "romlm",
-  	"license": "ISC",
+  	"license": "MIT",
   	"devDependencies": {
     		"jest": "^26.6.3",
     		"node-gyp": "^7.1.2"
