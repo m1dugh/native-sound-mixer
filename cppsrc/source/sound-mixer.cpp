@@ -30,20 +30,25 @@ std::string GetProcNameFromId(DWORD id)
 	return std::string(name.begin(), name.end());
 }
 
-inline LPWSTR toLPWSTR(std::string str) {
-	// 56 is the length of the array returned by IMMDevice::GetId
-	wchar_t chars[56];
-	std::mbstowcs(chars, str.c_str(), str.length() + 1);
+inline LPWSTR toLPWSTR(std::string str)
+{
+
+	size_t size = str.length() + 1;
+
+	LPWSTR chars = (LPWSTR)malloc(size * sizeof(wchar_t));
+	std::mbstowcs(chars, str.c_str(), size);
 	return (LPWSTR)chars;
 }
 
-inline std::string toString(LPWSTR str) {
+inline std::string toString(LPWSTR str)
+{
 	std::wstring wstr(str);
 
 	return std::string(wstr.begin(), wstr.end());
 }
 
-inline Napi::Object& deviceToObject(SoundMixerUtils::DeviceDescriptor const& desc, Napi::Object & obj) {
+inline Napi::Object &deviceToObject(SoundMixerUtils::DeviceDescriptor const &desc, Napi::Object &obj)
+{
 	obj.Set("id", desc.id);
 	obj.Set("name", desc.fullName);
 	obj.Set("render", (bool)(desc.dataFlow == EDataFlow::eRender));
@@ -74,7 +79,7 @@ namespace SoundMixer
 		return exports;
 	}
 
-	Napi::Array GetAudioSessionNames(Napi::CallbackInfo const& info)
+	Napi::Array GetAudioSessionNames(Napi::CallbackInfo const &info)
 	{
 
 		Napi::Env env = info.Env();
@@ -86,21 +91,20 @@ namespace SoundMixer
 
 		CoInitialize(NULL);
 		std::string id = info[0].As<Napi::String>().Utf8Value();
-		IMMDevice* pDevice = GetDeviceById(toLPWSTR(id));
+		IMMDevice *pDevice = GetDeviceById(toLPWSTR(id));
 
 		CHECK_PTR(env, pDevice);
-		std::vector<IAudioSessionControl2*> sessions = GetAudioSessions(pDevice);
+		std::vector<IAudioSessionControl2 *> sessions = GetAudioSessions(pDevice);
 		Napi::Array sessionNames = Napi::Array::New(env, sessions.size());
 		int i = 0;
 		DWORD procId = 0;
-		HRESULT result = S_OK;
-		for (IAudioSessionControl2* session : sessions)
+		LPWSTR guid;
+		for (IAudioSessionControl2 *session : sessions)
 		{
-			result = session->GetProcessId(&procId);
-			if (result == S_OK)
+			if (session->GetProcessId(&procId) == S_OK && session->GetSessionIdentifier(&guid) == S_OK)
 			{
 				Napi::Object val = Napi::Object::New(env);
-				val.Set(Napi::String::New(env, "id"), procId);
+				val.Set(Napi::String::New(env, "id"), toString(guid));
 				val.Set(Napi::String::New(env, "path"), GetProcNameFromId(procId));
 				sessionNames.Set(i++, val);
 			}
@@ -110,7 +114,8 @@ namespace SoundMixer
 		return sessionNames;
 	}
 
-	Napi::Array GetEndpoints(Napi::CallbackInfo const& info) {
+	Napi::Array GetEndpoints(Napi::CallbackInfo const &info)
+	{
 
 		Napi::Env env = info.Env();
 
@@ -118,35 +123,39 @@ namespace SoundMixer
 		Napi::Array result = Napi::Array::New(env, devices.size());
 
 		int i = 0;
-		for (DeviceDescriptor const& desc : devices) {
+		for (DeviceDescriptor const &desc : devices)
+		{
 			Napi::Object obj = Napi::Object::New(env);
 			result.Set(i++, deviceToObject(desc, obj));
-
 		}
 		return result;
 	}
 
-	Napi::Object GetDefaultEndpoint(Napi::CallbackInfo const& info) {
+	Napi::Object GetDefaultEndpoint(Napi::CallbackInfo const &info)
+	{
 		Napi::Env env = info.Env();
 		Napi::Object obj = Napi::Object::New(env);
-		if (info.Length() != 1 || !info[0].IsNumber()) {
+		if (info.Length() != 1 || !info[0].IsNumber())
+		{
 			Napi::Error::New(env, "wrong argument passed, expected number").ThrowAsJavaScriptException();
 			return obj;
 		}
 
 		int val = info[0].As<Napi::Number>().Int32Value();
-		if (val < 0 || val >= EDataFlow::EDataFlow_enum_count) {
+		if (val < 0 || val >= EDataFlow::EDataFlow_enum_count)
+		{
 			Napi::Error::New(env, "illegal argument passed, expected number ranged from 0 to 3").ThrowAsJavaScriptException();
 			return obj;
 		}
 
 		EDataFlow dataFlow = (EDataFlow)val;
-		try {
+		try
+		{
 			DeviceDescriptor desc = GetDevice(dataFlow);
 			deviceToObject(desc, obj);
-
 		}
-		catch (SoundMixerException const& e) {
+		catch (SoundMixerException const &e)
+		{
 			Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
 			return obj;
 		}
@@ -154,11 +163,11 @@ namespace SoundMixer
 		return obj;
 	}
 
-	Napi::Number SetEndpointVolume(Napi::CallbackInfo const& info)
+	Napi::Number SetEndpointVolume(Napi::CallbackInfo const &info)
 	{
 		Napi::Env env = info.Env();
 
-		if (info.Length() != 2 || !info[1].IsNumber() ||!info[0].IsString())
+		if (info.Length() != 2 || !info[1].IsNumber() || !info[0].IsString())
 		{
 			Napi::TypeError::New(env, "expected 3 numbers as arguments").ThrowAsJavaScriptException();
 			return Napi::Number::New(env, -1);
@@ -177,13 +186,13 @@ namespace SoundMixer
 		}
 
 		std::string id = info[0].As<Napi::String>().Utf8Value();
-		IMMDevice* pDevice = GetDeviceById(toLPWSTR(id));
+		IMMDevice *pDevice = GetDeviceById(toLPWSTR(id));
 		CHECK_PTR(env, pDevice);
 
-		IAudioEndpointVolume* pEndpointVolume = GetDeviceEndpointVolume(pDevice);
+		IAudioEndpointVolume *pEndpointVolume = GetDeviceEndpointVolume(pDevice);
 		CHECK_PTR(env, pEndpointVolume);
 
-		HRESULT res = pEndpointVolume->SetMasterVolumeLevelScalar(volume, NULL);	
+		HRESULT res = pEndpointVolume->SetMasterVolumeLevelScalar(volume, NULL);
 		if (res != S_OK)
 		{
 			Napi::Error::New(env, "an error occured when setting the volume level").ThrowAsJavaScriptException();
@@ -194,7 +203,7 @@ namespace SoundMixer
 		return Napi::Number::New(env, volume);
 	}
 
-	Napi::Number GetEndpointVolume(Napi::CallbackInfo const& info)
+	Napi::Number GetEndpointVolume(Napi::CallbackInfo const &info)
 	{
 		Napi::Env env = info.Env();
 		if (info.Length() != 1 || !info[0].IsString())
@@ -206,10 +215,10 @@ namespace SoundMixer
 		CoInitialize(NULL);
 
 		std::string id = info[0].As<Napi::String>().Utf8Value();
-		IMMDevice* pDevice = GetDeviceById(toLPWSTR(id));
+		IMMDevice *pDevice = GetDeviceById(toLPWSTR(id));
 		CHECK_PTR(env, pDevice);
 
-		IAudioEndpointVolume* pEndpointVolume = GetDeviceEndpointVolume(pDevice);
+		IAudioEndpointVolume *pEndpointVolume = GetDeviceEndpointVolume(pDevice);
 		CHECK_PTR(env, pEndpointVolume);
 
 		float levelScalar = 0.F;
@@ -223,7 +232,7 @@ namespace SoundMixer
 		return Napi::Number::New(env, levelScalar);
 	}
 
-	Napi::Boolean SetEndpointMute(Napi::CallbackInfo const& info)
+	Napi::Boolean SetEndpointMute(Napi::CallbackInfo const &info)
 	{
 		Napi::Env env = info.Env();
 
@@ -236,10 +245,10 @@ namespace SoundMixer
 		CoInitialize(NULL);
 
 		std::string id = info[0].As<Napi::String>().Utf8Value();
-		IMMDevice* pDevice = GetDeviceById(toLPWSTR(id));
+		IMMDevice *pDevice = GetDeviceById(toLPWSTR(id));
 		CHECK_PTR(env, pDevice);
 
-		IAudioEndpointVolume* pEndpointVolume = GetDeviceEndpointVolume(pDevice);
+		IAudioEndpointVolume *pEndpointVolume = GetDeviceEndpointVolume(pDevice);
 		CHECK_PTR(env, pEndpointVolume);
 
 		bool mute = info[1].As<Napi::Boolean>().Value();
@@ -255,7 +264,7 @@ namespace SoundMixer
 		return Napi::Boolean::New(env, mute);
 	}
 
-	Napi::Boolean GetEndpointMute(Napi::CallbackInfo const& info)
+	Napi::Boolean GetEndpointMute(Napi::CallbackInfo const &info)
 	{
 		Napi::Env env = info.Env();
 		if (info.Length() != 1 || !info[0].IsString())
@@ -267,10 +276,10 @@ namespace SoundMixer
 		CoInitialize(NULL);
 
 		std::string id = info[0].As<Napi::String>().Utf8Value();
-		IMMDevice* pDevice = GetDeviceById(toLPWSTR(id));
+		IMMDevice *pDevice = GetDeviceById(toLPWSTR(id));
 		CHECK_PTR(env, pDevice);
 
-		IAudioEndpointVolume* pEndpointVolume = GetDeviceEndpointVolume(pDevice);
+		IAudioEndpointVolume *pEndpointVolume = GetDeviceEndpointVolume(pDevice);
 		CHECK_PTR(env, pEndpointVolume);
 
 		bool mute = false;
@@ -284,11 +293,11 @@ namespace SoundMixer
 		return Napi::Boolean::New(env, mute);
 	}
 
-	Napi::Number SetAudioSessionVolume(Napi::CallbackInfo const& info)
+	Napi::Number SetAudioSessionVolume(Napi::CallbackInfo const &info)
 	{
 		Napi::Env env = info.Env();
 
-		if (info.Length() != 3 || !info[0].IsString() || !info[1].IsNumber() || !info[2].IsNumber())
+		if (info.Length() != 3 || !info[0].IsString() || !info[1].IsString() || !info[2].IsNumber())
 		{
 			Napi::TypeError::New(env, "expected 3 numbers as arguments").ThrowAsJavaScriptException();
 			return Napi::Number::New(env, -1);
@@ -296,7 +305,7 @@ namespace SoundMixer
 
 		CoInitialize(NULL);
 
-		DWORD id = info[1].As<Napi::Number>().Int32Value();
+		std::string id = info[1].As<Napi::String>().Utf8Value();
 
 		float volume = info[2].As<Napi::Number>().FloatValue();
 		if (volume > 1.F)
@@ -309,13 +318,13 @@ namespace SoundMixer
 		}
 
 		std::string deviceId = info[0].As<Napi::String>().Utf8Value();
-		IMMDevice* pDevice = GetDeviceById(toLPWSTR(deviceId));
+		IMMDevice *pDevice = GetDeviceById(toLPWSTR(deviceId));
 		CHECK_PTR(env, pDevice);
 
-		IAudioSessionControl2* pSessionControl = GetAudioSessionByProcessId(pDevice, id);
+		IAudioSessionControl2 *pSessionControl = GetAudioSessionByGUID(pDevice, toLPWSTR(id));
 		CHECK_PTR(env, pSessionControl);
 
-		ISimpleAudioVolume* pSessionVolume = GetSessionVolume(pSessionControl);
+		ISimpleAudioVolume *pSessionVolume = GetSessionVolume(pSessionControl);
 		CHECK_PTR(env, pSessionVolume);
 
 		HRESULT res = pSessionVolume->SetMasterVolume(volume, NULL);
@@ -329,34 +338,35 @@ namespace SoundMixer
 		return Napi::Number::New(env, volume);
 	}
 
-	Napi::Number GetAudioSessionVolume(Napi::CallbackInfo const& info)
+	Napi::Number GetAudioSessionVolume(Napi::CallbackInfo const &info)
 	{
 		Napi::Env env = info.Env();
-		if (info.Length() != 2 || !info[1].IsNumber() || !info[0].IsString())
+		if (info.Length() != 2 || !info[1].IsString() || !info[0].IsString())
 		{
-			Napi::TypeError::New(env, "expected {deviceId: string}, {processId: number} as arguments").ThrowAsJavaScriptException();
+			Napi::TypeError::New(env, "expected {<deviceId>: string}, {<audio session id>: string} as arguments").ThrowAsJavaScriptException();
 			return Napi::Number::New(env, 0.F);
 		}
 
 		CoInitialize(NULL);
 
-		DWORD id = info[1].As<Napi::Number>().Int32Value();
+		std::string id = info[1].As<Napi::String>().Utf8Value();
 
 		std::string deviceId = info[0].As<Napi::String>().Utf8Value();
-		IMMDevice* pDevice = GetDeviceById(toLPWSTR(deviceId));
+		IMMDevice *pDevice = GetDeviceById(toLPWSTR(deviceId));
 		CHECK_PTR(env, pDevice);
 
-		IAudioSessionControl2* pSessionControl = GetAudioSessionByProcessId(pDevice, id);
+		IAudioSessionControl2 *pSessionControl = GetAudioSessionByGUID(pDevice, toLPWSTR(id));
 		CHECK_PTR(env, pSessionControl);
 
-		ISimpleAudioVolume* pSessionVolume = GetSessionVolume(pSessionControl);
+		ISimpleAudioVolume *pSessionVolume = GetSessionVolume(pSessionControl);
 		CHECK_PTR(env, pSessionVolume);
 
 		float volume = 0.F;
 		HRESULT res = pSessionVolume->GetMasterVolume(&volume);
 		if (res != S_OK)
 		{
-			Napi::Error::New(env, "an error occured when setting the volume level for audioSession").ThrowAsJavaScriptException();
+			Napi::Error::New(env, "an error occured when getting the volume level for audioSession").ThrowAsJavaScriptException();
+			return Napi::Number::New(env, -1.F);
 		}
 
 		CoUninitialize();
@@ -364,10 +374,10 @@ namespace SoundMixer
 		return Napi::Number::New(env, volume);
 	}
 
-	Napi::Boolean SetAudioSessionMute(Napi::CallbackInfo const& info)
+	Napi::Boolean SetAudioSessionMute(Napi::CallbackInfo const &info)
 	{
 		Napi::Env env = info.Env();
-		if (info.Length() != 3 || !info[0].IsString() || !info[1].IsNumber() || !info[2].IsBoolean())
+		if (info.Length() != 3 || !info[0].IsString() || !info[1].IsString() || !info[2].IsBoolean())
 		{
 			Napi::TypeError::New(env, "expected 3 numbers as arguments").ThrowAsJavaScriptException();
 			return Napi::Boolean::New(env, false);
@@ -375,18 +385,18 @@ namespace SoundMixer
 
 		CoInitialize(NULL);
 
-		DWORD id = info[1].As<Napi::Number>().Int32Value();
+		std::string id = info[1].As<Napi::String>().Utf8Value();
 
 		bool mute = info[2].As<Napi::Boolean>().Value();
 
 		std::string deviceId = info[0].As<Napi::String>().Utf8Value();
-		IMMDevice* pDevice = GetDeviceById(toLPWSTR(deviceId));
+		IMMDevice *pDevice = GetDeviceById(toLPWSTR(deviceId));
 		CHECK_PTR(env, pDevice);
 
-		IAudioSessionControl2* pSessionControl = GetAudioSessionByProcessId(pDevice, id);
+		IAudioSessionControl2 *pSessionControl = GetAudioSessionByGUID(pDevice, toLPWSTR(id));
 		CHECK_PTR(env, pSessionControl);
 
-		ISimpleAudioVolume* pSessionVolume = GetSessionVolume(pSessionControl);
+		ISimpleAudioVolume *pSessionVolume = GetSessionVolume(pSessionControl);
 		CHECK_PTR(env, pSessionVolume);
 
 		HRESULT res = pSessionVolume->SetMute(mute, NULL);
@@ -400,11 +410,11 @@ namespace SoundMixer
 		return Napi::Boolean::New(env, mute);
 	}
 
-	Napi::Boolean GetAudioSessionMute(Napi::CallbackInfo const& info)
+	Napi::Boolean GetAudioSessionMute(Napi::CallbackInfo const &info)
 	{
 		Napi::Env env = info.Env();
 
-		if (info.Length() != 2 || !info[1].IsString() || !info[0].IsString())
+		if (info.Length() != 2 || !info[0].IsString() || !info[1].IsString())
 		{
 			Napi::TypeError::New(env, "expected 3 numbers as arguments").ThrowAsJavaScriptException();
 			return Napi::Boolean::New(env, false);
@@ -412,16 +422,16 @@ namespace SoundMixer
 
 		CoInitialize(NULL);
 
-		DWORD id = info[1].As<Napi::Number>().Int32Value();
+		std::string id = info[1].As<Napi::String>().Utf8Value();
 
 		std::string deviceId = info[0].As<Napi::String>().Utf8Value();
-		IMMDevice* pDevice = GetDeviceById(toLPWSTR(deviceId));
+		IMMDevice *pDevice = GetDeviceById(toLPWSTR(deviceId));
 		CHECK_PTR(env, pDevice);
 
-		IAudioSessionControl2* pSessionControl = GetAudioSessionByProcessId(pDevice, id);
+		IAudioSessionControl2 *pSessionControl = GetAudioSessionByGUID(pDevice, toLPWSTR(id));
 		CHECK_PTR(env, pSessionControl);
 
-		ISimpleAudioVolume* pSessionVolume = GetSessionVolume(pSessionControl);
+		ISimpleAudioVolume *pSessionVolume = GetSessionVolume(pSessionControl);
 		CHECK_PTR(env, pSessionVolume);
 
 		bool mute = false;

@@ -1,4 +1,4 @@
-import Device from './model/device';
+import Device, {AudioSession} from './model/device';
 /**
  * @returns {Device} the default output device
  */
@@ -14,9 +14,9 @@ export declare const GetDevices: () => Device[];
 /**
  *
  * @param {string} deviceId the device id
- * @returns {[{path: string, processIds: Number[]}]} the list of appNames
+ * @returns {[AudioSession]} the list of appNames
  */
-export declare const GetSessions: (deviceId: string) => any[];
+export declare const GetSessions: (deviceId: string) => AudioSession[];
 /**
  * @param {string} deviceId the device id
  * @param {boolean} mute the mute/unmute value for the device specified in device
@@ -53,43 +53,43 @@ export declare const GetDeviceVolume: (deviceId: string) => number;
 export declare const ChangeDeviceVolume: (deviceId: string, deltaVolume: number) => number;
 /**
  * @param {string} deviceId the device id
- * @param {int} processId the session process ids
+ * @param {string} sessionId the session id
  * @param {boolean} mute the value to set for the specified session
  * @returns {boolean} the mute value set for specified app
  */
-export declare const SetAppMute: (deviceId: string, processId: number, mute: boolean) => boolean;
+export declare const SetAppMute: (deviceId: string, sessionId: string, mute: boolean) => boolean;
 /**
  *
  * @param {string} deviceId the device id
- * @param {int} processId - the session processId
+ * @param {string} sessionId - the session id
  * @returns {boolean} the mute value
  */
-export declare const GetAppMute: (deviceId: string, processId: number) => boolean;
+export declare const GetAppMute: (deviceId: string, sessionId: string) => boolean;
 /**
  *
  * @param {string} deviceId the device id
- * @param {int} processId - the processId of the audio session
+ * @param {string} sessionId - the ID of the audio session
  * @returns {boolean} - the mute value set for the specified app
  */
-export declare const ToggleAppMute: (deviceId: string, processId: number) => boolean;
+export declare const ToggleAppMute: (deviceId: string, sessionId: string) => boolean;
 /**
  * @param {string} deviceId the device id
- * @param {int} processId the session process id
+ * @param {string} sessionId the session id
  * @param {float} volume the volume scalar ranged from 0 to 1 to set for the specified session
  * @returns {float} the volume scalar set for app
  */
-export declare const SetAppVolume: (deviceId: string, processId: number, volume: number) => number;
+export declare const SetAppVolume: (deviceId: string, sessionId: string, volume: number) => number;
 /**
  * @param {string} deviceId the device id
- * @param {int} processId the session process id
+ * @param {string} sessionId the session id
  * @returns {float} - the app volume scalar set
  */
-export declare const GetAppVolume: (deviceId: string, processId: number) => number;
+export declare const GetAppVolume: (deviceId: string, sessionId: string) => number;
 /**
  * @param {string} deviceId the device id
- * @param {int} processId the session process id
+ * @param {string} sessionId the session id
  * @param {float} deltaVolume the volume change ranged from -1.0 to 1.0 to add for the specified session
  * @returns {float} the volume scalar set for app
  */
-export declare const ChangeAppVolume: (deviceId: string, processId: number, deltaVolume: number) => number;
+export declare const ChangeAppVolume: (deviceId: string, sessionId: string, deltaVolume: number) => number;
 //# sourceMappingURL=mixer-wrapper.d.ts.map

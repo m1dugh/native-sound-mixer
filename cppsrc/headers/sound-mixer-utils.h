@@ -28,7 +28,7 @@ namespace SoundMixerUtils {
 		EDataFlow dataFlow;
 	};
 
-	IAudioSessionControl2* GetAudioSessionByProcessId(IMMDevice*, DWORD);
+	IAudioSessionControl2* GetAudioSessionByGUID(IMMDevice*, LPWSTR);
 	IAudioEndpointVolume* GetDeviceEndpointVolume(IMMDevice*);
 	ISimpleAudioVolume* GetSessionVolume(IAudioSessionControl2*);
 	std::vector<IAudioSessionControl2*> GetAudioSessions(IMMDevice*);

@@ -1,5 +1,5 @@
 const SoundMixer = require('../build/Release/SoundMixer.node');
-const lodash = require("lodash");
+const { clamp, round } = require("lodash");
 
 
 const precision = 2;
@@ -24,22 +24,9 @@ module.exports.GetDevices = SoundMixer.GetDevices;
 /**
  * 
  * @param {string} deviceId the device id
- * @returns {[{path: string, processIds: Number[]}]} the list of appNames
+ * @returns {[{path: string, id: string}]} the list of appNames
  */
-module.exports.GetSessions = (deviceId) => {
-	const knownPaths = {};
-	const provider = [];
-	SoundMixer.GetSessions(deviceId).forEach(({ path, id }) => {
-		if (Object.keys(knownPaths).includes(path)) {
-			provider[knownPaths[path]].processIds.push(id);
-		} else {
-			provider.push({ path, processIds: [id] });
-			knownPaths[path] = provider.length - 1;
-		}
-	});
-
-	return provider;
-}
+module.exports.GetSessions = SoundMixer.GetSessions
 
 /**
  * @param {string} deviceId the device id
@@ -71,8 +58,8 @@ module.exports.ToggleDeviceMute = (deviceId) => {
  * @param {float} volume the volume scalar ranged from 0 to 1 to set
  */
 module.exports.SetDeviceVolume = (deviceId, volume) => {
-	const effectiveScalar = lodash.clamp(volume, .0, 1.0);
-	return lodash.round(SoundMixer.SetEndpointVolume(deviceId, effectiveScalar), precision);
+	const effectiveScalar = clamp(volume, .0, 1.0);
+	return round(SoundMixer.SetEndpointVolume(deviceId, effectiveScalar), precision);
 }
 
 /**
@@ -80,7 +67,7 @@ module.exports.SetDeviceVolume = (deviceId, volume) => {
  * @returns {float} the volume scalar ranged from 0 to 1 for the device
  */
 module.exports.GetDeviceVolume = (deviceId) => {
-	return lodash.round(SoundMixer.GetEndpointVolume(deviceId), precision);
+	return round(SoundMixer.GetEndpointVolume(deviceId), precision);
 }
 
 /**
@@ -91,8 +78,8 @@ module.exports.GetDeviceVolume = (deviceId) => {
  */
 module.exports.ChangeDeviceVolume = (deviceId, deltaVolume) => {
 	const currentValue = SoundMixer.GetEndpointVolume(deviceId);
-	const newScalar = lodash.clamp(currentValue + deltaVolume, .0, 1.0);
-	return lodash.round(SoundMixer.SetEndpointVolume(deviceId, newScalar), precision);
+	const newScalar = clamp(currentValue + clamp(deltaVolume, -1.0, 1.0), .0, 1.0);
+	return round(SoundMixer.SetEndpointVolume(deviceId, newScalar), precision);
 }
 
 /**
@@ -133,7 +120,7 @@ module.exports.ToggleAppMute = (deviceId, processId) => {
  * @param {float} volume the volume scalar ranged from 0 to 1 to set for the specified session 
  */
 module.exports.SetAppVolume = (deviceId, processId, volume) => {
-	return lodash.round(SoundMixer.SetAudioSessionVolume(deviceId, processId, lodash.clamp(volume, 0, 1.0)), precision);
+	return round(SoundMixer.SetAudioSessionVolume(deviceId, processId, clamp(volume, 0, 1.0)), precision);
 }
 
 /**
@@ -142,7 +129,7 @@ module.exports.SetAppVolume = (deviceId, processId, volume) => {
  * @returns {float} - the app volume scalar
  */
 module.exports.GetAppVolume = (deviceId, processId) => {
-	return lodash.round(SoundMixer.GetAudioSessionVolume(deviceId, processId), precision);
+	return round(SoundMixer.GetAudioSessionVolume(deviceId, processId), precision);
 
 }
 
@@ -155,7 +142,7 @@ module.exports.GetAppVolume = (deviceId, processId) => {
 module.exports.ChangeAppVolume = (deviceId, processId, deltaVolume) => {
 	const currentValue = SoundMixer.GetAudioSessionVolume(deviceId, processId);
 
-	return lodash.round(SoundMixer.SetAudioSessionVolume(deviceId, processId, lodash.clamp(currentValue + deltaVolume, 0, 1.0)), precision);
+	return round(SoundMixer.SetAudioSessionVolume(deviceId, processId, clamp(currentValue + clamp(deltaVolume, -1.0, 1.0)), 0, 1.0), precision);
 
 }
 
