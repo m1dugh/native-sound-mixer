@@ -39,9 +39,9 @@ ___
 ___
 ### summary:
 1. [terminology](#1-terminology)
-	1. Device
-	1. AudioSession
-	1. volume scalar
+	1. [Device](#device)
+	1. [AudioSession](#audioSession)
+	1. [volume scalar](#volume-scalar)
 1. [Information Gathering functions](#2-information-gathering-functions)
 	1. [GetDevices](#getdevices)
 	1. [GetDefaultRenderDevice](#getdefaultrenderdevice)
@@ -67,7 +67,8 @@ ___
 		1. [ToggleAppMute](#toggleAppMute)
 
 ### 1) Terminology
-1) Device: an interface providing infos about a physical I/O sound Device (see [microsoft doc about device](https://docs.microsoft.com/en-us/windows/win32/api/mmdeviceapi/nn-mmdeviceapi-immdevice))
+1) #### Device
+	- an interface providing infos about a physical I/O sound Device (see [microsoft doc about device](https://docs.microsoft.com/en-us/windows/win32/api/mmdeviceapi/nn-mmdeviceapi-immdevice))
 ```TypeScript
 // @types/model/Device.d.ts
 
@@ -90,7 +91,8 @@ export default interface Device {
 }
 ```
 
-#### 2) AudioSession: an interface providing infos about an I/O sound stream (see [microsoft doc about AudioSessions](https://docs.microsoft.com/en-us/windows/win32/api/audiopolicy/nn-audiopolicy-iaudiosessioncontrol))
+2) #### AudioSession
+	- an interface providing infos about an I/O sound stream (see [microsoft doc about AudioSessions](https://docs.microsoft.com/en-us/windows/win32/api/audiopolicy/nn-audiopolicy-iaudiosessioncontrol))
 ```TypeScript
 // @types/model/Device.d.ts
 
@@ -106,7 +108,8 @@ export interface AudioSession {
 }
 ```
 
-3) volume scalar: a float beetween 0 and 1 determining the volume, 1 is 100% of the maximum volume, and 0 is mute.
+3) #### volume scalar
+	- a float beetween 0 and 1 determining the volume, 1 is 100% of the maximum volume, and 0 is mute.
 **N.B: in the app, all volumes are scalars**
 
 ### 2) Information gathering functions
