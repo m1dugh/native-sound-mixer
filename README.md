@@ -38,33 +38,33 @@ ___
 ## Documentation
 ___
 ### summary:
-1. terminology
+1. [terminology](#1-terminology)
 	1. Device
 	1. AudioSession
 	1. volume scalar
-1. [Information Gathering functions](#information-gathering-functions)
-	1. GetDevices
-	1. GetDefaultRenderDevice
-	1. GetDefaultCaptureDevice
-	1. GetSessions
-1. Getters
+1. [Information Gathering functions](#2-information-gathering-functions)
+	1. [GetDevices](#getdevices)
+	1. [GetDefaultRenderDevice](#getdefaultrenderdevice)
+	1. [GetDefaultCaptureDevice](#getdefaultcapturedevice)
+	1. [GetSessions](#getsessions)
+1. [Getters](#3-getters)
 	1. Device
-		1. GetDeviceVolume
-		1. GetDeviceMute
+		1. [GetDeviceVolume](#getDeviceVolume)
+		1. [GetDeviceMute](#getDeviceMute)
 	1. AudioSession
-		1. GetAppVolume
-		1. GetAppMute
-1. Setters
+		1. [GetAppVolume](#getAppVolume)
+		1. [GetAppMute](#getAppMute)
+1. [Setters](#4-setters)
 	1. Device
-		1. SetDeviceMute
-		1. SetDeviceVolume
-		1. ChangeDeviceVolume
-		1. ToggleDeviceMute
+		1. [SetDeviceMute](#setDeviceMute)
+		1. [SetDeviceVolume](#setDeviceVolume)
+		1. [ChangeDeviceVolume](#changeDeviceVolume)
+		1. [ToggleDeviceMute](#toggleDeviceMute)
 	1. AudioSession
-		1. SetAppMute
-		1. SetAppVolume
-		1. ChangeAppVolume
-		1. ToggleAppMute
+		1. [SetAppMute](#setAppMute)
+		1. [SetAppVolume](#setAppVolume)
+		1. [ChangeAppVolume](#changeAppVolume)
+		1. [ToggleAppMute](#toggleAppMute)
 
 ### 1) Terminology
 1) Device: an interface providing infos about a physical I/O sound Device (see [microsoft doc about device](https://docs.microsoft.com/en-us/windows/win32/api/mmdeviceapi/nn-mmdeviceapi-immdevice))
@@ -90,7 +90,7 @@ export default interface Device {
 }
 ```
 
-2) AudioSession: an interface providing infos about an I/O sound stream (see [microsoft doc about AudioSessions](https://docs.microsoft.com/en-us/windows/win32/api/audiopolicy/nn-audiopolicy-iaudiosessioncontrol))
+#### 2) AudioSession: an interface providing infos about an I/O sound stream (see [microsoft doc about AudioSessions](https://docs.microsoft.com/en-us/windows/win32/api/audiopolicy/nn-audiopolicy-iaudiosessioncontrol))
 ```TypeScript
 // @types/model/Device.d.ts
 
@@ -223,7 +223,7 @@ export interface AudioSession {
 
 ### 4) Setters
 1. **Device :**
-	1. SetDeviceMute
+	1. #### SetDeviceMute
 		- sets the mute flag for given device
 		- returns the new mute flag
 		- **parameters :**
@@ -238,7 +238,7 @@ export interface AudioSession {
 		SetDeviceMute(device.id, true); // mutes the device
 		```
 
-	1. SetDeviceVolume
+	1. #### SetDeviceVolume
 		- sets the volume scalar for given device
 		- returns the new volume scalar
 		- **parameters :**
@@ -253,7 +253,7 @@ export interface AudioSession {
 		SetDeviceVolume(device.id, 0.5); // sets the device at half its max power
 		```
 
-	1. ToggleDeviceMute
+	1. #### ToggleDeviceMute
 		- toggles the mute flag for given device. a muted device will go unmuted, and an unmuted device will go muted.
 		- returns the new mute flag
 		- **parameters :**
@@ -267,7 +267,7 @@ export interface AudioSession {
 		ToggleDeviceMute(device.id); // mutes the device if unmuted
 		```
 
-	1. ChangeDeviceVolume
+	1. #### ChangeDeviceVolume
 		- sets the volume scalar for given device based on a given delta scalar
 		- returns the new volume scalar
 		- **parameters :**
@@ -285,7 +285,7 @@ export interface AudioSession {
 		```
 
 1. **Audio Session :**
-	1. SetAppMute
+	1. #### SetAppMute
 		- sets the mute flag for given audio session
 		- returns the new mute flag
 		- **parameters :**
@@ -301,7 +301,7 @@ export interface AudioSession {
 		SetAppMute(device.id, session.id, true); // mutes the audio session
 		```
 
-	1. SetAppVolume
+	1. #### SetAppVolume
 		- sets the volume scalar for given audio session
 		- returns the new volume scalar
 		- **parameters :**
@@ -317,7 +317,7 @@ export interface AudioSession {
 		SetAppVolume(device.id, session.id, 0.5); // sets the audio session to half its max power
 		```
 
-	1. ToggleAppMute
+	1. #### ToggleAppMute
 		- toggles the mute flag for given audio session. a muted audio session will go unmuted, and an unmuted audio session will go muted.
 		- returns the new mute flag
 		- **parameters :**
@@ -332,7 +332,7 @@ export interface AudioSession {
 		ToggleAppMute(device.id, session.id); // mutes the audio session if unmuted
 		```
 
-	1. ChangeAppVolume
+	1. #### ChangeAppVolume
 		- sets the volume scalar for given audio session based on a given delta scalar
 		- returns the new volume scalar
 		- **parameters :**
@@ -351,7 +351,9 @@ export interface AudioSession {
 		```
 
 
-
+## Contributing
+___
+As an open-source project, every one is free to modify the codebase. The [TODO](https://github.com/romlm/native-sound-mixer/blob/develop/TODO.md) file privides all future features with their current development state. Please test your code before committing to this repository.
 
 ## License
 ___
