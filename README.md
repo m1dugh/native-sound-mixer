@@ -109,7 +109,7 @@ export interface AudioSession {
 3) volume scalar: a float beetween 0 and 1 determining the volume, 1 is 100% of the maximum volume, and 0 is mute.
 **N.B: in the app, all volumes are scalars**
 
-# ### 2) Information gathering functions
+### # 2) Information gathering functions
 *Disclaimer: As of this section, provided documentation will be examples, for further understanding, refer to [C++ sources](https://github.com/romlm/native-sound-mixer/tree/develop/cppsrc).*
 
 1. #### GetDevices
