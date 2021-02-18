@@ -1,6 +1,5 @@
 # Windows Sound Mixer
 ## Introduction 
-___
 ### Native sound mixer for windows
 
 This `node.js` project is a sound mixer for node desktop apps providing control over volume for each render/capture device (I/O devices) and for each audio session in an audio device separately.
@@ -11,7 +10,6 @@ postinstall scripts will automatically build bin files
 
 
 ## Install
-___
 This is a [Node js](https://nodejs.org) package available through [npm registry](https://npmjs.org)
 
 Once `Node.js` is installed, you can install `native-sound-mixer` with npm : 
@@ -25,18 +23,15 @@ or using yarn :
 
 
 ## Features
-___
  - Per-device volume control and monitoring
  - Per-audio session volume control and monitoring within each device
  - Fully compatible with [TypeScript](https://www.typescriptlang.org/)
 
 ## Restrictrictions
-___
  - Yet, business logic has only been implemented for Windows 7+
 
 
 ## Documentation
-___
 ### summary:
 1. [terminology](#1-terminology)
 	1. [Device](#device)
@@ -352,12 +347,10 @@ export interface AudioSession {
 
 		ChangeAppVolume(device.id, session.id, -0.5); // sets the audio session volume scalar to current volume minus half its max power
 		```
-
+___
 
 ## Contributing
-___
 As an open-source project, every one is free to modify the codebase. The [TODO](https://github.com/romlm/native-sound-mixer/blob/develop/TODO.md) file privides all future features with their current development state. Please test your code before committing to this repository.
 
 ## License
-___
 This project is under [MIT](https://github.com/romlm/native-sound-mixer/blob/develop/LICENSE) license
