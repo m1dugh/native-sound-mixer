@@ -3,32 +3,33 @@
   	"version": "2.2.0",
   	"description": "node js windows native sound mixer module",
   	"main": "./src/mixer-wrapper.js",
-	"type": "commonjs",
+  	"type": "commonjs",
   	"gypfile": true,
   	"scripts": {
-    		"build": "node-gyp rebuild",
-    		"clean": "node-gyp clean",
-    		"test": "jest"
+  	  	"build": "node-gyp rebuild",
+  	  	"clean": "node-gyp clean",
+  	  	"test": "jest"
   	},
-	"typings": "@types/mixer-wrapper.d.ts",
+  	"typings": "@types/mixer-wrapper.d.ts",
   	"author": "romlm",
   	"license": "MIT",
   	"devDependencies": {
-    		"jest": "^26.6.3",
-    		"node-gyp": "^7.1.2"
+  	  	"jest": "^26.6.3",
+  	  	"node-gyp": "^7.1.2"
   	},
   	"dependencies": {
-    		"lodash": "^4.17.20",
-    		"node-addon-api": "^3.0.2"
+  	  	"@types/node": "^14.14.41",
+  	  	"lodash": "^4.17.20",
+  	  	"node-addon-api": "^3.0.2"
   	},
   	"repository": {
-    		"type": "git",
-    		"url": "https://github.com/romlm/node-windows-soundmixer.git"
+  	  	"type": "git",
+  	  	"url": "https://github.com/romlm/node-windows-soundmixer.git"
   	},
-	"files": [
-		"cppsrc",
-		"src",
-		"@types",
-		"binding.gyp"
-	]
+  	"files": [
+  	  	"cppsrc",
+  	  	"src",
+  	  	"@types",
+  	  	"binding.gyp"
+  	]
 }
