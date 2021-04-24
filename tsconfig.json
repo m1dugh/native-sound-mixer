@@ -7,7 +7,7 @@
 		"allowJs": false,
 		"strict": true,
 		"declaration": true,
-		"declarationDir": "./@types/",
+		"declarationDir": "./dist/@types/",
 		"paths": {
 			"@nativeFile": [
 				"./build/Release/SoundMixer.node"

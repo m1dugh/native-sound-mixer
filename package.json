@@ -12,14 +12,17 @@
 		"clean": "node-gyp clean",
 		"test": "jest"
 	},
-	"typings": "@types/sound-mixer.d.ts",
+	"types": "dist/@types/sound-mixer.d.ts",
 	"author": "romlm",
 	"license": "MIT",
 	"devDependencies": {
+		"@types/jest": "^26.0.22",
 		"jest": "^26.6.3",
-		"node-gyp": "^7.1.2"
+		"node-gyp": "^7.1.2",
+		"ts-jest": "^26.5.5"
 	},
 	"dependencies": {
+		"@types/lodash": "^4.14.168",
 		"@types/node": "^14.14.41",
 		"lodash": "^4.17.20",
 		"node-addon-api": "^3.0.2"

@@ -1,5 +1,5 @@
 # node config
-/node_modules/
+node_modules
 package-lock.json
 
 #IDE config
@@ -8,10 +8,6 @@ package-lock.json
 
 #build files
 build/
-addons/sound-mixer/*
-!addons/sound-mixer/*.ts
-!addons/sound-mixer/index.js
-!addons/sound-mixer/package.json
 dist/
 
 #test files
