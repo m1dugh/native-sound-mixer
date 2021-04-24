@@ -1,5 +1,5 @@
-#include "../headers/sound-mixer.h"
-#include "../headers/sound-mixer-utils.h"
+#include "../headers/sound-mixer.hpp"
+#include "../headers/sound-mixer-utils.hpp"
 
 #include <iostream>
 
@@ -51,7 +51,7 @@ inline Napi::Object &deviceToObject(SoundMixerUtils::DeviceDescriptor const &des
 {
 	obj.Set("id", desc.id);
 	obj.Set("name", desc.fullName);
-	obj.Set("render", (bool)(desc.dataFlow == EDataFlow::eRender));
+	obj.Set("type", (int)desc.dataFlow);
 
 	return obj;
 }
@@ -88,6 +88,7 @@ namespace SoundMixer
 		{
 			std ::cout << "throwing error " << std::endl;
 			Napi::TypeError::New(env, "expected string as device id as only parameter").ThrowAsJavaScriptException();
+			return Napi::Array::New(env);
 		}
 
 		CoInitialize(NULL);
@@ -100,13 +101,15 @@ namespace SoundMixer
 		int i = 0;
 		DWORD procId = 0;
 		LPWSTR guid;
+		AudioSessionState state;
 		for (IAudioSessionControl2 *session : sessions)
 		{
-			if (session->GetProcessId(&procId) == S_OK && session->GetSessionIdentifier(&guid) == S_OK)
+			if (session->GetProcessId(&procId) == S_OK && session->GetSessionIdentifier(&guid) == S_OK && session->GetState(&state) == S_OK)
 			{
 				Napi::Object val = Napi::Object::New(env);
-				val.Set(Napi::String::New(env, "id"), toString(guid));
-				val.Set(Napi::String::New(env, "path"), GetProcNameFromId(procId));
+				val.Set("id", toString(guid));
+				val.Set("path", GetProcNameFromId(procId));
+				val.Set("state", (int)state);
 				sessionNames.Set(i++, val);
 			}
 		}
