@@ -7,14 +7,16 @@
 		"allowJs": false,
 		"strict": true,
 		"declaration": true,
+		"sourceMap": true,
 		"declarationDir": "./dist/@types/",
-		"paths": {
-			"@nativeFile": [
-				"./build/Release/SoundMixer.node"
-			]
-		}
 	},
 	"include": [
 		"./src/*.ts"
+	],
+	"exclude": [
+		"node_modules",
+		"test/**",
+		"**/*.spec.ts",
+		"**/*.test.ts"
 	]
 }

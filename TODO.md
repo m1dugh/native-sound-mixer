@@ -3,12 +3,12 @@
 ***N.B :Feel free to add any idea in this file under the first section to make this project even more reliable and useful***
 
 ### Features to be developed (not yet under development):
- - add C++ code base for Mac and linux compatibility
+ - add C++ code base for mac os
 
-### Features in development cycle
- - secure C++ functions input (input type checking and exception manager)
- - full migration to typescript
- - OOP compatibility
+### Features under development cycle
+ - add C++ code base for linux
 
 ### Features under testing (features already developed or almost done under testing)
- - no features yet
+ - full migration to typescript
+ - OOP compatibility
+ - secure C++ functions input (input type checking and exception manager)
