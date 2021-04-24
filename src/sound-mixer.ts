@@ -79,6 +79,10 @@ export default class SoundMixer {
 		return new DeviceImpl(id, name, nativeType);
 	}
 
+	static getDeviceById(id: string): Device | undefined {
+		return sMixerModule.GetDevices().filter(({ id: devId }: Device) => devId === id);
+	}
+
 }
 
 export {
