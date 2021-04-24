@@ -10,28 +10,28 @@ export type VolumeScalar = number;
 
 export abstract class AudioSession {
 
-	constructor(private readonly deviceId: string, public readonly id: string, public readonly path: string) { }
+	constructor(protected readonly deviceId: string, public readonly id: string, public readonly path: string) { }
 
-	abstract setVolume(volume: VolumeScalar): void;
-	abstract getVolume(): VolumeScalar;
-	abstract changeVolume(deltaVolume: VolumeScalar): VolumeScalar;
+	abstract set volume(volume: VolumeScalar);
+	abstract get volume(): VolumeScalar;
+	// abstract changeVolume(deltaVolume: VolumeScalar): VolumeScalar;
 
-	abstract getMute(): boolean;
-	abstract setMute(mute: boolean);
-	abstract toggleMute(): boolean;
+	abstract get mute(): boolean;
+	abstract set mute(mute: boolean);
+	// abstract toggleMute(): boolean;
 
 }
 
 export abstract class Device {
 	constructor(public readonly id: string, public readonly name: string, public readonly type: DeviceType) { }
 
-	abstract getAudioSessions(): AudioSession[];
+	abstract get audioSessions(): AudioSession[];
 
-	abstract getVolume(): VolumeScalar;
-	abstract setVolume(volumeToSet: VolumeScalar): void;
-	abstract changeVolume(deltaVolume: VolumeScalar): VolumeScalar;
+	abstract get volume(): VolumeScalar;
+	abstract set volume(volumeToSet: VolumeScalar);
+	// abstract changeVolume(deltaVolume: VolumeScalar): VolumeScalar;
 
-	abstract getMute(): boolean;
-	abstract setMute(mute: boolean);
-	abstract toggleMute(): boolean;
+	abstract get mute(): boolean;
+	abstract set mute(mute: boolean);
+	// abstract toggleMute(): boolean;
 }

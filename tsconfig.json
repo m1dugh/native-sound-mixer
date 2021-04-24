@@ -1,0 +1,20 @@
+{
+	"compilerOptions": {
+		"target": "ES5",
+		"module": "commonjs",
+		"rootDir": "src",
+		"outDir": "dist",
+		"allowJs": false,
+		"strict": true,
+		"declaration": true,
+		"declarationDir": "./@types/",
+		"paths": {
+			"@nativeFile": [
+				"./build/Release/SoundMixer.node"
+			]
+		}
+	},
+	"include": [
+		"./src/*.ts"
+	]
+}
