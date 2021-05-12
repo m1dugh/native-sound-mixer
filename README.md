@@ -1,23 +1,36 @@
 # Windows Sound Mixer
 ## Introduction 
-### Native sound mixer for windows
+### Native cross-platform sound mixer
+*NB: Note that native integration with linux is under development and macos integration is not yet under development*
 
 This `node.js` project is a sound mixer for node desktop apps providing control over volume for each render/capture device (I/O devices) and for each audio session in an audio device separately.
 
-It's built on top of `windows desktop api` and uses the [windows core audio api](https://docs.microsoft.com/en-us/windows/win32/api/_coreaudio/). The native `c++` code is provided in `cppsrc/` and compiled using [node-addon-api](https://github.com/nodejs/node-addon-api)
+The native `c++` code is provided in `cppsrc/` and compiled using [node-addon-api](https://github.com/nodejs/node-addon-api)
 
 postinstall scripts will automatically build bin files
+
+### What's new in v3
+
+ - the `node.js` logic is now fully written in `TypeScript`
+ - old functional architecture turned to modern `object-oriented` architecture
 
 
 ## Install
 This is a [Node js](https://nodejs.org) package available through [npm registry](https://npmjs.org)
 
-Once `Node.js` is installed, you can install `native-sound-mixer` with npm : 
-```batch
+### prerequisites
+#### Linux (currently under development)
+ - install `pulseaudio` lib
+
+#### Windows
+ - no prerequisites are required for windows.
+
+Once `Node.js` and platform-specific prerequisites are installed, you can install `native-sound-mixer` with npm : 
+```
 > npm install native-sound-mixer
 ```
 or using yarn :
-```batch
+```
 > yarn add native-sound-mixer
 ```
 
@@ -26,9 +39,6 @@ or using yarn :
  - Per-device volume control and monitoring
  - Per-audio session volume control and monitoring within each device
  - Fully compatible with [TypeScript](https://www.typescriptlang.org/)
-
-## Restrictrictions
- - Yet, business logic has only been implemented for Windows 7+
 
 
 ## Documentation
@@ -350,7 +360,7 @@ export interface AudioSession {
 ___
 
 ## Contributing
-As an open-source project, every one is free to modify the codebase. The [TODO](https://github.com/romlm/native-sound-mixer/blob/develop/TODO.md) file privides all future features with their current development state. Please test your code before committing to this repository.
+As an open-source project, every one is free to modify the codebase. The [TODO](https://github.com/romlm/native-sound-mixer/blob/develop/TODO.md) file provides all future features with their current development state. Please test your code before committing to this repository.
 
 ## License
 This project is under [MIT](https://github.com/romlm/native-sound-mixer/blob/develop/LICENSE) license
