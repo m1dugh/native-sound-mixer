@@ -1,7 +1,7 @@
 {
 	"name": "native-sound-mixer",
-	"version": "3.0.1-BETA",
-	"description": "node js windows native sound mixer module",
+	"version": "3.0.1",
+	"description": "node js native sound mixer module",
 	"main": "./dist/sound-mixer.js",
 	"type": "commonjs",
 	"gypfile": true,

@@ -66,6 +66,14 @@ class DeviceImpl extends Device {
 		_safeWrap(() => sMixerModule.SetEndpointVolume(this.id, volume));
 	}
 
+	getSessionById(id: string) {
+		const sessions: AudioSession[] = sMixerModule.GetAudioSessions(this.id).filter(({ id: sessionId }: AudioSession) => id === sessionId);
+		if (sessions.length > 0) {
+			return sessions[0]
+		}
+		return undefined;
+	}
+
 }
 
 export default class SoundMixer {
@@ -80,7 +88,10 @@ export default class SoundMixer {
 	}
 
 	static getDeviceById(id: string): Device | undefined {
-		return sMixerModule.GetDevices().filter(({ id: devId }: Device) => devId === id);
+		const devices: Device[] = sMixerModule.GetDevices().filter(({ id: devId }: Device) => devId === id);
+		if (devices.length > 0)
+			return devices[0];
+		return undefined;
 	}
 
 }

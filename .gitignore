@@ -5,6 +5,7 @@ package-lock.json
 #IDE config
 .vscode/
 .vs/
+*.code-workspace
 
 #build files
 build/
