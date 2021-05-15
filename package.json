@@ -1,6 +1,6 @@
 {
 	"name": "native-sound-mixer",
-	"version": "3.0.1",
+	"version": "3.0.2",
 	"description": "node js native sound mixer module",
 	"main": "./dist/sound-mixer.js",
 	"type": "commonjs",
@@ -8,7 +8,8 @@
 	"scripts": {
 		"build:ts": "tsc",
 		"build:bin": "node-gyp rebuild",
-		"build": "node-gyp rebuild & npx tsc",
+		"build": "npm run build:bin && npm run build:ts",
+		"postinstall": "npm run build:ts",
 		"clean": "node-gyp clean",
 		"test": "jest"
 	},
@@ -35,6 +36,7 @@
 	"files": [
 		"cppsrc",
 		"src",
-		"binding.gyp"
+		"binding.gyp",
+		"tsconfig.json"
 	]
 }
