@@ -1,5 +1,5 @@
 #include "../headers/sound-mixer.hpp"
-#include "../headers/sound-mixer-utils.hpp"
+#include "./headers/sound-mixer-utils.hpp"
 
 #include <iostream>
 

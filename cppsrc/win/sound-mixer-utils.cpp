@@ -1,4 +1,4 @@
-#include "../headers/sound-mixer-utils.hpp"
+#include "./headers/sound-mixer-utils.hpp"
 #include <iostream>
 #include <Functiondiscoverykeys_devpkey.h>
 #include <string>

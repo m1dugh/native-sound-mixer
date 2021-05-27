@@ -7,10 +7,22 @@ import {
 } from "./model/model";
 
 import { round } from "lodash";
+import { arch, platform } from "os";
 
 const ROUND_PRECISION = 3;
 
-const sMixerModule = require(`${__dirname}/SoundMixer.node`)
+const sMixerModule = (() => {
+
+	const getModule = (platform: "macos" | "win" | "linux", arch: string | undefined = undefined) => require(`${__dirname}/addons/sound-mixer-${platform}${arch ? "_"+arch : ""}.node`)
+	if (arch() === "x32" || arch() === "x64") {
+		if (platform() === "win32") {
+			return getModule("win");
+		}
+	}
+
+	throw new Error("could not get the binary file")
+
+})()
 
 
 const _safeWrap = (func: Function) => {
