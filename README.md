@@ -20,21 +20,16 @@ This is a [Node js](https://nodejs.org) package available through [npm registry]
 
 ### prerequisites
 #### Linux (currently under development)
- - install `pulseaudio` lib
 
 #### Windows
  - no prerequisites are required for windows.
 
-Once `Node.js` and platform-specific prerequisites are installed, you can install `native-sound-mixer` with npm. 
-In order to compile files, you have to run `npm run build` or `npm install` in `node_modules/native-sound-mixer`. : 
 ```
 > npm install native-sound-mixer
-> cd node_modules/native-sound-mixer && npm run build
 ```
 or using yarn :
 ```
 > yarn add native-sound-mixer
-> cd node_modules/native-sound-mixer && npm run build
 ```
 
 
