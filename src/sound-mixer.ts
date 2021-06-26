@@ -59,7 +59,10 @@ class AudioSessionImpl extends AudioSession {
 class DeviceImpl extends Device {
 
 	get sessions() {
-		return sMixerModule.GetSessions(this.id).map(({ id, path, state }: AudioSession) => new AudioSessionImpl(this.id, id, path, state));
+
+		const ids = new Set();
+		return sMixerModule.GetSessions(this.id).map(({ id, path, state }: AudioSession) => new AudioSessionImpl(this.id, id, path, state))
+			.filter(({id}: AudioSession) => !ids.has(id) && ids.add(id));
 	}
 
 	get mute() {

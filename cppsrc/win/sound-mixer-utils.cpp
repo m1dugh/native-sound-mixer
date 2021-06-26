@@ -283,14 +283,9 @@ namespace SoundMixerUtils
 		AudioSessionState state;
 		for (size_t i = 0; i < size; i++)
 		{
-
-			result = pSessionEnumerator->GetSession(i, &pSessionControl);
-			if (result == S_OK)
+			if (pSessionEnumerator->GetSession(i, &pSessionControl) == S_OK)
 			{
-				result = pSessionControl->QueryInterface(__uuidof(IAudioSessionControl2), (LPVOID *)&pSessionControl2);
-				pSessionControl->GetState(&state);
-
-				if (result == S_OK && state == AudioSessionState::AudioSessionStateActive)
+				if (pSessionControl->QueryInterface(__uuidof(IAudioSessionControl2), (LPVOID *)&pSessionControl2) == S_OK)
 					audioSessions.push_back(pSessionControl2);
 			}
 		}

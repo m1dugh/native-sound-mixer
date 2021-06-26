@@ -7,9 +7,9 @@ export enum DeviceType {
 }
 
 export enum AudioSessionState {
-	INACTIVE,
-	ACTIVE,
-	EXPIRED
+	INACTIVE = 0,
+	ACTIVE = 1,
+	EXPIRED = 2
 }
 
 /** a float representing the volume (1.0 is full volume, .0 is no volume) */

@@ -1,6 +1,6 @@
 {
 	"name": "native-sound-mixer",
-	"version": "3.0.4",
+	"version": "3.0.6",
 	"description": "node js native sound mixer module",
 	"main": "./dist/sound-mixer.js",
 	"type": "commonjs",
