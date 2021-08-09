@@ -21,6 +21,7 @@ std::string GetProcNameFromId(DWORD id)
 	QueryFullProcessImageNameW(handle, 0, processName, &size);
 
 	std::wstring name = std::wstring(processName);
+	CoTaskMemFree(processName);
 	return std::string(name.begin(), name.end());
 }
 
@@ -39,16 +40,6 @@ inline std::string toString(LPWSTR str)
 	std::wstring wstr(str);
 
 	return std::string(wstr.begin(), wstr.end());
-}
-
-inline Napi::Object deviceToObject(SoundMixerUtils::DeviceDescriptor const &desc, Napi::Env const &env)
-{
-	Napi::Object obj = Napi::Object::New(env);
-	obj.Set("id", desc.id);
-	obj.Set("name", desc.fullName);
-	obj.Set("type", (int)desc.dataFlow);
-
-	return obj;
 }
 
 using namespace SoundMixerUtils;
@@ -141,7 +132,11 @@ namespace SoundMixer
 		int i = 0;
 		for (DeviceDescriptor const &desc : devices)
 		{
-			result.Set(i++, deviceToObject(desc, env));
+			Napi::Object obj = Napi::Object::New(env);
+			obj.Set("id", desc.id);
+			obj.Set("name", desc.fullName);
+			obj.Set("type", (int)desc.dataFlow);
+			result.Set(i++, obj);
 		}
 		return result;
 	}
@@ -166,8 +161,12 @@ namespace SoundMixer
 		{
 			throw Napi::Error::New(env, "An error occured when getting device for specified dataflow");
 		}
+		Napi::Object obj = Napi::Object::New(env);
+		obj.Set("id", desc.id);
+		obj.Set("name", desc.fullName);
+		obj.Set("type", (int)desc.dataFlow);
 
-		return deviceToObject(desc, env);
+		return obj;
 	}
 
 	Napi::Number SetEndpointVolume(Napi::CallbackInfo const &info)
@@ -453,6 +452,8 @@ namespace SoundMixer
 		}
 
 		bool mute = info[2].As<Napi::Boolean>().Value();
+
+		CoInitialize(NULL);
 		LPWSTR deviceId = toLPWSTR(info[0].As<Napi::String>().Utf8Value());
 		IMMDevice *pDevice = GetDeviceById(deviceId);
 		CoTaskMemFree(deviceId);

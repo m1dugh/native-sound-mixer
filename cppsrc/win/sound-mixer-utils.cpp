@@ -50,6 +50,7 @@ namespace SoundMixerUtils
 		IMMDeviceEnumerator *pDeviceEnumerator;
 		if (CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (LPVOID *)&pDeviceEnumerator) != S_OK)
 		{
+			CoUninitialize();
 			return DeviceDescriptor{};
 		}
 		IMMDevice *pDevice;
@@ -57,6 +58,7 @@ namespace SoundMixerUtils
 		if (pDeviceEnumerator->GetDefaultAudioEndpoint(dataFlow, ERole::eConsole, &pDevice) != S_OK)
 		{
 			SafeRelease(&pDeviceEnumerator);
+			CoUninitialize();
 			return DeviceDescriptor{};
 		}
 		SafeRelease(&pDeviceEnumerator);
@@ -65,6 +67,7 @@ namespace SoundMixerUtils
 		DeviceDescriptor descriptor;
 		if (pDevice->GetId(&id) != S_OK)
 		{
+			CoUninitialize();
 			return descriptor;
 		}
 
@@ -141,6 +144,7 @@ namespace SoundMixerUtils
 				DeviceDescriptor desc;
 
 				desc.id = toString(id);
+				CoTaskMemFree(id);
 				if (pDevice->OpenPropertyStore(STGM_READ, &pProperties) == S_OK)
 				{
 					std::string fullName;
@@ -174,7 +178,6 @@ namespace SoundMixerUtils
 				SafeRelease(&pProperties);
 				SafeRelease(&pEndpoint);
 			}
-			CoTaskMemFree(id);
 			SafeRelease(&pDevice);
 		}
 
@@ -196,35 +199,37 @@ namespace SoundMixerUtils
 		IAudioSessionEnumerator *pSessionEnumerator;
 		if (pSessionManager->GetSessionEnumerator(&pSessionEnumerator) != S_OK)
 		{
+			SafeRelease(&pSessionManager);
 			return nullptr;
 		}
+		SafeRelease(&pSessionManager);
 
 		IAudioSessionControl *pSessionControl;
 		IAudioSessionControl2 *pSessionControl2;
 		int size = -1;
-		HRESULT result = pSessionEnumerator->GetCount(&size);
+		pSessionEnumerator->GetCount(&size);
 		LPWSTR id;
-		for (size_t i = 0; result == S_OK && i < size; i++)
+		for (size_t i = 0; i < size; i++)
 		{
-			if (pSessionEnumerator->GetSession(i, (IAudioSessionControl **)&pSessionControl) == S_OK)
+			if (pSessionEnumerator->GetSession(i, &pSessionControl) == S_OK)
 			{
 
-				if (pSessionControl->QueryInterface(__uuidof(IAudioSessionControl2), (LPVOID *)&pSessionControl2))
+				if (pSessionControl->QueryInterface(__uuidof(IAudioSessionControl2), (LPVOID *)&pSessionControl2) == S_OK)
 				{
-					SafeRelease(&pSessionControl);
 					if (pSessionControl2->GetSessionIdentifier(&id) == S_OK && wcscmp(id, guid) == 0)
 					{
 						CoTaskMemFree(id);
 						SafeRelease(&pSessionEnumerator);
-						SafeRelease(&pSessionManager);
+						SafeRelease(&pSessionControl);
 						return pSessionControl2;
 					}
 					CoTaskMemFree(id);
+					SafeRelease(&pSessionControl2);
 				}
+				SafeRelease(&pSessionControl);
 			}
 		}
 		SafeRelease(&pSessionEnumerator);
-		SafeRelease(&pSessionManager);
 		return nullptr;
 	}
 
@@ -243,7 +248,7 @@ namespace SoundMixerUtils
 	ISimpleAudioVolume *GetSessionVolume(IAudioSessionControl2 *pSessionControl)
 	{
 
-		ISimpleAudioVolume *pAudioVolume = nullptr;
+		ISimpleAudioVolume *pAudioVolume;
 		if (pSessionControl->QueryInterface(__uuidof(ISimpleAudioVolume), (LPVOID *)&pAudioVolume) != S_OK)
 		{
 			return nullptr;
