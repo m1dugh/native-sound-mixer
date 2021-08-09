@@ -7,13 +7,16 @@
 #include <vector>
 #include <exception>
 
-namespace SoundMixerUtils {
+namespace SoundMixerUtils
+{
 
-	class SoundMixerException : public std::exception {
+	class SoundMixerException : public std::exception
+	{
 	public:
-		SoundMixerException(std::string const& message = "an error occured in sound mixer process") throw() : m_message(message) {}
+		SoundMixerException(std::string const &message = "an error occured in sound mixer process") throw() : m_message(message) {}
 
-		virtual const char* what() const throw() {
+		virtual const char *what() const throw()
+		{
 			return m_message.c_str();
 		}
 
@@ -28,11 +31,11 @@ namespace SoundMixerUtils {
 		EDataFlow dataFlow;
 	};
 
-	IAudioSessionControl2* GetAudioSessionByGUID(IMMDevice*, LPWSTR);
-	IAudioEndpointVolume* GetDeviceEndpointVolume(IMMDevice*);
-	ISimpleAudioVolume* GetSessionVolume(IAudioSessionControl2*);
-	std::vector<IAudioSessionControl2*> GetAudioSessions(IMMDevice*);
+	IAudioSessionControl2 *GetAudioSessionByGUID(IMMDevice *, LPWSTR);
+	IAudioEndpointVolume *GetDeviceEndpointVolume(IMMDevice *);
+	ISimpleAudioVolume *GetSessionVolume(IAudioSessionControl2 *);
+	std::vector<IAudioSessionControl2 *> GetAudioSessions(IMMDevice *);
 	std::vector<DeviceDescriptor> GetDevices();
 	DeviceDescriptor GetDevice(EDataFlow);
-	IMMDevice* GetDeviceById(LPWSTR);
+	IMMDevice *GetDeviceById(LPWSTR);
 };
