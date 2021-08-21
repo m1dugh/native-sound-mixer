@@ -1,3 +1,3 @@
-module github.com/m1dugh/go-crawler
+module github.com/m1dugh/crawler
 
 go 1.16
