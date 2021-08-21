@@ -1,7 +1,6 @@
 package crawler
 
 import (
-	"fmt"
 	"sync/atomic"
 )
 
@@ -15,22 +14,36 @@ func NewCrawlerOptions() *_CrawlerOptions {
 	}
 }
 
-type Crawler struct {
-	Scope       Scope
-	Options     _CrawlerOptions
+type _Crawler struct {
+	Scope       *Scope
+	Options     *_CrawlerOptions
 	fetchedUrls map[string]PageResult
 	urlsToFetch StringSet
+	OnUrlFound  func(string)
 }
 
-func (c *Crawler) FetchedUrls() map[string]PageResult {
+func NewCrawler(scope *Scope) *_Crawler {
+	return &_Crawler{
+		Scope:       scope,
+		fetchedUrls: make(map[string]PageResult),
+		urlsToFetch: make(StringSet),
+		Options:     NewCrawlerOptions(),
+	}
+}
+
+func (c *_Crawler) FetchedUrls() map[string]PageResult {
 	return c.fetchedUrls
 }
 
-func (c *Crawler) UrlsToFetch() StringSet {
+func (c *_Crawler) UrlsToFetch() StringSet {
 	return c.urlsToFetch
 }
 
-func (c *Crawler) Crawl() {
+func (c *_Crawler) Crawl(baseUrls []string) {
+	for _, v := range baseUrls {
+		c.urlsToFetch.Insert(v)
+	}
+
 	inChannel := make(chan string)
 	outChannel := make(chan PageResult)
 
@@ -47,7 +60,7 @@ func (c *Crawler) Crawl() {
 			go func() {
 				defer atomic.AddInt32(&workers, -1)
 				url := <-inChannel
-				res, _ := FetchPage(url, c.Scope)
+				res, _ := FetchPage(url, *c.Scope)
 
 				outChannel <- res
 			}()
@@ -66,9 +79,12 @@ func (c *Crawler) Crawl() {
 				c.urlsToFetch.Remove(k)
 			}
 
-			for v := range res.foundUrls {
-				fmt.Println(v)
+			if c.OnUrlFound != nil {
+				for v := range c.urlsToFetch.Union(res.foundUrls) {
+					c.OnUrlFound(v)
+				}
 			}
+
 		}
 
 	}

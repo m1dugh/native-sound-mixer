@@ -2,6 +2,7 @@ package crawler
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -36,6 +37,27 @@ func (s StringSet) ToArray() []string {
 	result := make([]string, len(s))
 	for k := range s {
 		result = append(result, k)
+	}
+
+	return result
+}
+
+func (s StringSet) Union(s2 StringSet) StringSet {
+	result := make(StringSet)
+
+	// shall remove from the smallest StringSet for performance purposes
+	if len(s) >= len(s2) {
+		for v := range s {
+			if s2.Remove(v) {
+				result.Insert(v)
+			}
+		}
+	} else {
+		for v := range s2 {
+			if s.Remove(v) {
+				result.Insert(v)
+			}
+		}
 	}
 
 	return result
@@ -109,6 +131,7 @@ type PageResult struct {
 }
 
 func (p PageResult) ContentType() string {
+	fmt.Println(strings.Split(p.headers["Content-Type"][0], ";")[0])
 	return strings.Split(p.headers["Content-Type"][0], ";")[0]
 }
 
@@ -117,7 +140,7 @@ type RegexScope struct {
 	Excludes []string `json:"excludes"`
 }
 
-func (r RegexScope) MatchesRegexScope(value string) bool {
+func (r RegexScope) matchesRegexScope(value string) bool {
 	included := false
 
 	if len(r.Includes) == 0 {
@@ -145,13 +168,13 @@ func (r RegexScope) MatchesRegexScope(value string) bool {
 }
 
 type Scope struct {
-	Urls         RegexScope `json:"urls"`
-	ContentTypes RegexScope `json:"content-type"`
-	Extensions   RegexScope `json:"extensions"`
+	Urls         *RegexScope `json:"urls"`
+	ContentTypes *RegexScope `json:"content-type"`
+	Extensions   *RegexScope `json:"extensions"`
 }
 
 func (s Scope) UrlInScope(url string) bool {
-	return s.Urls.MatchesRegexScope(url)
+	return s.Urls.matchesRegexScope(url)
 }
 
 func (s Scope) PageInScope(p PageResult) bool {
@@ -159,23 +182,32 @@ func (s Scope) PageInScope(p PageResult) bool {
 		return false
 	}
 
-	var extensions []string = strings.Split(strings.Split(p.url, "/")[len(strings.Split(p.url, "/"))-1], ".")
-	if len(extensions) > 0 {
-		ext := "." + strings.Join(extensions[1:len(extensions)-1], ".")
-		if !s.Extensions.MatchesRegexScope(ext) {
-			return false
+	urlEnd := strings.Split(p.url, "?")[0]
+	urlEnd = strings.Split(urlEnd, "#")[0]
+
+	urlParts := strings.Split(urlEnd, "/")
+
+	if len(urlParts) > 3 {
+		urlEnd = urlParts[len(urlParts)-1]
+
+		var extensions []string = strings.Split(urlEnd, ".")
+		if len(extensions) > 1 {
+			ext := "." + strings.Join(extensions[1:], ".")
+			if !s.Extensions.matchesRegexScope(ext) {
+				return false
+			}
 		}
 	}
 
-	return s.ContentTypes.MatchesRegexScope(p.ContentType())
+	return s.ContentTypes.matchesRegexScope(p.ContentType())
 
 }
 
-func BasicScope(urls RegexScope) Scope {
-	return Scope{
+func BasicScope(urls *RegexScope) *Scope {
+	return &Scope{
 		urls,
-		RegexScope{},
-		RegexScope{},
+		&RegexScope{},
+		&RegexScope{},
 	}
 }
 
