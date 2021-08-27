@@ -1,17 +1,15 @@
 #pragma once
 
+#include "../../headers/sound-mixer-utils.hpp"
 #include <pulse/pulseaudio.h>
 #include <vector>
 #include <string>
 
+using SoundMixerUtils::DeviceDescriptor;
+using SoundMixerUtils::DeviceType;
+
 namespace LinuxSoundMixer
 {
-
-	enum DeviceType
-	{
-		OUTPUT = 0,
-		INPUT = 1
-	};
 
 	typedef struct _PAControls
 	{
@@ -87,6 +85,7 @@ namespace LinuxSoundMixer
 		virtual std::string name() = 0;
 		virtual std::string friendlyName() = 0;
 		virtual DeviceType type() = 0;
+		virtual DeviceDescriptor toDeviceDescriptor();
 
 	public:
 		_Device(_PAControls, uint32_t index);

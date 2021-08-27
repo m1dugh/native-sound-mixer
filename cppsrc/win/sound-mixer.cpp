@@ -1,5 +1,5 @@
 #include "../headers/sound-mixer.hpp"
-#include "./headers/sound-mixer-utils.hpp"
+#include "./headers/win-sound-mixer.hpp"
 
 #include <iostream>
 
@@ -42,7 +42,7 @@ inline std::string toString(LPWSTR str)
 	return std::string(wstr.begin(), wstr.end());
 }
 
-using namespace SoundMixerUtils;
+using namespace WinSoundMixer;
 
 namespace SoundMixer
 {
@@ -135,7 +135,7 @@ namespace SoundMixer
 			Napi::Object obj = Napi::Object::New(env);
 			obj.Set("id", desc.id);
 			obj.Set("name", desc.fullName);
-			obj.Set("type", (int)desc.dataFlow);
+			obj.Set("type", (int)desc.type);
 			result.Set(i++, obj);
 		}
 		return result;
@@ -164,7 +164,7 @@ namespace SoundMixer
 		Napi::Object obj = Napi::Object::New(env);
 		obj.Set("id", desc.id);
 		obj.Set("name", desc.fullName);
-		obj.Set("type", (int)desc.dataFlow);
+		obj.Set("type", (int)desc.type);
 
 		return obj;
 	}
