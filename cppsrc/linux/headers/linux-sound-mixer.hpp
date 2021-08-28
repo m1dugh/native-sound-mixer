@@ -85,7 +85,7 @@ namespace LinuxSoundMixer
 		virtual std::string name() = 0;
 		virtual std::string friendlyName() = 0;
 		virtual DeviceType type() = 0;
-		virtual DeviceDescriptor toDeviceDescriptor();
+		virtual DeviceDescriptor ToDeviceDescriptor();
 
 	public:
 		_Device(_PAControls, uint32_t index);

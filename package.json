@@ -1,6 +1,6 @@
 {
 	"name": "native-sound-mixer",
-	"version": "3.1.3-ALPHA",
+	"version": "3.2.0",
 	"description": "node js native sound mixer module",
 	"main": "./dist/sound-mixer.js",
 	"type": "commonjs",
@@ -11,7 +11,7 @@
 		"build": "npm run build:ts && npm run build:bin",
 		"clean": "node-gyp clean && node scripts/clean.js",
 		"test": "jest",
-		"prepublishOnly": "npm run clean && npm run build"
+		"prepublishOnly": "npm run build && npm run test && node scripts/check-bins.js"
 	},
 	"os": [
 		"win32",
@@ -35,7 +35,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/romlm/native-sound-mixer.git"
+		"url": "https://github.com/m1dugh/native-sound-mixer.git"
 	},
 	"files": ["dist"]
 }

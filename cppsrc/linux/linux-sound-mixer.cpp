@@ -1,7 +1,5 @@
 #include "./headers/linux-sound-mixer.hpp"
 
-#include <iostream>
-
 #define WAIT(op, ml)                      \
 	do                                    \
 	{                                     \
@@ -156,7 +154,7 @@ namespace LinuxSoundMixer
 	{
 	}
 
-	DeviceDescriptor _Device::toDeviceDescriptor()
+	DeviceDescriptor _Device::ToDeviceDescriptor()
 	{
 		return DeviceDescriptor{
 			name(),

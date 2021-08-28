@@ -1,7 +1,6 @@
 #include "../headers/sound-mixer.hpp"
 #include "./headers/win-sound-mixer.hpp"
 
-#include <iostream>
 
 #define CHECK_RES(res)  \
 	if (res != S_OK)    \

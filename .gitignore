@@ -20,3 +20,9 @@ coverage/
 cppsrc/linux/**/Makefile
 cppsrc/linux/main.cpp
 cppsrc/linux/out
+
+#bin files
+*.tgz
+*.a
+*.o
+*.exe

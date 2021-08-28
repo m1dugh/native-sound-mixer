@@ -1,5 +1,4 @@
 #include "./headers/win-sound-mixer.hpp"
-#include <iostream>
 #include <Functiondiscoverykeys_devpkey.h>
 #include <string>
 #include <wchar.h>
