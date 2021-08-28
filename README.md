@@ -9,20 +9,22 @@ The native `c++` code is provided in `cppsrc/` and compiled using [node-addon-ap
 
 postinstall scripts will automatically build bin files
 
-### What's new in v3
+### What's new in v3.2
 
- - the `node.js` logic is now fully written in `TypeScript`
- - old functional architecture turned to modern `object-oriented` architecture
+ - projects now works out of the box with both windows and linux
 
 
 ## Install
 This is a [Node js](https://nodejs.org) package available through [npm registry](https://npmjs.org).
 
 ### prerequisites
-#### Linux (currently under development)
+#### Linux 
+ - install `pulseaudio` server (already installed on most user-friendly distros)
 
 #### Windows
  - no prerequisites are required for windows.
+
+### Install
 
 ```
 > npm install native-sound-mixer
