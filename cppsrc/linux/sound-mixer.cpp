@@ -49,26 +49,26 @@ namespace SoundMixer
 	{
 	}
 
-	Napi::Number SetDeviceVolume(Napi::CallbackInfo const &)
+	void SetDeviceVolume(Napi::CallbackInfo const &)
 	{
 	}
 	Napi::Number GetDeviceVolume(Napi::CallbackInfo const &)
 	{
 	}
-	Napi::Boolean SetDeviceMute(Napi::CallbackInfo const &)
+	void SetDeviceMute(Napi::CallbackInfo const &)
 	{
 	}
 	Napi::Boolean GetDeviceMute(Napi::CallbackInfo const &)
 	{
 	}
 
-	Napi::Number SetAudioSessionVolume(Napi::CallbackInfo const &)
+	void SetAudioSessionVolume(Napi::CallbackInfo const &)
 	{
 	}
 	Napi::Number GetAudioSessionVolume(Napi::CallbackInfo const &)
 	{
 	}
-	Napi::Boolean SetAudioSessionMute(Napi::CallbackInfo const &)
+	void SetAudioSessionMute(Napi::CallbackInfo const &)
 	{
 	}
 	Napi::Boolean GetAudioSessionMute(Napi::CallbackInfo const &)

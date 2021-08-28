@@ -31,9 +31,8 @@ namespace SoundMixer
 	 * @param string device id
 	 * @param DeviceType the device type
 	 * @param float the volume to set
-	 * @returns the new volume
 	 */
-	Napi::Number SetDeviceVolume(Napi::CallbackInfo const &);
+	void SetDeviceVolume(Napi::CallbackInfo const &);
 
 	/**
 	 * @param string the device id
@@ -46,9 +45,8 @@ namespace SoundMixer
 	 * @param string the device id
 	 * @param DeviceType the device type
 	 * @param bool the mute flag
-	 * @returns the new mute flag
 	 */
-	Napi::Boolean SetDeviceMute(Napi::CallbackInfo const &);
+	void SetDeviceMute(Napi::CallbackInfo const &);
 	/**
 	 * @param string the device id
 	 * @param DeviceType the device type
@@ -61,9 +59,8 @@ namespace SoundMixer
 	 * @param DeviceType the device type
 	 * @param string the session id
 	 * @param float the volume to set
-	 * @returns the new volume
 	 */
-	Napi::Number SetAudioSessionVolume(Napi::CallbackInfo const &);
+	void SetAudioSessionVolume(Napi::CallbackInfo const &);
 	/**
 	 * @param string the device id
 	 * @param DeviceType the device type
@@ -76,9 +73,8 @@ namespace SoundMixer
 	 * @param DeviceType the device type
 	 * @param string the session id
 	 * @param bool the mute flag
-	 * @returns the new mute flag
 	 */
-	Napi::Boolean SetAudioSessionMute(Napi::CallbackInfo const &);
+	void SetAudioSessionMute(Napi::CallbackInfo const &);
 	/**
 	 * @param string the device id
 	 * @param DeviceType the device type

@@ -169,7 +169,7 @@ namespace SoundMixer
 		return obj;
 	}
 
-	Napi::Number SetDeviceVolume(Napi::CallbackInfo const &info)
+	void SetDeviceVolume(Napi::CallbackInfo const &info)
 	{
 		Napi::Env env = info.Env();
 
@@ -214,8 +214,6 @@ namespace SoundMixer
 		{
 			throw Napi::Error::New(env, "an error occured when setting the volume level");
 		}
-
-		return Napi::Number::New(env, volume);
 	}
 
 	Napi::Number GetDeviceVolume(Napi::CallbackInfo const &info)
@@ -259,7 +257,7 @@ namespace SoundMixer
 		return Napi::Number::New(env, levelScalar);
 	}
 
-	Napi::Boolean SetDeviceMute(Napi::CallbackInfo const &info)
+	void SetDeviceMute(Napi::CallbackInfo const &info)
 	{
 		Napi::Env env = info.Env();
 
@@ -297,8 +295,6 @@ namespace SoundMixer
 		{
 			throw Napi::Error::New(env, "an error occured when setting mute");
 		}
-
-		return Napi::Boolean::New(env, mute);
 	}
 
 	Napi::Boolean GetDeviceMute(Napi::CallbackInfo const &info)
@@ -339,7 +335,7 @@ namespace SoundMixer
 		return Napi::Boolean::New(env, (bool)mute);
 	}
 
-	Napi::Number SetAudioSessionVolume(Napi::CallbackInfo const &info)
+	void SetAudioSessionVolume(Napi::CallbackInfo const &info)
 	{
 		Napi::Env env = info.Env();
 
@@ -396,8 +392,6 @@ namespace SoundMixer
 		{
 			throw Napi::Error::New(env, "an error occured when setting the volume level for audioSession");
 		}
-
-		return Napi::Number::New(env, volume);
 	}
 
 	Napi::Number GetAudioSessionVolume(Napi::CallbackInfo const &info)
@@ -450,7 +444,7 @@ namespace SoundMixer
 		return Napi::Number::New(env, volume);
 	}
 
-	Napi::Boolean SetAudioSessionMute(Napi::CallbackInfo const &info)
+	void SetAudioSessionMute(Napi::CallbackInfo const &info)
 	{
 		Napi::Env env = info.Env();
 		if (info.Length() != 4 || !info[0].IsString() || !info[2].IsString() || !info[3].IsBoolean() || !info[1].IsNumber())
@@ -497,8 +491,6 @@ namespace SoundMixer
 		{
 			throw Napi::Error::New(env, "an error occured when muting audioSession");
 		}
-
-		return Napi::Boolean::New(env, mute);
 	}
 
 	Napi::Boolean GetAudioSessionMute(Napi::CallbackInfo const &info)
