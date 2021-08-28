@@ -1,4 +1,4 @@
-#include "./headers/win-sound-mixer-utils.hpp"
+#include "./headers/win-sound-mixer.hpp"
 #include <iostream>
 #include <Functiondiscoverykeys_devpkey.h>
 #include <string>
@@ -105,7 +105,7 @@ namespace WinSoundMixer
 		return descriptor;
 	}
 
-	std::vector<DeviceDescriptor> GetDevices()
+	std::vector<DeviceDescriptor> GetEndpoints()
 	{
 
 		std::vector<DeviceDescriptor> descriptors;

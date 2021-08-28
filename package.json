@@ -1,20 +1,21 @@
 {
 	"name": "native-sound-mixer",
-	"version": "3.0.8",
+	"version": "3.1.3-ALPHA",
 	"description": "node js native sound mixer module",
 	"main": "./dist/sound-mixer.js",
 	"type": "commonjs",
 	"gypfile": true,
 	"scripts": {
 		"build:ts": "tsc",
-		"build:bin": "node-gyp rebuild",
-		"build": "npm run build:bin && npm run build:ts",
+		"build:bin": "node-gyp rebuild && node scripts/copy-bins.js",
+		"build": "npm run build:ts && npm run build:bin",
 		"clean": "node-gyp clean && node scripts/clean.js",
 		"test": "jest",
-		"prepublishOnly": "npm run build && node scripts/prepublish.js"
+		"prepublishOnly": "npm run clean && npm run build"
 	},
 	"os": [
-		"win32"
+		"win32",
+		"linux"
 	],
 	"types": "dist/@types/sound-mixer.d.ts",
 	"author": "romlm",

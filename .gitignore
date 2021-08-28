@@ -19,3 +19,4 @@ coverage/
 #cpp linux test files
 cppsrc/linux/**/Makefile
 cppsrc/linux/main.cpp
+cppsrc/linux/out

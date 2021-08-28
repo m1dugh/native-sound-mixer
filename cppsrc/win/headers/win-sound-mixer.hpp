@@ -18,7 +18,7 @@ namespace WinSoundMixer
 	IAudioEndpointVolume *GetDeviceEndpointVolume(IMMDevice *);
 	ISimpleAudioVolume *GetSessionVolume(IAudioSessionControl2 *);
 	std::vector<IAudioSessionControl2 *> GetAudioSessions(IMMDevice *);
-	std::vector<DeviceDescriptor> GetDevices();
+	std::vector<DeviceDescriptor> GetEndpoints();
 	DeviceDescriptor GetDevice(EDataFlow);
 	IMMDevice *GetDeviceById(LPWSTR);
 };

@@ -13,11 +13,14 @@ const ROUND_PRECISION = 3;
 
 const sMixerModule = (() => {
 
-	const getModule = (platform: "macos" | "win" | "linux", arch: string | undefined = undefined) => require(`${__dirname}/addons/sound-mixer-${platform}${arch ? "_"+arch : ""}.node`)
-	if (arch() === "x32" || arch() === "x64") {
-		if (platform() === "win32") {
+	const getModule = (platform: "macos" | "win" | "linux", arch: string | undefined = undefined) => require(`${__dirname}/addons/${platform}-sound-mixer${arch ? "_" + arch : ""}.node`)
+	if (platform() === "win32") {
+		if (arch() === "x32" || arch() === "x64") {
 			return getModule("win");
 		}
+	} else if (platform() == "linux") {
+		if (arch() === "x32" || arch() === "x64")
+			return getModule("linux");
 	}
 
 	throw new Error("could not get the binary file")
@@ -39,19 +42,19 @@ const _safeWrap = (func: Function) => {
 class AudioSessionImpl extends AudioSession {
 
 	get mute() {
-		return _safeWrap(() => sMixerModule.GetAudioSessionMute(this.deviceId, this.id))
+		return _safeWrap(() => sMixerModule.GetAudioSessionMute(this.deviceId, this.deviceType, this.id))
 	}
 
 	get volume() {
-		return round(_safeWrap(() => sMixerModule.GetAudioSessionVolume(this.deviceId, this.id)), ROUND_PRECISION);
+		return round(_safeWrap(() => sMixerModule.GetAudioSessionVolume(this.deviceId, this.deviceType, this.id)), ROUND_PRECISION);
 	}
 
 	set mute(mute: boolean) {
-		_safeWrap(() => sMixerModule.SetAudioSessionMute(this.deviceId, this.id, mute));
+		_safeWrap(() => sMixerModule.SetAudioSessionMute(this.deviceId, this.deviceType, this.id, mute));
 	}
 
 	set volume(volume: VolumeScalar) {
-		_safeWrap(() => sMixerModule.SetAudioSessionVolume(this.deviceId, this.id, volume));
+		_safeWrap(() => sMixerModule.SetAudioSessionVolume(this.deviceId, this.deviceType, this.id, volume));
 	}
 
 }
@@ -61,28 +64,29 @@ class DeviceImpl extends Device {
 	get sessions() {
 
 		const ids = new Set();
-		return sMixerModule.GetSessions(this.id).map(({ id, path, state }: AudioSession) => new AudioSessionImpl(this.id, id, path, state))
-			.filter(({id}: AudioSession) => !ids.has(id) && ids.add(id));
+		return sMixerModule.GetSessions(this.id, this.type).map(({ id, path, state }: AudioSession) => new AudioSessionImpl(this.id, this.type, id, path, state))
+			.filter(({ id }: AudioSession) => !ids.has(id) && ids.add(id));
 	}
 
 	get mute() {
-		return _safeWrap(() => sMixerModule.GetEndpointMute(this.id));
+		return _safeWrap(() => sMixerModule.GetDeviceMute(this.id, this.type));
 	}
 
 	get volume() {
-		return round(_safeWrap(() => sMixerModule.GetEndpointVolume(this.id)), ROUND_PRECISION);
+		return round(_safeWrap(() => sMixerModule.GetDeviceVolume(this.id, this.type)), ROUND_PRECISION);
 	}
 
 	set mute(mute: boolean) {
-		_safeWrap(() => sMixerModule.SetEndpointMute(this.id, mute));
+		_safeWrap(() => sMixerModule.SetDeviceMute(this.id, this.type, mute));
 	}
 
 	set volume(volume: VolumeScalar) {
-		_safeWrap(() => sMixerModule.SetEndpointVolume(this.id, volume));
+		_safeWrap(() => sMixerModule.SetDeviceVolume(this.id, this.type, volume));
 	}
 
 	getSessionById(id: string) {
-		const sessions: AudioSession[] = sMixerModule.GetAudioSessions(this.id).filter(({ id: sessionId }: AudioSession) => id === sessionId);
+		const sessions: AudioSession[] = this.sessions
+			.filter((s: AudioSession) => id === s.id)
 		if (sessions.length > 0) {
 			return sessions[0]
 		}

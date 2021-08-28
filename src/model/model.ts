@@ -23,6 +23,12 @@ export abstract class AudioSession {
 		 * the linked {@link Device} id
 		 */
 		protected readonly deviceId: string,
+
+		/**
+		 * @member
+		 * the type of the linked device
+		 */
+		protected readonly deviceType: DeviceType,
 		/**
 		 * @member
 		 * the unique and persistent session id

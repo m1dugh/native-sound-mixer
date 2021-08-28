@@ -683,7 +683,6 @@ namespace LinuxSoundMixer
 
 	std::string OutputAudioSession::appName()
 	{
-		pa_operation *op;
 		auto *props = GetProps();
 		std::string name = this->description();
 		if (pa_proplist_contains(props, PA_PROP_APPLICATION_NAME))

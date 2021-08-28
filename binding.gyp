@@ -1,25 +1,58 @@
 {
-    "variables": {
-        "module_name%": "sound-mixer",
-        "PRODUCTION_DIR%": "./build/"
-    },
-    "targets": [{
-        "target_name": "<(module_name)-win",
-        "cflags!": ["-fno-exceptions"],
-        "cflags_cc!": ["-fno-exceptions"],
-        'include_dirs': [
-            "<!@(node -p \"require('node-addon-api').include\")"
-        ],
-        'libraries': [],
-        'dependencies': [
-            "<!(node -p \"require('node-addon-api').gyp\")"
-        ],
-        'defines': ['NAPI_DISABLE_CPP_EXCEPTIONS'],
-        "sources": [
-            "cppsrc/main.cpp",
-            "cppsrc/win/sound-mixer-utils.cpp",
-            "cppsrc/win/sound-mixer.cpp"
-        ]
-    },
-    ]
+	"variables": {
+		"PRODUCTION_DIR%": "./windows/"
+	},
+	"conditions": [
+		['OS=="linux"', {
+			"variables": {
+				"PRODUCTION_DIR%": "./build/linux"
+			},
+			"targets": [
+				{
+					"target_name": "linux-sound-mixer",
+					"cflags!": ["-fno-exceptions"],
+					"cflags_cc!": ["-fno-exceptions"],
+					'include_dirs': [
+						"<!@(node -p \"require('node-addon-api').include\")"
+					],
+					'libraries': [
+						"-lpulse"
+					],
+					'dependencies': [
+						"<!(node -p \"require('node-addon-api').gyp\")"
+					],
+					'defines': ['NAPI_DISABLE_CPP_EXCEPTIONS'],
+					"sources": [
+						"cppsrc/main.cpp",
+						"cppsrc/linux/linux-sound-mixer.cpp",
+						"cppsrc/linux/sound-mixer.cpp"
+					]
+
+				}
+			]
+		}],
+		['OS=="win"', {
+			"variables": {
+				"PRODUCTION_DIR%": "./win/"
+			},
+			"targets": [{
+				"target_name": "win-sound-mixer",
+				"cflags!": ["-fno-exceptions"],
+				"cflags_cc!": ["-fno-exceptions"],
+				'include_dirs': [
+					"<!@(node -p \"require('node-addon-api').include\")"
+				],
+				'libraries': [],
+				'dependencies': [
+					"<!(node -p \"require('node-addon-api').gyp\")"
+				],
+				'defines': ['NAPI_DISABLE_CPP_EXCEPTIONS'],
+				"sources": [
+					"cppsrc/main.cpp",
+					"cppsrc/win/win-sound-mixer.cpp",
+					"cppsrc/win/sound-mixer.cpp"
+				]
+			}]
+		}]
+	]
 }

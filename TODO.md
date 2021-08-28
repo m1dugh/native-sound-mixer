@@ -6,9 +6,6 @@
  - add C++ code base for mac os
 
 ### Features under development cycle
- - add C++ code base for linux
 
 ### Features under testing (features already developed or almost done under testing)
- - full migration to typescript
- - OOP compatibility
- - secure C++ functions input (input type checking and exception manager)
+ - add C++ code base for linux

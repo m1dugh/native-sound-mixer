@@ -6,19 +6,19 @@ using namespace LinuxSoundMixer;
 namespace SoundMixer
 {
 
-	SoundMixer mixer;
+	LinuxSoundMixer::SoundMixer mixer;
 
-	Napi::Object Init(Napi::Env, Napi::Object)
+	Napi::Object Init(Napi::Env env, Napi::Object exports)
 	{
-		mixer = SoundMixer();
-		exports.Set("GetSessions", Napi::Function::New(env, GetAudioSessionNames));
-		exports.Set("GetDevices", Napi::Function::New(env, GetEndpoints));
-		exports.Set("GetDefaultDevice", Napi::Function::New(env, GetDefaultEndpoint));
+		mixer = LinuxSoundMixer::SoundMixer();
+		exports.Set("GetSessions", Napi::Function::New(env, GetAudioSessions));
+		exports.Set("GetDevices", Napi::Function::New(env, GetDevices));
+		exports.Set("GetDefaultDevice", Napi::Function::New(env, GetDefaultDevice));
 
-		exports.Set("SetEndpointVolume", Napi::Function::New(env, SetEndpointVolume));
-		exports.Set("GetEndpointVolume", Napi::Function::New(env, GetEndpointVolume));
-		exports.Set("SetEndpointMute", Napi::Function::New(env, SetEndpointMute));
-		exports.Set("GetEndpointMute", Napi::Function::New(env, GetEndpointMute));
+		exports.Set("SetDeviceVolume", Napi::Function::New(env, SetDeviceVolume));
+		exports.Set("GetDeviceVolume", Napi::Function::New(env, GetDeviceVolume));
+		exports.Set("SetDeviceMute", Napi::Function::New(env, SetDeviceMute));
+		exports.Set("GetDeviceMute", Napi::Function::New(env, GetDeviceMute));
 
 		exports.Set("SetAudioSessionVolume", Napi::Function::New(env, SetAudioSessionVolume));
 		exports.Set("GetAudioSessionVolume", Napi::Function::New(env, GetAudioSessionVolume));
@@ -28,27 +28,37 @@ namespace SoundMixer
 		return exports;
 	}
 
-	Napi::Array GetAudioSessionNames(const Napi::CallbackInfo &)
+	Napi::Array GetAudioSessions(const Napi::CallbackInfo &info)
+	{
+		Napi::Env env = info.Env();
+
+		if (info.Length() != 1 || !info[0].IsString())
+		{
+			throw Napi::TypeError::New(env, "expected string as device id as only parameter");
+		}
+
+		std::string deviceName = info[0].As<Napi::String>().Utf8Value();
+
+		mixer.GetDeviceByName(deviceName, DeviceType::OUTPUT);
+	}
+
+	Napi::Array GetDevices(Napi::CallbackInfo const &)
+	{
+	}
+	Napi::Object GetDefaultDevice(Napi::CallbackInfo const &)
 	{
 	}
 
-	Napi::Array GetEndpoints(Napi::CallbackInfo const &)
+	Napi::Number SetDeviceVolume(Napi::CallbackInfo const &)
 	{
 	}
-	Napi::Object GetDefaultEndpoint(Napi::CallbackInfo const &)
+	Napi::Number GetDeviceVolume(Napi::CallbackInfo const &)
 	{
 	}
-
-	Napi::Number SetEndpointVolume(Napi::CallbackInfo const &)
+	Napi::Boolean SetDeviceMute(Napi::CallbackInfo const &)
 	{
 	}
-	Napi::Number GetEndpointVolume(Napi::CallbackInfo const &)
-	{
-	}
-	Napi::Boolean SetEndpointMute(Napi::CallbackInfo const &)
-	{
-	}
-	Napi::Boolean GetEndpointMute(Napi::CallbackInfo const &)
+	Napi::Boolean GetDeviceMute(Napi::CallbackInfo const &)
 	{
 	}
 
