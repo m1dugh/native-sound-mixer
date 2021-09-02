@@ -2,7 +2,6 @@ package crawler
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -12,17 +11,23 @@ import (
 /* a function that extracts any url from any html page
  */
 func ExtractUrlsFromHtml(page string, url string) StringSet {
+	foundLinks := make(StringSet)
+
 	urlPattern := regexp.MustCompile(`https?://(\w+\.)+[a-z]{2,5}(/[^"'\s><\\]+)*`)
-	locationPattern := regexp.MustCompile(`^"(/[^"'\s><\\]+)+"$`)
+	locationPattern := regexp.MustCompile(`"(/[^"'\s><\\]+)+"`)
 
 	rootUrl := regexp.MustCompile(`https?://(\w+\.)+[a-z]{2,5}`).FindString(url)
 
-	foundLinks := make(StringSet)
 	for _, v := range urlPattern.FindAllString(page, -1) {
 		foundLinks.Insert(v)
 	}
 
 	for _, loc := range locationPattern.FindAllString(page, -1) {
+
+		if len(loc) <= 2 {
+			continue
+		}
+		loc = loc[1 : len(loc)-1]
 		if len(loc) >= 2 && loc[1] != '/' && loc[0] == '/' {
 			foundLinks.Insert(strings.Join([]string{rootUrl, loc}, ""))
 		}
@@ -124,14 +129,13 @@ func (s *StringSet) RemoveAll(values StringSet) {
 
 type PageResult struct {
 	url           string
-	statusCode    int
-	contentLength int
+	StatusCode    int
+	ContentLength int
 	headers       http.Header
 	foundUrls     StringSet
 }
 
 func (p PageResult) ContentType() string {
-	fmt.Println(strings.Split(p.headers["Content-Type"][0], ";")[0])
 	return strings.Split(p.headers["Content-Type"][0], ";")[0]
 }
 
@@ -182,24 +186,30 @@ func (s Scope) PageInScope(p PageResult) bool {
 		return false
 	}
 
-	urlEnd := strings.Split(p.url, "?")[0]
-	urlEnd = strings.Split(urlEnd, "#")[0]
+	if s.Extensions != nil {
+		urlEnd := strings.Split(p.url, "?")[0]
+		urlEnd = strings.Split(urlEnd, "#")[0]
 
-	urlParts := strings.Split(urlEnd, "/")
+		urlParts := strings.Split(urlEnd, "/")
 
-	if len(urlParts) > 3 {
-		urlEnd = urlParts[len(urlParts)-1]
+		if len(urlParts) > 3 {
+			urlEnd = urlParts[len(urlParts)-1]
 
-		var extensions []string = strings.Split(urlEnd, ".")
-		if len(extensions) > 1 {
-			ext := "." + strings.Join(extensions[1:], ".")
-			if !s.Extensions.matchesRegexScope(ext) {
-				return false
+			var extensions []string = strings.Split(urlEnd, ".")
+			if len(extensions) > 1 {
+				ext := "." + strings.Join(extensions[1:], ".")
+				if !s.Extensions.matchesRegexScope(ext) {
+					return false
+				}
 			}
 		}
 	}
 
-	return s.ContentTypes.matchesRegexScope(p.ContentType())
+	if s.ContentTypes != nil {
+		return s.ContentTypes.matchesRegexScope(p.ContentType())
+	}
+
+	return true
 
 }
 
@@ -231,7 +241,7 @@ func FetchPage(url string, scope Scope) (PageResult, error) {
 		return result, NewOutOfScopeError("", url)
 	}
 
-	for v := range ExtractUrlsFromHtml(string(body), url) {
+	for v := range ExtractUrlsFromHtml(string(body[:]), url) {
 		if scope.UrlInScope(v) {
 			result.foundUrls.Insert(v)
 		}

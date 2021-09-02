@@ -1,6 +1,7 @@
 package crawler
 
 import (
+	"html"
 	"sync/atomic"
 )
 
@@ -81,7 +82,7 @@ func (c *_Crawler) Crawl(baseUrls []string) {
 
 			if c.OnUrlFound != nil {
 				for v := range c.urlsToFetch.Union(res.foundUrls) {
-					c.OnUrlFound(v)
+					c.OnUrlFound(html.UnescapeString(v))
 				}
 			}
 
