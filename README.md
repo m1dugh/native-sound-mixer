@@ -1,7 +1,6 @@
 # Windows Sound Mixer
 ## Introduction 
 ### Native cross-platform sound mixer
-*NB: Note that native integration with linux is under development and macos integration is not yet under development*
 
 This `node.js` project is a sound mixer for node desktop apps providing control over volume for each render/capture device (I/O devices) and for each audio session in an audio device separately.
 
@@ -58,7 +57,7 @@ or using yarn :
 
 3. [AudioSession](#3-AudioSession): Represents an app-linked audio channel with volume controls
 	- [(Attribute) mute](#session-mute): `read-write`
-	- [(Attribute) volume](#session-volume): ``read-write
+	- [(Attribute) volume](#session-volume): `read-write`
 
 4. [Data Structures](#4-Data-Structures)
 	- [Volume Scalar](#VolumeScalar)
