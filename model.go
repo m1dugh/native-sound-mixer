@@ -2,24 +2,30 @@ package crawler
 
 import (
 	"errors"
+	"fmt"
+	"html"
 	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strings"
 )
 
+const rootUrlString = `https?://((\w+\.)+[a-z]{2,5}|localhost|((\d{1,3}\.){3})\d{1,3})(:\d+)?`
+const locationString = `(/[^"'\s><\\]*)+`
+
+var rootUrlPattern = regexp.MustCompile(rootUrlString)
+var urlPattern = regexp.MustCompile(rootUrlString + locationString)
+var locationPattern = regexp.MustCompile(fmt.Sprintf(`"%s"`, locationString))
+
 /* a function that extracts any url from any html page
  */
-func ExtractUrlsFromHtml(page string, url string) StringSet {
-	foundLinks := make(StringSet)
+func ExtractUrlsFromHtml(page string, url string) []PageRequest {
+	foundLinks := make([]PageRequest, 0)
 
-	urlPattern := regexp.MustCompile(`https?://(\w+\.)+[a-z]{2,5}(/[^"'\s><\\]+)*`)
-	locationPattern := regexp.MustCompile(`"(/[^"'\s><\\]+)+"`)
-
-	rootUrl := regexp.MustCompile(`https?://(\w+\.)+[a-z]{2,5}`).FindString(url)
+	rootUrl := rootUrlPattern.FindString(url)
 
 	for _, v := range urlPattern.FindAllString(page, -1) {
-		foundLinks.Insert(v)
+		foundLinks = append(foundLinks, PageRequestFromUrl(html.UnescapeString(v)))
 	}
 
 	for _, loc := range locationPattern.FindAllString(page, -1) {
@@ -28,111 +34,192 @@ func ExtractUrlsFromHtml(page string, url string) StringSet {
 			continue
 		}
 		loc = loc[1 : len(loc)-1]
-		if len(loc) >= 2 && loc[1] != '/' && loc[0] == '/' {
-			foundLinks.Insert(strings.Join([]string{rootUrl, loc}, ""))
+		if len(loc) >= 1 {
+			foundLinks = append(foundLinks, PageRequestFromUrl(html.UnescapeString(rootUrl+loc)))
 		}
 	}
 
-	return foundLinks
+	return filterArray(foundLinks)
 }
 
-type StringSet map[string]bool
+func filterArray(pages []PageRequest) []PageRequest {
+	index := make(map[string]bool)
 
-func (s StringSet) ToArray() []string {
-	result := make([]string, len(s))
-	for k := range s {
-		result = append(result, k)
+	size := 0
+	for _, req := range pages {
+		if _, ok := index[req.ToUrl()]; !ok {
+			pages[size] = req
+			index[req.ToUrl()] = false
+			size++
+		}
 	}
 
-	return result
+	return pages[:size]
 }
 
-func (s StringSet) Union(s2 StringSet) StringSet {
-	result := make(StringSet)
+type PageRequest struct {
+	BaseUrl    string
+	Parameters map[string]string
+	Anchor     string
+}
 
-	// shall remove from the smallest StringSet for performance purposes
-	if len(s) >= len(s2) {
-		for v := range s {
-			if s2.Remove(v) {
-				result.Insert(v)
+func (req *PageRequest) Equals(r2 PageRequest) bool {
+	return req.ToUrl() == r2.ToUrl()
+}
+
+func (req *PageRequest) GetExtensions() string {
+	urlParts := strings.Split(req.BaseUrl, "/")
+	if len(urlParts[len(urlParts)-1]) <= 0 {
+		return "." + strings.Join(strings.Split(urlParts[len(urlParts)-2], ".")[1:], ".")
+	}
+	return "." + strings.Join(strings.Split(urlParts[len(urlParts)-1], ".")[1:], ".")
+}
+
+func PageRequestFromUrl(url string) PageRequest {
+	parts := strings.Split(url, "?")
+	var req PageRequest
+	if len(parts) == 2 {
+		req.Parameters = make(map[string]string)
+		for _, paramString := range strings.Split(parts[1], "&") {
+			data := strings.Split(paramString, "=")
+			if len(data) > 1 {
+				req.Parameters[data[0]] = data[1]
+			} else {
+				req.Parameters[data[0]] = ""
 			}
 		}
-	} else {
-		for v := range s2 {
-			if s.Remove(v) {
-				result.Insert(v)
-			}
+	}
+
+	parts = strings.Split(parts[0], "#")
+	if len(parts) > 1 {
+		req.Anchor = parts[1]
+	}
+
+	req.BaseUrl = parts[0]
+
+	return req
+}
+
+func (p PageRequest) ToUrl() string {
+	var url string = p.BaseUrl
+	if len(p.Anchor) > 0 {
+		url += "#" + p.Anchor
+	}
+
+	if len(p.Parameters) > 0 {
+		paramStrings := make([]string, len(p.Parameters))
+
+		i := 0
+		for key, param := range p.Parameters {
+			paramStrings[i] = fmt.Sprintf("%s=%s", key, param)
+			i++
+		}
+
+		url += fmt.Sprintf("?%s", strings.Join(paramStrings, "&"))
+	}
+
+	return url
+}
+
+type HookPoint int
+
+const (
+	FetchRequest HookPoint = iota
+	PageParse
+)
+
+type Hook struct {
+	Callback func(PageResult, map[string][]PageResult) bool
+	Point    HookPoint
+}
+
+type Hooks []Hook
+
+func (h Hooks) RunHooksForHookPoint(point HookPoint, result PageResult, fetchedUrls map[string][]PageResult) bool {
+	for _, hook := range h {
+		if hook.Point == point && !hook.Callback(result, fetchedUrls) {
+			return false
 		}
 	}
 
-	return result
-}
-
-/*
-returns true if successfully Inserted and false if it already existed
-*/
-func (s *StringSet) Insert(value string) bool {
-	_, ok := (*s)[value]
-	if ok {
-		return false
-	}
-
-	(*s)[value] = false
 	return true
 }
 
-func (s StringSet) Contains(value string) bool {
-	_, ok := s[value]
-	return ok
-}
-
-func (s *StringSet) Merge(s1 StringSet) {
-	for key := range s1 {
-		(*s)[key] = false
-	}
-}
-
-func (s *StringSet) Pop() (string, error) {
-	for key := range *s {
-		delete(*s, key)
-		return key, nil
-	}
-
-	return "", errors.New("empty set")
-}
-
-func FromArray(values []string) StringSet {
-	result := make(StringSet)
-	for _, v := range values {
-		result.Insert(v)
-	}
-
-	return result
-}
-
-/*
-returns true if successfully deleted and false if it did not exists in the set
-*/
-func (s *StringSet) Remove(value string) bool {
-	_, ok := (*s)[value]
-	if ok {
-		delete(*s, value)
-	}
-	return ok
-}
-
-func (s *StringSet) RemoveAll(values StringSet) {
-	for k := range values {
-		s.Remove(k)
-	}
-}
-
 type PageResult struct {
-	url           string
+	Url           PageRequest
 	StatusCode    int
 	ContentLength int
 	headers       http.Header
-	foundUrls     StringSet
+	foundUrls     []PageRequest
+}
+
+type CrawlerData struct {
+	UrlsToFetch []PageRequest
+	FetchedUrls map[string][]PageResult
+}
+
+func NewCrawlerData() *CrawlerData {
+	return &CrawlerData{
+		make([]PageRequest, 0),
+		make(map[string][]PageResult),
+	}
+}
+
+type ShouldAddFilter func(foundUrl PageRequest, data *CrawlerData) bool
+
+func (d *CrawlerData) AddUrlsToFetch(urls []PageRequest, shouldAdd ShouldAddFilter) []PageRequest {
+
+	arr := make([]PageRequest, len(urls))
+	size := 0
+	for _, u := range urls {
+		if d.AddUrlToFetch(u, shouldAdd) {
+			arr[size] = u
+			size++
+		}
+	}
+
+	return arr[:size]
+}
+
+func (d *CrawlerData) AddUrlToFetch(url PageRequest, shouldAdd ShouldAddFilter) bool {
+
+	if shouldAdd(url, d) {
+		newArr := filterArray(append(d.UrlsToFetch, url))
+		if len(filterArray(d.UrlsToFetch)) == len(newArr) {
+			return false
+		}
+		d.UrlsToFetch = newArr
+		return true
+	}
+	return false
+}
+
+func (d *CrawlerData) AddFetchedUrl(res PageResult) {
+
+	if results, present := d.FetchedUrls[res.Url.BaseUrl]; present {
+		for _, url := range results {
+			if url.Url.Equals(res.Url) {
+				return
+			}
+		}
+
+		d.FetchedUrls[res.Url.BaseUrl] = append(results, res)
+	} else {
+		d.FetchedUrls[res.Url.BaseUrl] = make([]PageResult, 1)
+		d.FetchedUrls[res.Url.BaseUrl][0] = res
+	}
+}
+
+func (d *CrawlerData) PopUrlToFetch() (PageRequest, bool) {
+	if len(d.UrlsToFetch) <= 0 {
+		return PageRequest{}, false
+	}
+	res := d.UrlsToFetch[len(d.UrlsToFetch)-1]
+
+	d.UrlsToFetch = d.UrlsToFetch[:len(d.UrlsToFetch)-1]
+
+	return res, true
+
 }
 
 func (p PageResult) ContentType() string {
@@ -144,13 +231,17 @@ type RegexScope struct {
 	Excludes []string `json:"excludes"`
 }
 
-func (r RegexScope) matchesRegexScope(value string) bool {
+func (r *RegexScope) matchesRegexScope(value string) bool {
+
+	if len(value) <= 0 {
+		return false
+	}
+
 	included := false
 
 	if len(r.Includes) == 0 {
 		included = true
 	}
-
 	for _, include := range r.Includes {
 		if r, err := regexp.Compile(include); err == nil && r.MatchString(value) {
 			included = true
@@ -177,32 +268,27 @@ type Scope struct {
 	Extensions   *RegexScope `json:"extensions"`
 }
 
-func (s Scope) UrlInScope(url string) bool {
-	return s.Urls.matchesRegexScope(url)
-}
+func (s *Scope) UrlInScope(url PageRequest) bool {
 
-func (s Scope) PageInScope(p PageResult) bool {
-	if !s.UrlInScope(p.url) {
+	if s.Urls != nil && !s.Urls.matchesRegexScope(url.BaseUrl) {
 		return false
 	}
 
-	if s.Extensions != nil {
-		urlEnd := strings.Split(p.url, "?")[0]
-		urlEnd = strings.Split(urlEnd, "#")[0]
+	if s.Extensions != nil && !s.Extensions.matchesRegexScope(url.GetExtensions()) {
+		return false
+	}
 
-		urlParts := strings.Split(urlEnd, "/")
+	return true
+}
 
-		if len(urlParts) > 3 {
-			urlEnd = urlParts[len(urlParts)-1]
+func (s *Scope) PageInScope(p PageResult) bool {
 
-			var extensions []string = strings.Split(urlEnd, ".")
-			if len(extensions) > 1 {
-				ext := "." + strings.Join(extensions[1:], ".")
-				if !s.Extensions.matchesRegexScope(ext) {
-					return false
-				}
-			}
-		}
+	if !s.UrlInScope(p.Url) {
+		return false
+	}
+
+	if s.Extensions != nil && !s.Extensions.matchesRegexScope(p.Url.GetExtensions()) {
+		return false
 	}
 
 	if s.ContentTypes != nil {
@@ -221,12 +307,20 @@ func BasicScope(urls *RegexScope) *Scope {
 	}
 }
 
-func FetchPage(url string, scope Scope) (PageResult, error) {
-	res, err := http.Get(url)
+func FetchPage(url PageRequest, scope Scope, hooks Hooks, fetchedUrls map[string][]PageResult) (PageResult, error) {
+
+	if !hooks.RunHooksForHookPoint(FetchRequest, PageResult{}, fetchedUrls) {
+		return PageResult{}, errors.New("Hooks stopped page parsing")
+	}
+
+	res, err := http.Get(url.ToUrl())
 
 	if err != nil {
 		return PageResult{}, err
 	}
+
+	result := PageResult{url, res.StatusCode, int(res.ContentLength), res.Header.Clone(), make([]PageRequest, 0)}
+
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
 
@@ -234,19 +328,24 @@ func FetchPage(url string, scope Scope) (PageResult, error) {
 		return PageResult{}, err
 	}
 
-	var inScopeResults StringSet = make(StringSet)
-	result := PageResult{url, res.StatusCode, int(res.ContentLength), res.Header.Clone(), inScopeResults}
-
-	if !scope.PageInScope(result) {
-		return result, NewOutOfScopeError("", url)
+	if !hooks.RunHooksForHookPoint(PageParse, result, fetchedUrls) {
+		return PageResult{}, errors.New("hooks stopped page parsing")
 	}
 
-	for v := range ExtractUrlsFromHtml(string(body[:]), url) {
+	urls := ExtractUrlsFromHtml(string(body), url.BaseUrl)
+
+	data := make([]PageRequest, len(urls))
+
+	size := 0
+	for _, v := range urls {
 		if scope.UrlInScope(v) {
-			result.foundUrls.Insert(v)
+			data[size] = v
+			size++
 		}
 	}
 
-	return PageResult{url, res.StatusCode, int(res.ContentLength), res.Header.Clone(), inScopeResults}, nil
+	result.foundUrls = data[:size]
+
+	return result, nil
 
 }
