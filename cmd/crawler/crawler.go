@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -76,6 +77,8 @@ func main() {
 	}
 
 	cr := crawler.NewCrawler(&scope, options)
+
+	cr.OnUrlFound = func(req crawler.PageRequest) { fmt.Println(req.ToUrl()) }
 
 	cr.Crawl(*urls)
 

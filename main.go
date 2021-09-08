@@ -1,7 +1,6 @@
 package crawler
 
 import (
-	"fmt"
 	"log"
 	"sync/atomic"
 )
@@ -31,6 +30,7 @@ type _Crawler struct {
 	Options *Options
 	data    *CrawlerData
 	Hooks
+	OnUrlFound func(PageRequest)
 }
 
 func NewCrawler(scope *Scope, opts *Options) *_Crawler {
@@ -118,9 +118,10 @@ func (c *_Crawler) Crawl(baseUrls []string) {
 			}
 
 			addedUrls := c.data.AddUrlsToFetch(res.foundUrls, shouldAddFilter)
-
-			for _, v := range addedUrls {
-				fmt.Println(v.ToUrl())
+			if c.OnUrlFound != nil {
+				for _, url := range addedUrls {
+					c.OnUrlFound(url)
+				}
 			}
 
 		}
