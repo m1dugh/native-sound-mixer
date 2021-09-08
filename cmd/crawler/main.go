@@ -31,12 +31,14 @@ func main() {
 		Help:     "the number of max concurrent threads",
 	})
 
-	aggressive := parser.Flag("a", "aggressive-scan", &argparse.Options{
-		Help: "set scan mode to aggressive",
-	})
-
-	light := parser.Flag("l", "light-scan", &argparse.Options{
-		Help: "set scan mode to light",
+	policy := parser.Selector("p", "policy", []string{
+		"AGGRESSIVE",
+		"A",
+		"MODERATE", "M",
+		"LIGHT", "L",
+	}, &argparse.Options{
+		Default: "MODERATE",
+		Help:    "the level of scanning",
 	})
 
 	if err := parser.Parse(os.Args); err != nil {
@@ -57,12 +59,14 @@ func main() {
 		MaxWorkers: uint(*max_workers),
 	}
 
-	if *aggressive {
+	switch *policy {
+	case "AGGRESSIVE", "A":
 		options.Policy = crawler.AGGRESSIVE
-	} else if *light {
+	case "LIGHT", "L":
 		options.Policy = crawler.LIGHT
-	} else {
+	default:
 		options.Policy = crawler.MODERATE
+
 	}
 
 	var scope crawler.Scope
