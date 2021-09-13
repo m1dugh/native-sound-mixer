@@ -63,9 +63,9 @@ class DeviceImpl extends Device {
 
 	get sessions() {
 
-		const ids = new Set();
+		// const ids = new Set();
 		return sMixerModule.GetSessions(this.id, this.type).map(({ id, path, state }: AudioSession) => new AudioSessionImpl(this.id, this.type, id, path, state))
-			.filter(({ id }: AudioSession) => !ids.has(id) && ids.add(id));
+			.filter((s: AudioSession) => s != undefined);
 	}
 
 	get mute() {
