@@ -336,7 +336,7 @@ namespace WinSoundMixer
 			CoTaskMemFree(guid);
 		}
 
-		return result;
+		return result + name();
 	}
 
 	std::string AudioSession::path()
