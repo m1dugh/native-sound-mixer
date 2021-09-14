@@ -1,7 +1,38 @@
 #include "./headers/win-sound-mixer.hpp"
 #include <Functiondiscoverykeys_devpkey.h>
+#include <WinUser.h>
 #include <string>
 #include <wchar.h>
+
+#include <iostream>
+#include <sstream>
+
+std::string
+GetProcNameFromId(DWORD id)
+{
+	if (id == 0)
+	{
+		return std::to_string(id);
+	}
+	HANDLE handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, id);
+	LPWSTR processName = (LPWSTR)CoTaskMemAlloc(256);
+	DWORD size = 256;
+	QueryFullProcessImageNameW(handle, 0, processName, &size);
+
+	std::wstring name = std::wstring(processName);
+	CoTaskMemFree(processName);
+	return std::string(name.begin(), name.end());
+}
+
+inline LPWSTR toLPWSTR(std::string str)
+{
+
+	size_t size = str.length() + 1;
+
+	LPWSTR chars = (LPWSTR)CoTaskMemAlloc(size * sizeof(wchar_t));
+	std::mbstowcs(chars, str.c_str(), size);
+	return (LPWSTR)chars;
+}
 
 inline std::string toString(LPWSTR str)
 {
@@ -9,6 +40,54 @@ inline std::string toString(LPWSTR str)
 
 	return std::string(wstr.begin(), wstr.end());
 }
+
+HWND GetWindowHandle(DWORD id)
+{
+
+	HWND prevWindow = 0;
+
+	for (;;)
+	{
+		HWND desktopWindow = GetDesktopWindow();
+		if (!desktopWindow)
+			break;
+
+		HWND nextWindow = FindWindowEx(desktopWindow, prevWindow, NULL, NULL);
+
+		if (!nextWindow)
+			break;
+		DWORD windowId;
+		GetWindowThreadProcessId(nextWindow, &windowId);
+
+		if (windowId == id && IsWindowVisible(nextWindow) && !GetParent(nextWindow) && GetWindowTextLength(nextWindow))
+		{
+			return nextWindow;
+		}
+
+		prevWindow = nextWindow;
+	}
+
+	return 0;
+}
+
+std::string GetWindowNameFromProcId(DWORD id)
+{
+	HWND handle = GetWindowHandle(id);
+	if (handle == 0)
+	{
+		return std::string();
+	}
+	// adding +1 for null character
+	size_t length = GetWindowTextLengthW(handle) + 1;
+	LPWSTR name = (LPWSTR)CoTaskMemAlloc(length * sizeof(WCHAR));
+	GetWindowTextW(handle, name, length);
+
+	std::string result = toString(name);
+	CoTaskMemFree(name);
+	return result;
+}
+
+using std::vector;
 
 namespace WinSoundMixer
 {
@@ -23,274 +102,290 @@ namespace WinSoundMixer
 		}
 	}
 
-	IMMDevice *GetDeviceById(LPWSTR id)
-	{
-
-		IMMDeviceEnumerator *pDeviceEnumerator;
-		if (CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (LPVOID *)&pDeviceEnumerator) != S_OK)
-		{
-			return nullptr;
-		}
-		IMMDevice *pDevice;
-		if (pDeviceEnumerator->GetDevice(id, &pDevice) != S_OK)
-		{
-			SafeRelease(&pDeviceEnumerator);
-			return nullptr;
-		}
-		SafeRelease(&pDeviceEnumerator);
-
-		return pDevice;
-	}
-
-	DeviceDescriptor GetDevice(EDataFlow dataFlow)
+	SoundMixer::SoundMixer()
 	{
 		CoInitialize(NULL);
+		HRESULT ok = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (LPVOID *)&pEnumerator);
+		Reload();
+	}
 
-		IMMDeviceEnumerator *pDeviceEnumerator;
-		if (CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (LPVOID *)&pDeviceEnumerator) != S_OK)
+	SoundMixer::~SoundMixer()
+	{
+		for (auto dev : devices)
 		{
-			CoUninitialize();
-			return DeviceDescriptor{};
+			delete dev;
 		}
-		IMMDevice *pDevice;
-
-		if (pDeviceEnumerator->GetDefaultAudioEndpoint(dataFlow, ERole::eConsole, &pDevice) != S_OK)
-		{
-			SafeRelease(&pDeviceEnumerator);
-			CoUninitialize();
-			return DeviceDescriptor{};
-		}
-		SafeRelease(&pDeviceEnumerator);
-
-		LPWSTR id;
-		DeviceDescriptor descriptor;
-		if (pDevice->GetId(&id) != S_OK)
-		{
-			CoUninitialize();
-			return descriptor;
-		}
-
-		descriptor.id = toString(id);
-		CoTaskMemFree(id);
-
-		IPropertyStore *pProperties;
-		if (pDevice->OpenPropertyStore(STGM_READ, &pProperties) == S_OK)
-		{
-			std::string fullName;
-			PROPVARIANT prop;
-			PropVariantInit(&prop);
-			if (pProperties->GetValue(PKEY_DeviceInterface_FriendlyName, &prop) == S_OK)
-			{
-				fullName = toString(prop.pwszVal);
-			}
-			PropVariantClear(&prop);
-			PropVariantInit(&prop);
-
-			if (pProperties->GetValue(PKEY_Device_DeviceDesc, &prop) == S_OK)
-			{
-				fullName += ' ' + toString(prop.pwszVal);
-			}
-			PropVariantClear(&prop);
-
-			descriptor.fullName = fullName;
-			SafeRelease(&pProperties);
-		}
-		descriptor.type = (DeviceType)dataFlow;
-
-		SafeRelease(&pDevice);
-
+		SafeRelease(&pEnumerator);
 		CoUninitialize();
-
-		return descriptor;
 	}
 
-	std::vector<DeviceDescriptor> GetEndpoints()
+	void SoundMixer::Reload()
 	{
-
-		std::vector<DeviceDescriptor> descriptors;
-		CoInitialize(NULL);
-
-		IMMDeviceEnumerator *pDeviceEnumerator;
-		if (CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (LPVOID *)&pDeviceEnumerator) != S_OK)
-		{
-			return descriptors;
-		}
 
 		IMMDeviceCollection *pDevices;
-		if (pDeviceEnumerator->EnumAudioEndpoints(EDataFlow::eAll, DEVICE_STATE_ACTIVE, &pDevices) != S_OK)
-		{
-			SafeRelease(&pDeviceEnumerator);
-			return descriptors;
-		}
-		SafeRelease(&pDeviceEnumerator);
+		HRESULT ok = pEnumerator->EnumAudioEndpoints(EDataFlow::eAll, DEVICE_STATE_ACTIVE, &pDevices);
 
-		UINT deviceCount;
-		if (pDevices->GetCount(&deviceCount) != S_OK)
+		if (defaultOutputDevice != nullptr)
 		{
-			SafeRelease(&pDevices);
-			return descriptors;
+			delete defaultOutputDevice;
+		}
+		if (defaultInputDevice != nullptr)
+		{
+			delete defaultInputDevice;
 		}
 
-		LPWSTR id;
-		IMMDevice *pDevice;
-		IMMEndpoint *pEndpoint;
-		IPropertyStore *pProperties;
-		for (UINT i = 0; i < deviceCount; i++)
+		IMMDevice *dev;
+		ok = pEnumerator->GetDefaultAudioEndpoint(EDataFlow::eCapture, ERole::eConsole, &dev);
+		defaultInputDevice = new Device(dev);
+		ok = pEnumerator->GetDefaultAudioEndpoint(EDataFlow::eRender, ERole::eConsole, &dev);
+		defaultOutputDevice = new Device(dev);
+
+		devices.clear();
+
+		UINT count = 0;
+		pDevices->GetCount(&count);
+		for (UINT i = 0; i < count; i++)
 		{
-
-			if (pDevices->Item(i, &pDevice) == S_OK && pDevice->GetId(&id) == S_OK)
-			{
-				DeviceDescriptor desc;
-
-				desc.id = toString(id);
-				CoTaskMemFree(id);
-				if (pDevice->OpenPropertyStore(STGM_READ, &pProperties) == S_OK)
-				{
-					std::string fullName;
-					PROPVARIANT prop;
-					PropVariantInit(&prop);
-					if (pProperties->GetValue(PKEY_DeviceInterface_FriendlyName, &prop) == S_OK)
-					{
-						fullName = toString(prop.pwszVal);
-					}
-
-					PropVariantClear(&prop);
-					PropVariantInit(&prop);
-					if (pProperties->GetValue(PKEY_Device_DeviceDesc, &prop) == S_OK)
-					{
-						fullName += ' ' + toString(prop.pwszVal);
-					}
-					PropVariantClear(&prop);
-					desc.fullName = fullName;
-				}
-
-				if (pDevice->QueryInterface(__uuidof(IMMEndpoint), (LPVOID *)&pEndpoint) == S_OK)
-				{
-					EDataFlow flow;
-					if (pEndpoint->GetDataFlow(&flow) == S_OK)
-					{
-						desc.type = (DeviceType)flow;
-					}
-				}
-
-				descriptors.push_back(desc);
-				SafeRelease(&pProperties);
-				SafeRelease(&pEndpoint);
-			}
-			SafeRelease(&pDevice);
+			pDevices->Item(i, &dev);
+			devices.push_back(new Device(dev));
 		}
-
-		SafeRelease(&pDevices);
-
-		CoUninitialize();
-
-		return descriptors;
 	}
 
-	IAudioSessionControl2 *GetAudioSessionByGUID(IMMDevice *pDevice, LPWSTR guid)
+	vector<Device *> SoundMixer::GetDevices()
 	{
-		IAudioSessionManager2 *pSessionManager;
-		if (pDevice->Activate(__uuidof(IAudioSessionManager2), CLSCTX_ALL, NULL, (LPVOID *)&pSessionManager) != S_OK)
-		{
-			return nullptr;
-		}
+		return devices;
+	}
 
-		IAudioSessionEnumerator *pSessionEnumerator;
-		if (pSessionManager->GetSessionEnumerator(&pSessionEnumerator) != S_OK)
-		{
-			SafeRelease(&pSessionManager);
-			return nullptr;
-		}
-		SafeRelease(&pSessionManager);
+	Device *SoundMixer::GetDefaultDevice(DeviceType type)
+	{
+		if (type == DeviceType::OUTPUT)
+			return defaultOutputDevice;
+		else
+			return defaultInputDevice;
+	}
 
-		IAudioSessionControl *pSessionControl;
-		IAudioSessionControl2 *pSessionControl2;
-		int size = -1;
-		pSessionEnumerator->GetCount(&size);
-		LPWSTR id;
-		for (size_t i = 0; i < size; i++)
+	Device *SoundMixer::GetDeviceById(std::string id)
+	{
+		for (auto dev : devices)
 		{
-			if (pSessionEnumerator->GetSession(i, &pSessionControl) == S_OK)
+			if (id == dev->Desc().id)
 			{
-
-				if (pSessionControl->QueryInterface(__uuidof(IAudioSessionControl2), (LPVOID *)&pSessionControl2) == S_OK)
-				{
-					if (pSessionControl2->GetSessionIdentifier(&id) == S_OK && wcscmp(id, guid) == 0)
-					{
-						CoTaskMemFree(id);
-						SafeRelease(&pSessionEnumerator);
-						SafeRelease(&pSessionControl);
-						return pSessionControl2;
-					}
-					CoTaskMemFree(id);
-					SafeRelease(&pSessionControl2);
-				}
-				SafeRelease(&pSessionControl);
+				return dev;
 			}
 		}
-		SafeRelease(&pSessionEnumerator);
+
 		return nullptr;
 	}
 
-	IAudioEndpointVolume *GetDeviceEndpointVolume(IMMDevice *pDevice)
+	Device::Device(IMMDevice *dev) : device(dev)
 	{
+		device->QueryInterface(&endpoint);
+		IPropertyStore *store;
+		device->OpenPropertyStore(STGM_READ, &store);
+		LPWSTR winId;
+		PROPVARIANT var;
+		PropVariantInit(&var);
+		device->GetId(&winId);
+		store->GetValue(PKEY_Device_FriendlyName, &var);
+		EDataFlow flow;
+		endpoint->GetDataFlow(&flow);
 
-		IAudioEndpointVolume *pEndpointVolume;
-		if (pDevice->Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, NULL, (LPVOID *)&pEndpointVolume) != S_OK)
-		{
-			return nullptr;
-		}
+		desc = DeviceDescriptor{
+			toString(var.pwszVal),
+			toString(winId),
+			(DeviceType)flow};
 
-		return pEndpointVolume;
+		PropVariantClear(&var);
+		SafeRelease(&store);
+		CoTaskMemFree(winId);
+		Reload();
 	}
 
-	ISimpleAudioVolume *GetSessionVolume(IAudioSessionControl2 *pSessionControl)
+	void Device::Reload()
 	{
+		IAudioSessionManager2 *manager;
+		device->Activate(__uuidof(IAudioSessionManager2), CLSCTX_ALL, NULL, (LPVOID *)&manager);
 
-		ISimpleAudioVolume *pAudioVolume;
-		if (pSessionControl->QueryInterface(__uuidof(ISimpleAudioVolume), (LPVOID *)&pAudioVolume) != S_OK)
+		IAudioSessionEnumerator *pEnumerator;
+		manager->GetSessionEnumerator(&pEnumerator);
+
+		sessions.clear();
+
+		int count;
+		pEnumerator->GetCount(&count);
+		IAudioSessionControl *control;
+		IAudioSessionControl2 *control2;
+		for (int i = 0; i < count; i++)
 		{
-			return nullptr;
-		}
-
-		return pAudioVolume;
-	}
-
-	std::vector<IAudioSessionControl2 *> GetAudioSessions(IMMDevice *pDevice)
-	{
-
-		std::vector<IAudioSessionControl2 *> audioSessions;
-
-		IAudioSessionManager2 *pSessionManager;
-		if (pDevice->Activate(__uuidof(IAudioSessionManager2), CLSCTX_ALL, NULL, (void **)&pSessionManager) != S_OK)
-		{
-			return audioSessions;
-		}
-
-		IAudioSessionEnumerator *pSessionEnumerator;
-		if (pSessionManager->GetSessionEnumerator(&pSessionEnumerator) != S_OK)
-		{
-			SafeRelease(&pSessionManager);
-			return audioSessions;
-		}
-
-		IAudioSessionControl *pSessionControl = nullptr;
-		IAudioSessionControl2 *pSessionControl2 = nullptr;
-		int size = -1;
-		pSessionEnumerator->GetCount(&size);
-		for (size_t i = 0; i < size; i++)
-		{
-			if (pSessionEnumerator->GetSession(i, &pSessionControl) == S_OK)
+			if (pEnumerator->GetSession(i, &control) == S_OK &&
+				control->QueryInterface(&control2) == S_OK)
 			{
-				if (pSessionControl->QueryInterface(__uuidof(IAudioSessionControl2), (LPVOID *)&pSessionControl2) == S_OK)
-					audioSessions.push_back(pSessionControl2);
-				SafeRelease(&pSessionControl);
+				sessions.push_back(new AudioSession(control2));
+			}
+			SafeRelease(&control);
+		}
+		SafeRelease(&pEnumerator);
+		SafeRelease(&manager);
+	}
+
+	Device::~Device()
+	{
+		for (auto s : sessions)
+		{
+			delete s;
+		}
+		SafeRelease(&endpoint);
+		SafeRelease(&device);
+	}
+
+	vector<AudioSession *> Device::GetAudioSessions()
+	{
+		return sessions;
+	}
+
+	AudioSession *Device::GetAudioSessionById(std::string id)
+	{
+		for (auto s : sessions)
+		{
+			if (s->id() == id)
+				return s;
+		}
+		return nullptr;
+	}
+
+	IAudioEndpointVolume *Device::getAudioEndpointVolume()
+	{
+		IAudioEndpointVolume *volume;
+		device->Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, NULL, (LPVOID *)&volume);
+		return volume;
+	}
+
+	void Device::SetVolume(float volume)
+	{
+		IAudioEndpointVolume *endpointVol = getAudioEndpointVolume();
+		endpointVol->SetMasterVolumeLevelScalar(volume, NULL);
+		SafeRelease(&endpointVol);
+	}
+
+	void Device::SetMute(bool volume)
+	{
+		IAudioEndpointVolume *endpointVol = getAudioEndpointVolume();
+		endpointVol->SetMute((BOOL)volume, NULL);
+		SafeRelease(&endpointVol);
+	}
+
+	float Device::GetVolume()
+	{
+		IAudioEndpointVolume *endpointVol = getAudioEndpointVolume();
+		float volume;
+		endpointVol->GetMasterVolumeLevelScalar(&volume);
+		SafeRelease(&endpointVol);
+		return volume;
+	}
+
+	bool Device::GetMute()
+	{
+		IAudioEndpointVolume *endpointVol = getAudioEndpointVolume();
+		BOOL mute;
+		endpointVol->GetMute(&mute);
+		SafeRelease(&endpointVol);
+		return (bool)mute;
+	}
+
+	AudioSession::AudioSession(IAudioSessionControl2 *control) : control(control)
+	{
+	}
+
+	AudioSession::~AudioSession()
+	{
+		SafeRelease(&control);
+	}
+
+	std::string AudioSession::name()
+	{
+		DWORD pId;
+		std::string result;
+		if (control->GetProcessId(&pId) == S_OK)
+		{
+			if ((result = GetWindowNameFromProcId(pId)).size() <= 0)
+			{
+
+				std::stringstream stream(GetProcNameFromId(pId));
+				while (getline(stream, result, '\\'))
+					;
+				getline(std::stringstream(result), result, '.');
 			}
 		}
+		return result;
+	}
 
-		SafeRelease(&pSessionEnumerator);
-		SafeRelease(&pSessionManager);
-		return audioSessions;
+	AudioSessionState AudioSession::state() {
+		AudioSessionState state;
+		control->GetState(&state);
+		return state;
+	}
+
+	std::string AudioSession::id()
+	{
+
+		LPWSTR guid;
+		std::string result;
+		if (control->GetSessionIdentifier(&guid) == S_OK)
+		{
+			result = toString(guid);
+			CoTaskMemFree(guid);
+		}
+
+		return result;
+	}
+
+	std::string AudioSession::path()
+	{
+		DWORD pId;
+		if (control->GetProcessId(&pId) == S_OK)
+		{
+			return GetProcNameFromId(pId);
+		}
+		return "";
+	}
+
+	ISimpleAudioVolume *AudioSession::getAudioVolume()
+	{
+		ISimpleAudioVolume *volume;
+		control->QueryInterface(__uuidof(ISimpleAudioVolume), (LPVOID *)&volume);
+		return volume;
+	}
+
+	void AudioSession::SetVolume(float vol)
+	{
+		ISimpleAudioVolume *volume = getAudioVolume();
+		volume->SetMasterVolume(vol, NULL);
+		SafeRelease(&volume);
+	}
+
+	void AudioSession::SetMute(bool mute)
+	{
+		ISimpleAudioVolume *volume = getAudioVolume();
+		volume->SetMute(mute, NULL);
+		SafeRelease(&volume);
+	}
+
+	bool AudioSession::GetMute()
+	{
+		ISimpleAudioVolume *volume = getAudioVolume();
+		BOOL mute;
+		volume->GetMute(&mute);
+		SafeRelease(&volume);
+		return (bool)mute;
+	}
+
+	float AudioSession::GetVolume()
+	{
+		ISimpleAudioVolume *volume = getAudioVolume();
+		float vol;
+		volume->GetMasterVolume(&vol);
+		SafeRelease(&volume);
+		return vol;
 	}
 
 } // namespace SoundMixerUtils

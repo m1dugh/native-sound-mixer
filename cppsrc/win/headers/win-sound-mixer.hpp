@@ -14,11 +14,75 @@ using SoundMixerUtils::DeviceType;
 namespace WinSoundMixer
 {
 
-	IAudioSessionControl2 *GetAudioSessionByGUID(IMMDevice *, LPWSTR);
-	IAudioEndpointVolume *GetDeviceEndpointVolume(IMMDevice *);
-	ISimpleAudioVolume *GetSessionVolume(IAudioSessionControl2 *);
-	std::vector<IAudioSessionControl2 *> GetAudioSessions(IMMDevice *);
-	std::vector<DeviceDescriptor> GetEndpoints();
-	DeviceDescriptor GetDevice(EDataFlow);
-	IMMDevice *GetDeviceById(LPWSTR);
+	class AudioSessionEvents : public IAudioSessionEvents
+	{
+	};
+
+	class AudioSession
+	{
+	public:
+		AudioSession(IAudioSessionControl2 *control);
+		~AudioSession();
+
+		virtual bool GetMute();
+		virtual void SetMute(bool);
+		virtual float GetVolume();
+		virtual void SetVolume(float);
+
+		std::string id();
+		std::string name();
+		std::string path();
+		AudioSessionState state();
+
+	protected:
+		IAudioSessionControl2 *control;
+
+		ISimpleAudioVolume *getAudioVolume();
+	};
+
+	class Device
+	{
+	public:
+		Device(IMMDevice *);
+		~Device();
+
+		virtual bool GetMute();
+		virtual void SetMute(bool);
+		virtual float GetVolume();
+		virtual void SetVolume(float);
+
+		virtual void Reload();
+
+		DeviceDescriptor Desc()
+		{
+			return desc;
+		}
+
+		std::vector<AudioSession *> GetAudioSessions();
+		AudioSession *GetAudioSessionById(std::string);
+
+	protected:
+		IMMDevice *device;
+		IMMEndpoint *endpoint;
+		std::vector<AudioSession *> sessions;
+		DeviceDescriptor desc;
+
+		IAudioEndpointVolume *getAudioEndpointVolume();
+	};
+
+	class SoundMixer
+	{
+	public:
+		SoundMixer();
+		~SoundMixer();
+		std::vector<Device *> GetDevices();
+		Device *GetDeviceById(std::string);
+		Device *GetDefaultDevice(DeviceType);
+		void Reload();
+
+	private:
+		std::vector<Device *> devices;
+		IMMDeviceEnumerator *pEnumerator = nullptr;
+		Device *defaultOutputDevice = nullptr, *defaultInputDevice = nullptr;
+	};
 };

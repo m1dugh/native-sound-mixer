@@ -1,63 +1,17 @@
 #include "../headers/sound-mixer.hpp"
 #include "./headers/win-sound-mixer.hpp"
 
-
-#define CHECK_RES(res)  \
-	if (res != S_OK)    \
-	{                   \
-		return nullptr; \
-	}
-
-std::string GetProcNameFromId(DWORD id)
-{
-	if (id == 0)
-	{
-		return std::to_string(id);
-	}
-	HANDLE handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, id);
-	LPWSTR processName = (LPWSTR)CoTaskMemAlloc(256);
-	DWORD size = 256;
-	QueryFullProcessImageNameW(handle, 0, processName, &size);
-
-	std::wstring name = std::wstring(processName);
-	CoTaskMemFree(processName);
-	return std::string(name.begin(), name.end());
-}
-
-inline LPWSTR toLPWSTR(std::string str)
-{
-
-	size_t size = str.length() + 1;
-
-	LPWSTR chars = (LPWSTR)CoTaskMemAlloc(size * sizeof(wchar_t));
-	std::mbstowcs(chars, str.c_str(), size);
-	return (LPWSTR)chars;
-}
-
-inline std::string toString(LPWSTR str)
-{
-	std::wstring wstr(str);
-
-	return std::string(wstr.begin(), wstr.end());
-}
-
 using namespace WinSoundMixer;
+using std::vector;
 
 namespace SoundMixer
 {
 
-	template <class T>
-	void SafeRelease(T **ppT)
-	{
-		if (ppT && *ppT)
-		{
-			(*ppT)->Release();
-			*ppT = NULL;
-		}
-	}
+	WinSoundMixer::SoundMixer *mixer;
 
 	Napi::Object Init(Napi::Env env, Napi::Object exports)
 	{
+		mixer = new WinSoundMixer::SoundMixer();
 		exports.Set("GetSessions", Napi::Function::New(env, GetAudioSessions));
 		exports.Set("GetDevices", Napi::Function::New(env, GetDevices));
 		exports.Set("GetDefaultDevice", Napi::Function::New(env, GetDefaultDevice));
@@ -85,38 +39,22 @@ namespace SoundMixer
 			throw Napi::TypeError::New(env, "expected string as device id as only parameter");
 		}
 
-		CoInitialize(NULL);
-		LPWSTR id = toLPWSTR(info[0].As<Napi::String>().Utf8Value());
-		IMMDevice *pDevice = GetDeviceById(id);
-		CoTaskMemFree(id);
-		if (pDevice == nullptr)
-		{
-			throw Napi::Error::New(env, "Could not find device for specified id.");
-		}
-
-		std::vector<IAudioSessionControl2 *> sessions = WinSoundMixer::GetAudioSessions(pDevice);
-		SafeRelease(&pDevice);
+		std::string id = info[0].As<Napi::String>().Utf8Value();
+		Device *dev = mixer->GetDeviceById(id);
+		vector<AudioSession *> sessions = dev->GetAudioSessions();
 
 		Napi::Array sessionNames = Napi::Array::New(env, sessions.size());
 		int i = 0;
-		DWORD procId = 0;
-		LPWSTR guid;
-		AudioSessionState state;
-		for (IAudioSessionControl2 *pSession : sessions)
+		for (auto *pSession : sessions)
 		{
-			if (pSession->GetProcessId(&procId) == S_OK && pSession->GetSessionIdentifier(&guid) == S_OK && pSession->GetState(&state) == S_OK)
-			{
-				Napi::Object val = Napi::Object::New(env);
-				val.Set("id", toString(guid));
-				CoTaskMemFree(guid);
-				val.Set("path", GetProcNameFromId(procId));
-				val.Set("state", (int)state);
-				sessionNames.Set(i++, val);
-			}
-			SafeRelease(&pSession);
-		}
 
-		CoUninitialize();
+			Napi::Object val = Napi::Object::New(env);
+			val.Set("id", pSession->id());
+			val.Set("path", pSession->path());
+			val.Set("name", pSession->name());
+			val.Set("state", (int)pSession->state());
+			sessionNames.Set(i++, val);
+		}
 
 		return sessionNames;
 	}
@@ -126,12 +64,13 @@ namespace SoundMixer
 
 		Napi::Env env = info.Env();
 
-		std::vector<DeviceDescriptor> devices = GetEndpoints();
+		vector<Device *> devices = mixer->GetDevices();
 		Napi::Array result = Napi::Array::New(env, devices.size());
 		int i = 0;
-		for (DeviceDescriptor const &desc : devices)
+		for (auto *dev : devices)
 		{
 			Napi::Object obj = Napi::Object::New(env);
+			DeviceDescriptor desc = dev->Desc();
 			obj.Set("id", desc.id);
 			obj.Set("name", desc.fullName);
 			obj.Set("type", (int)desc.type);
@@ -143,24 +82,23 @@ namespace SoundMixer
 	Napi::Object GetDefaultDevice(Napi::CallbackInfo const &info)
 	{
 		Napi::Env env = info.Env();
+		Napi::Object obj = Napi::Object::New(env);
 		if (info.Length() != 1 || !info[0].IsNumber())
 		{
-			throw Napi::Error::New(env, "wrong argument passed, expected number");
+			Napi::Error::New(env, "wrong argument passed, expected number").ThrowAsJavaScriptException();
+			return obj;
 		}
 
 		int val = info[0].As<Napi::Number>().Int32Value();
 		if (val < 0 || val >= EDataFlow::EDataFlow_enum_count)
 		{
-			throw Napi::Error::New(env, "illegal argument passed, expected number ranged from 0 to 3");
+			Napi::Error::New(env, "illegal argument passed, expected number ranged from 0 to 3").ThrowAsJavaScriptException();
+			return obj;
 		}
 
-		EDataFlow dataFlow = (EDataFlow)val;
-		DeviceDescriptor desc = GetDevice(dataFlow);
-		if (desc.id.size() == 0)
-		{
-			throw Napi::Error::New(env, "An error occured when getting device for specified dataflow");
-		}
-		Napi::Object obj = Napi::Object::New(env);
+		DeviceType type = (DeviceType)val;
+		DeviceDescriptor desc = mixer->GetDefaultDevice(type)->Desc();
+
 		obj.Set("id", desc.id);
 		obj.Set("name", desc.fullName);
 		obj.Set("type", (int)desc.type);
@@ -187,32 +125,16 @@ namespace SoundMixer
 		{
 			volume = 0.F;
 		}
-		CoInitialize(NULL);
-		LPWSTR id = toLPWSTR(info[0].As<Napi::String>().Utf8Value());
-		IMMDevice *pDevice = GetDeviceById(id);
-		CoTaskMemFree(id);
-		if (pDevice == nullptr)
+
+		std::string id = info[0].As<Napi::String>().Utf8Value();
+		Device *dev = mixer->GetDeviceById(id);
+		if (dev == nullptr)
 		{
-			CoUninitialize();
-			throw Napi::Error::New(env, "Invalid device id provided");
+			Napi::Error::New(env, "could not find device for the specified id").ThrowAsJavaScriptException();
+			return;
 		}
 
-		IAudioEndpointVolume *pEndpointVolume = GetDeviceEndpointVolume(pDevice);
-		SafeRelease(&pDevice);
-		if (pEndpointVolume == nullptr)
-		{
-			CoUninitialize();
-			throw Napi::Error::New(env, "An error occured when getting volume.");
-		}
-
-		HRESULT res = pEndpointVolume->SetMasterVolumeLevelScalar(volume, NULL);
-
-		SafeRelease(&pEndpointVolume);
-		CoUninitialize();
-		if (res != S_OK)
-		{
-			throw Napi::Error::New(env, "an error occured when setting the volume level");
-		}
+		dev->SetVolume(volume);
 	}
 
 	Napi::Number GetDeviceVolume(Napi::CallbackInfo const &info)
@@ -227,33 +149,15 @@ namespace SoundMixer
 
 		CoInitialize(NULL);
 
-		LPWSTR id = toLPWSTR(info[0].As<Napi::String>().Utf8Value());
-		IMMDevice *pDevice = GetDeviceById(id);
-		CoTaskMemFree(id);
+		std::string id = info[0].As<Napi::String>().Utf8Value();
+		Device *pDevice = mixer->GetDeviceById(id);
 		if (pDevice == nullptr)
 		{
-			CoUninitialize();
-			throw Napi::Error::New(env, "Invalid device id provided");
+			Napi::Error::New(env, "Invalid device id provided").ThrowAsJavaScriptException();
+			return Napi::Number::New(env, 0);
 		}
 
-		IAudioEndpointVolume *pEndpointVolume = GetDeviceEndpointVolume(pDevice);
-		SafeRelease(&pDevice);
-		if (pEndpointVolume == nullptr)
-		{
-			CoUninitialize();
-			throw Napi::Error::New(env, "An error occured when getting volume.");
-		}
-
-		float levelScalar = 0.F;
-		HRESULT res = pEndpointVolume->GetMasterVolumeLevelScalar(&levelScalar);
-		SafeRelease(&pEndpointVolume);
-		CoUninitialize();
-		if (res != S_OK)
-		{
-			throw Napi::Error::New(env, "an error occured when getting the volume level");
-		}
-
-		return Napi::Number::New(env, levelScalar);
+		return Napi::Number::New(env, pDevice->GetVolume());
 	}
 
 	void SetDeviceMute(Napi::CallbackInfo const &info)
@@ -268,32 +172,15 @@ namespace SoundMixer
 		DeviceType type = (DeviceType)info[1].As<Napi::Number>().Int32Value();
 		bool mute = info[2].As<Napi::Boolean>().Value();
 
-		CoInitialize(NULL);
-
-		LPWSTR id = toLPWSTR(info[0].As<Napi::String>().Utf8Value());
-		IMMDevice *pDevice = GetDeviceById(id);
-		CoTaskMemFree(id);
-		if (pDevice == nullptr)
+		std::string id = info[0].As<Napi::String>().Utf8Value();
+		Device *dev = mixer->GetDeviceById(id);
+		if (dev == nullptr)
 		{
-			CoUninitialize();
-			throw Napi::Error::New(env, "Invalid device id provided");
+			Napi::Error::New(env, "could not find device for the specified id").ThrowAsJavaScriptException();
+			return;
 		}
 
-		IAudioEndpointVolume *pEndpointVolume = GetDeviceEndpointVolume(pDevice);
-		SafeRelease(&pDevice);
-		if (pEndpointVolume == nullptr)
-		{
-			CoUninitialize();
-			throw Napi::Error::New(env, "An error occured when getting volume.");
-		}
-
-		HRESULT res = pEndpointVolume->SetMute(mute, NULL);
-		SafeRelease(&pEndpointVolume);
-		CoUninitialize();
-		if (res != S_OK && res != S_FALSE)
-		{
-			throw Napi::Error::New(env, "an error occured when setting mute");
-		}
+		dev->SetMute(mute);
 	}
 
 	Napi::Boolean GetDeviceMute(Napi::CallbackInfo const &info)
@@ -304,34 +191,15 @@ namespace SoundMixer
 			throw Napi::TypeError::New(env, "device id as only argument");
 		}
 		DeviceType type = (DeviceType)info[1].As<Napi::Number>().Int32Value();
-		CoInitialize(NULL);
-
-		LPWSTR id = toLPWSTR(info[0].As<Napi::String>().Utf8Value());
-		IMMDevice *pDevice = GetDeviceById(id);
-		CoTaskMemFree(id);
-		if (pDevice == nullptr)
+		std::string id = info[0].As<Napi::String>().Utf8Value();
+		Device *dev = mixer->GetDeviceById(id);
+		if (dev == nullptr)
 		{
-			CoUninitialize();
-			throw Napi::Error::New(env, "Invalid device id provided");
+			Napi::Error::New(env, "could not find device for the specified id").ThrowAsJavaScriptException();
+			return Napi::Boolean::New(env, false);
 		}
 
-		IAudioEndpointVolume *pEndpointVolume = GetDeviceEndpointVolume(pDevice);
-		SafeRelease(&pDevice);
-		if (pEndpointVolume == nullptr)
-		{
-			CoUninitialize();
-			throw Napi::Error::New(env, "An error occured when getting volume.");
-		}
-		BOOL mute = 0;
-		HRESULT res = pEndpointVolume->GetMute(&mute);
-		SafeRelease(&pEndpointVolume);
-		CoUninitialize();
-		if (res != S_OK)
-		{
-			throw Napi::Error::New(env, "an error occured when getting the volume level");
-		}
-
-		return Napi::Boolean::New(env, (bool)mute);
+		return Napi::Boolean::New(env, dev->GetMute());
 	}
 
 	void SetAudioSessionVolume(Napi::CallbackInfo const &info)
@@ -355,42 +223,23 @@ namespace SoundMixer
 			volume = 0.F;
 		}
 
-		CoInitialize(NULL);
-
-		LPWSTR deviceId = toLPWSTR(info[0].As<Napi::String>().Utf8Value());
-		IMMDevice *pDevice = GetDeviceById(deviceId);
-		CoTaskMemFree(deviceId);
+		std::string deviceId = info[0].As<Napi::String>().Utf8Value();
+		Device *pDevice = mixer->GetDeviceById(deviceId);
 		if (pDevice == nullptr)
 		{
-			CoUninitialize();
-			throw Napi::Error::New(env, "Invalid device id provided");
+			Napi::Error::New(env, "Invalid device id provided").ThrowAsJavaScriptException();
+			return;
 		}
 
-		LPWSTR sessionId = toLPWSTR(info[2].As<Napi::String>().Utf8Value());
-		IAudioSessionControl2 *pSessionControl = GetAudioSessionByGUID(pDevice, sessionId);
-		CoTaskMemFree(sessionId);
-		SafeRelease(&pDevice);
-		if (pSessionControl == nullptr)
+		std::string sessionId = info[2].As<Napi::String>().Utf8Value();
+		AudioSession *session = pDevice->GetAudioSessionById(sessionId);
+		if (session == nullptr)
 		{
-			CoUninitialize();
-			throw Napi::Error::New(env, "Invalid session id provided");
+			Napi::Error::New(env, "Invalid session id provided").ThrowAsJavaScriptException();
+			return;
 		}
 
-		ISimpleAudioVolume *pSessionVolume = GetSessionVolume(pSessionControl);
-		SafeRelease(&pSessionControl);
-		if (pSessionVolume == nullptr)
-		{
-			CoUninitialize();
-			throw Napi::Error::New(env, "An error occured when getting volume.");
-		}
-
-		HRESULT res = pSessionVolume->SetMasterVolume(volume, NULL);
-		SafeRelease(&pSessionVolume);
-		CoUninitialize();
-		if (res != S_OK)
-		{
-			throw Napi::Error::New(env, "an error occured when setting the volume level for audioSession");
-		}
+		session->SetVolume(volume);
 	}
 
 	Napi::Number GetAudioSessionVolume(Napi::CallbackInfo const &info)
@@ -402,45 +251,23 @@ namespace SoundMixer
 		}
 
 		DeviceType type = (DeviceType)info[1].As<Napi::Number>().Int32Value();
-		CoInitialize(NULL);
-
-		LPWSTR deviceId = toLPWSTR(info[0].As<Napi::String>().Utf8Value());
-		IMMDevice *pDevice = GetDeviceById(deviceId);
-		CoTaskMemFree(deviceId);
+		std::string deviceId = info[0].As<Napi::String>().Utf8Value();
+		Device *pDevice = mixer->GetDeviceById(deviceId);
 		if (pDevice == nullptr)
 		{
-			CoUninitialize();
-			throw Napi::Error::New(env, "Invalid device id provided");
+			Napi::Error::New(env, "Invalid device id provided").ThrowAsJavaScriptException();
+			return Napi::Number::New(env, 0);
 		}
 
-		LPWSTR sessionId = toLPWSTR(info[2].As<Napi::String>().Utf8Value());
-		IAudioSessionControl2 *pSessionControl = GetAudioSessionByGUID(pDevice, sessionId);
-		CoTaskMemFree(sessionId);
-		SafeRelease(&pDevice);
-		if (pSessionControl == nullptr)
+		std::string sessionId = info[2].As<Napi::String>().Utf8Value();
+		AudioSession *session = pDevice->GetAudioSessionById(sessionId);
+		if (session == nullptr)
 		{
-			CoUninitialize();
-			throw Napi::Error::New(env, "Invalid session id provided");
+			Napi::Error::New(env, "Invalid session id provided").ThrowAsJavaScriptException();
+			return Napi::Number::New(env, 0);
 		}
 
-		ISimpleAudioVolume *pSessionVolume = GetSessionVolume(pSessionControl);
-		SafeRelease(&pSessionControl);
-		if (pSessionVolume == nullptr)
-		{
-			CoUninitialize();
-			throw Napi::Error::New(env, "An error occured when getting volume.");
-		}
-
-		float volume = 0.F;
-		HRESULT res = pSessionVolume->GetMasterVolume(&volume);
-		SafeRelease(&pSessionVolume);
-		CoUninitialize();
-		if (res != S_OK)
-		{
-			throw Napi::Error::New(env, "an error occured when getting the volume level for audioSession");
-		}
-
-		return Napi::Number::New(env, volume);
+		return Napi::Number::New(env, session->GetVolume());
 	}
 
 	void SetAudioSessionMute(Napi::CallbackInfo const &info)
@@ -455,41 +282,23 @@ namespace SoundMixer
 
 		DeviceType type = (DeviceType)info[1].As<Napi::Number>().Int32Value();
 
-		CoInitialize(NULL);
-		LPWSTR deviceId = toLPWSTR(info[0].As<Napi::String>().Utf8Value());
-		IMMDevice *pDevice = GetDeviceById(deviceId);
-		CoTaskMemFree(deviceId);
+		std::string deviceId = info[0].As<Napi::String>().Utf8Value();
+		Device *pDevice = mixer->GetDeviceById(deviceId);
 		if (pDevice == nullptr)
 		{
-			CoUninitialize();
-			throw Napi::Error::New(env, "Invalid device id provided");
+			Napi::Error::New(env, "Invalid device id provided").ThrowAsJavaScriptException();
+			return;
 		}
 
-		LPWSTR sessionId = toLPWSTR(info[2].As<Napi::String>().Utf8Value());
-		IAudioSessionControl2 *pSessionControl = GetAudioSessionByGUID(pDevice, sessionId);
-		CoTaskMemFree(sessionId);
-		SafeRelease(&pDevice);
-		if (pSessionControl == nullptr)
+		std::string sessionId = info[2].As<Napi::String>().Utf8Value();
+		AudioSession *session = pDevice->GetAudioSessionById(sessionId);
+		if (session == nullptr)
 		{
-			CoUninitialize();
-			throw Napi::Error::New(env, "Invalid session id provided");
+			Napi::Error::New(env, "Invalid session id provided").ThrowAsJavaScriptException();
+			return;
 		}
 
-		ISimpleAudioVolume *pSessionVolume = GetSessionVolume(pSessionControl);
-		SafeRelease(&pSessionControl);
-		if (pSessionVolume == nullptr)
-		{
-			CoUninitialize();
-			throw Napi::Error::New(env, "An error occured when getting volume.");
-		}
-
-		HRESULT res = pSessionVolume->SetMute(mute, NULL);
-		SafeRelease(&pSessionVolume);
-		CoUninitialize();
-		if (res != S_OK)
-		{
-			throw Napi::Error::New(env, "an error occured when muting audioSession");
-		}
+		session->SetMute(mute);
 	}
 
 	Napi::Boolean GetAudioSessionMute(Napi::CallbackInfo const &info)
@@ -502,46 +311,23 @@ namespace SoundMixer
 		}
 
 		DeviceType type = (DeviceType)info[1].As<Napi::Number>().Int32Value();
-		CoInitialize(NULL);
-
-		LPWSTR deviceId = toLPWSTR(info[0].As<Napi::String>().Utf8Value());
-		IMMDevice *pDevice = GetDeviceById(deviceId);
-		CoTaskMemFree(deviceId);
+		std::string deviceId = info[0].As<Napi::String>().Utf8Value();
+		Device *pDevice = mixer->GetDeviceById(deviceId);
 		if (pDevice == nullptr)
 		{
-			CoUninitialize();
-			throw Napi::Error::New(env, "Invalid device id provided");
+			Napi::Error::New(env, "Invalid device id provided").ThrowAsJavaScriptException();
+			return Napi::Boolean::New(env, false);
 		}
 
-		LPWSTR sessionId = toLPWSTR(info[2].As<Napi::String>().Utf8Value());
-		IAudioSessionControl2 *pSessionControl = GetAudioSessionByGUID(pDevice, sessionId);
-		CoTaskMemFree(sessionId);
-		SafeRelease(&pDevice);
-		if (pSessionControl == nullptr)
+		std::string sessionId = info[2].As<Napi::String>().Utf8Value();
+		AudioSession *session = pDevice->GetAudioSessionById(sessionId);
+		if (session == nullptr)
 		{
-			CoUninitialize();
-			throw Napi::Error::New(env, "Invalid session id provided");
+			Napi::Error::New(env, "Invalid session id provided").ThrowAsJavaScriptException();
+			return Napi::Boolean::New(env, false);
 		}
 
-		ISimpleAudioVolume *pSessionVolume = GetSessionVolume(pSessionControl);
-		SafeRelease(&pSessionControl);
-		if (pSessionVolume == nullptr)
-		{
-			CoUninitialize();
-			throw Napi::Error::New(env, "An error occured when getting volume.");
-		}
-
-		BOOL mute = 0;
-		HRESULT res = pSessionVolume->GetMute(&mute);
-		SafeRelease(&pSessionVolume);
-		CoUninitialize();
-
-		if (res != S_OK)
-		{
-			throw Napi::Error::New(env, "an error occured when getting mute audioSession");
-		}
-
-		return Napi::Boolean::New(env, (bool)mute);
+		return Napi::Boolean::New(env, session->GetMute());
 	}
 
 } // namespace SoundMixer

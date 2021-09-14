@@ -43,6 +43,11 @@ export abstract class AudioSession {
 		 * @member
 		 * the state of the audio session
 		 */
+		public readonly name: string,
+		/**
+		 * @member
+		 * the state of the audio session
+		 */
 		public readonly state: AudioSessionState
 	) { }
 
@@ -60,6 +65,9 @@ export abstract class AudioSession {
 	 */
 	abstract get mute(): boolean;
 	abstract set mute(mute: boolean);
+
+
+	// abstract toString(): string;
 
 }
 
