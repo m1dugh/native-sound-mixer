@@ -1,17 +1,7 @@
-import {
-	Device,
-	AudioSession,
-	DeviceType,
-	VolumeScalar,
-	AudioSessionState
-} from "./model/model";
 
-import { round } from "lodash";
 import { arch, platform } from "os";
 
-const ROUND_PRECISION = 3;
-
-const sMixerModule = (() => {
+const sMixerModule: { SoundMixer: SoundMixer } = (() => {
 
 	const getModule = (platform: "macos" | "win" | "linux", arch: string | undefined = undefined) => require(`${__dirname}/addons/${platform}-sound-mixer${arch ? "_" + arch : ""}.node`)
 	if (platform() === "win32") {
@@ -27,98 +17,44 @@ const sMixerModule = (() => {
 
 })()
 
-
-const _safeWrap = (func: Function) => {
-	try {
-		return func();
-	} catch (err) {
-		if (err.name === "TypeError")
-			throw new TypeError(err)
-		throw new Error(err);
-	}
+declare class Device {
+	public volume: VolumeScalar;
+	public mute: boolean;
+	public readonly name: string;
+	public readonly type: DeviceType;
+	public readonly sessions: AudioSession[];
 }
 
-
-class AudioSessionImpl extends AudioSession {
-
-	get mute() {
-		return _safeWrap(() => sMixerModule.GetAudioSessionMute(this.deviceId, this.deviceType, this.id))
-	}
-
-	get volume() {
-		return round(_safeWrap(() => sMixerModule.GetAudioSessionVolume(this.deviceId, this.deviceType, this.id)), ROUND_PRECISION);
-	}
-
-	set mute(mute: boolean) {
-		_safeWrap(() => sMixerModule.SetAudioSessionMute(this.deviceId, this.deviceType, this.id, mute));
-	}
-
-	set volume(volume: VolumeScalar) {
-		_safeWrap(() => sMixerModule.SetAudioSessionVolume(this.deviceId, this.deviceType, this.id, volume));
-	}
-
+enum AudioSessionState {
+	ACTIVE = 0,
+	INACTIVE = 1,
+	EXPIRED = 2
 }
 
-class DeviceImpl extends Device {
-
-	get sessions() {
-
-		// const ids = new Set();
-		return sMixerModule.GetSessions(this.id, this.type).map(({ id, path, name, state }: AudioSession) => new AudioSessionImpl(this.id, this.type, id, path, name, state))
-			.filter((s: AudioSession) => s != undefined);
-	}
-
-	get mute() {
-		return _safeWrap(() => sMixerModule.GetDeviceMute(this.id, this.type));
-	}
-
-	get volume() {
-		return round(_safeWrap(() => sMixerModule.GetDeviceVolume(this.id, this.type)), ROUND_PRECISION);
-	}
-
-	set mute(mute: boolean) {
-		_safeWrap(() => sMixerModule.SetDeviceMute(this.id, this.type, mute));
-	}
-
-	set volume(volume: VolumeScalar) {
-		_safeWrap(() => sMixerModule.SetDeviceVolume(this.id, this.type, volume));
-	}
-
-	getSessionById(id: string) {
-		const sessions: AudioSession[] = this.sessions
-			.filter((s: AudioSession) => id === s.id)
-		if (sessions.length > 0) {
-			return sessions[0]
-		}
-		return undefined;
-	}
-
+enum DeviceType {
+	CAPTURE = 1,
+	RENDER = 0
 }
 
-export default class SoundMixer {
+export type VolumeScalar = number
 
-	static get devices(): Device[] {
-		return sMixerModule.GetDevices().map(({ id, name, type }: { id: string, name: string, type: number }) => new DeviceImpl(id, name, type))
-	}
-
-	static getDefaultDevice(type: DeviceType): Device {
-		const { id, name, type: nativeType } = sMixerModule.GetDefaultDevice(type);
-		return new DeviceImpl(id, name, nativeType);
-	}
-
-	static getDeviceById(id: string): Device | undefined {
-		const devices: Device[] = sMixerModule.GetDevices().filter(({ id: devId }: Device) => devId === id);
-		if (devices.length > 0)
-			return devices[0];
-		return undefined;
-	}
-
+declare class AudioSession {
+	public volume: VolumeScalar;
+	public mute: boolean;
+	public readonly name: string;
+	public readonly appName: string;
 }
+
+declare type SoundMixer = {
+	devices: Device[];
+	getDefaultDevice(type: DeviceType): Device;
+}
+
+export default sMixerModule.SoundMixer
 
 export {
+	DeviceType,
 	Device,
 	AudioSession,
-	DeviceType,
-	AudioSessionState,
-	VolumeScalar
+	AudioSessionState
 }
