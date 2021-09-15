@@ -4,7 +4,6 @@
 #include <string>
 #include <wchar.h>
 
-#include <iostream>
 #include <sstream>
 
 std::string
@@ -106,42 +105,22 @@ namespace WinSoundMixer
 	{
 		CoInitialize(NULL);
 		HRESULT ok = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (LPVOID *)&pEnumerator);
-		Reload();
 	}
 
 	SoundMixer::~SoundMixer()
 	{
-		for (auto dev : devices)
-		{
-			delete dev;
-		}
 		SafeRelease(&pEnumerator);
 		CoUninitialize();
 	}
 
-	void SoundMixer::Reload()
+	vector<Device *> SoundMixer::GetDevices()
 	{
-
+		CoInitialize(NULL);
 		IMMDeviceCollection *pDevices;
 		HRESULT ok = pEnumerator->EnumAudioEndpoints(EDataFlow::eAll, DEVICE_STATE_ACTIVE, &pDevices);
 
-		if (defaultOutputDevice != nullptr)
-		{
-			delete defaultOutputDevice;
-		}
-		if (defaultInputDevice != nullptr)
-		{
-			delete defaultInputDevice;
-		}
-
+		std::vector<Device *> devices;
 		IMMDevice *dev;
-		ok = pEnumerator->GetDefaultAudioEndpoint(EDataFlow::eCapture, ERole::eConsole, &dev);
-		defaultInputDevice = new Device(dev);
-		ok = pEnumerator->GetDefaultAudioEndpoint(EDataFlow::eRender, ERole::eConsole, &dev);
-		defaultOutputDevice = new Device(dev);
-
-		devices.clear();
-
 		UINT count = 0;
 		pDevices->GetCount(&count);
 		for (UINT i = 0; i < count; i++)
@@ -149,32 +128,17 @@ namespace WinSoundMixer
 			pDevices->Item(i, &dev);
 			devices.push_back(new Device(dev));
 		}
-	}
-
-	vector<Device *> SoundMixer::GetDevices()
-	{
 		return devices;
 	}
 
 	Device *SoundMixer::GetDefaultDevice(DeviceType type)
 	{
+		IMMDevice *dev;
 		if (type == DeviceType::OUTPUT)
-			return defaultOutputDevice;
+			pEnumerator->GetDefaultAudioEndpoint(EDataFlow::eRender, ERole::eConsole, &dev);
 		else
-			return defaultInputDevice;
-	}
-
-	Device *SoundMixer::GetDeviceById(std::string id)
-	{
-		for (auto dev : devices)
-		{
-			if (id == dev->Desc().id)
-			{
-				return dev;
-			}
-		}
-
-		return nullptr;
+			pEnumerator->GetDefaultAudioEndpoint(EDataFlow::eCapture, ERole::eConsole, &dev);
+		return new Device(dev);
 	}
 
 	Device::Device(IMMDevice *dev) : device(dev)
@@ -198,18 +162,25 @@ namespace WinSoundMixer
 		PropVariantClear(&var);
 		SafeRelease(&store);
 		CoTaskMemFree(winId);
-		Reload();
 	}
 
-	void Device::Reload()
+	Device::~Device()
 	{
+		SafeRelease(&endpoint);
+		SafeRelease(&device);
+	}
+
+	vector<AudioSession *> Device::GetAudioSessions()
+	{
+
 		IAudioSessionManager2 *manager;
 		device->Activate(__uuidof(IAudioSessionManager2), CLSCTX_ALL, NULL, (LPVOID *)&manager);
 
 		IAudioSessionEnumerator *pEnumerator;
 		manager->GetSessionEnumerator(&pEnumerator);
+		SafeRelease(&manager);
 
-		sessions.clear();
+		std::vector<AudioSession *> sessions;
 
 		int count;
 		pEnumerator->GetCount(&count);
@@ -225,32 +196,8 @@ namespace WinSoundMixer
 			SafeRelease(&control);
 		}
 		SafeRelease(&pEnumerator);
-		SafeRelease(&manager);
-	}
 
-	Device::~Device()
-	{
-		for (auto s : sessions)
-		{
-			delete s;
-		}
-		SafeRelease(&endpoint);
-		SafeRelease(&device);
-	}
-
-	vector<AudioSession *> Device::GetAudioSessions()
-	{
 		return sessions;
-	}
-
-	AudioSession *Device::GetAudioSessionById(std::string id)
-	{
-		for (auto s : sessions)
-		{
-			if (s->id() == id)
-				return s;
-		}
-		return nullptr;
 	}
 
 	IAudioEndpointVolume *Device::getAudioEndpointVolume()
@@ -262,6 +209,14 @@ namespace WinSoundMixer
 
 	void Device::SetVolume(float volume)
 	{
+		if (volume > 1.F)
+		{
+			volume = 1.F;
+		}
+		else if (volume < .0F)
+		{
+			volume = .0F;
+		}
 		IAudioEndpointVolume *endpointVol = getAudioEndpointVolume();
 		endpointVol->SetMasterVolumeLevelScalar(volume, NULL);
 		SafeRelease(&endpointVol);
@@ -319,7 +274,8 @@ namespace WinSoundMixer
 		return result;
 	}
 
-	AudioSessionState AudioSession::state() {
+	AudioSessionState AudioSession::state()
+	{
 		AudioSessionState state;
 		control->GetState(&state);
 		return state;
@@ -330,13 +286,13 @@ namespace WinSoundMixer
 
 		LPWSTR guid;
 		std::string result;
-		if (control->GetSessionIdentifier(&guid) == S_OK)
+		if (control->GetSessionInstanceIdentifier(&guid) == S_OK)
 		{
 			result = toString(guid);
 			CoTaskMemFree(guid);
 		}
 
-		return result + name();
+		return result;
 	}
 
 	std::string AudioSession::path()
@@ -358,6 +314,14 @@ namespace WinSoundMixer
 
 	void AudioSession::SetVolume(float vol)
 	{
+		if (vol > 1.F)
+		{
+			vol = 1.F;
+		}
+		else if (vol < .0F)
+		{
+			vol = .0F;
+		}
 		ISimpleAudioVolume *volume = getAudioVolume();
 		volume->SetMasterVolume(vol, NULL);
 		SafeRelease(&volume);

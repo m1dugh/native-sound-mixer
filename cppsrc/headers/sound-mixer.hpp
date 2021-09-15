@@ -9,77 +9,64 @@ namespace SoundMixer
 
 	Napi::Object Init(Napi::Env, Napi::Object);
 
-	/**
-	 * @param string device name
-	 * @param DeviceType device type
-	 * @returns audio sessions linked to device
-	 */
-	Napi::Array GetAudioSessions(Napi::CallbackInfo const &);
+	class AudioSessionObject : public Napi::ObjectWrap<AudioSessionObject>
+	{
+	public:
+		static Napi::Object Init(Napi::Env, Napi::Object);
+		static Napi::Value New(Napi::Env, void *);
+		AudioSessionObject(const Napi::CallbackInfo &info);
+		virtual ~AudioSessionObject();
 
-	/**
-	 * @returns all the devices
-	 */
-	Napi::Array GetDevices(Napi::CallbackInfo const &);
+		void Release(const Napi::CallbackInfo &info);
 
-	/**
-	 * @param DeviceType the device type
-	 * @returns the default device
-	 */
-	Napi::Object GetDefaultDevice(Napi::CallbackInfo const &);
+		Napi::Value GetVolume(const Napi::CallbackInfo &info);
+		Napi::Value GetMute(const Napi::CallbackInfo &info);
+		void SetVolume(const Napi::CallbackInfo &info, const Napi::Value &value);
+		void SetMute(const Napi::CallbackInfo &info, const Napi::Value &value);
 
-	/**
-	 * @param string device id
-	 * @param DeviceType the device type
-	 * @param float the volume to set
-	 */
-	void SetDeviceVolume(Napi::CallbackInfo const &);
+	private:
+		static Napi::Function GetClass(Napi::Env);
+		inline static Napi::FunctionReference constructor;
 
-	/**
-	 * @param string the device id
-	 * @param DeviceType the device type
-	 * @returns the volume
-	 */
-	Napi::Number GetDeviceVolume(Napi::CallbackInfo const &);
-	
-	/**
-	 * @param string the device id
-	 * @param DeviceType the device type
-	 * @param bool the mute flag
-	 */
-	void SetDeviceMute(Napi::CallbackInfo const &);
-	/**
-	 * @param string the device id
-	 * @param DeviceType the device type
-	 * @returns the mute flag
-	 */
-	Napi::Boolean GetDeviceMute(Napi::CallbackInfo const &);
+	private:
+		void *pSession;
+	};
 
-	/**
-	 * @param string the device id
-	 * @param DeviceType the device type
-	 * @param string the session id
-	 * @param float the volume to set
-	 */
-	void SetAudioSessionVolume(Napi::CallbackInfo const &);
-	/**
-	 * @param string the device id
-	 * @param DeviceType the device type
-	 * @param string the session id
-	 * @returns the new volume
-	 */
-	Napi::Number GetAudioSessionVolume(Napi::CallbackInfo const &);
-	/**
-	 * @param string the device id
-	 * @param DeviceType the device type
-	 * @param string the session id
-	 * @param bool the mute flag
-	 */
-	void SetAudioSessionMute(Napi::CallbackInfo const &);
-	/**
-	 * @param string the device id
-	 * @param DeviceType the device type
-	 * @param string the session id
-	 * @returns the new mute flag
-	 */
-	Napi::Boolean GetAudioSessionMute(Napi::CallbackInfo const &);
+	class DeviceObject : public Napi::ObjectWrap<DeviceObject>
+	{
+
+	public:
+		static Napi::Object Init(Napi::Env, Napi::Object);
+		DeviceObject(const Napi::CallbackInfo &info);
+		virtual ~DeviceObject();
+		static Napi::Value New(Napi::Env, void *);
+
+		void Release(const Napi::CallbackInfo &info);
+
+		Napi::Value GetVolume(const Napi::CallbackInfo &info);
+		Napi::Value GetMute(const Napi::CallbackInfo &info);
+		void SetVolume(const Napi::CallbackInfo &info, const Napi::Value &value);
+		void SetMute(const Napi::CallbackInfo &info, const Napi::Value &value);
+
+		Napi::Value GetSessions(const Napi::CallbackInfo &info);
+
+	private:
+		Napi::Value GetName();
+		static Napi::Function GetClass(Napi::Env);
+		inline static Napi::FunctionReference constructor;
+
+	private:
+		SoundMixerUtils::DeviceDescriptor desc;
+		void *pDevice;
+	};
+
+	class MixerObject : public Napi::ObjectWrap<MixerObject>
+	{
+	public:
+		static Napi::Object Init(Napi::Env, Napi::Object);
+		static Napi::Value GetDevices(const Napi::CallbackInfo &info);
+		MixerObject::MixerObject(const Napi::CallbackInfo &info) : Napi::ObjectWrap<MixerObject>(info) {}
+		static Napi::Value GetDefaultDevice(const Napi::CallbackInfo &info);
+	};
+
 } // namespace SoundMixer

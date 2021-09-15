@@ -6,328 +6,185 @@ using std::vector;
 
 namespace SoundMixer
 {
-
 	WinSoundMixer::SoundMixer *mixer;
 
 	Napi::Object Init(Napi::Env env, Napi::Object exports)
 	{
 		mixer = new WinSoundMixer::SoundMixer();
-		exports.Set("GetSessions", Napi::Function::New(env, GetAudioSessions));
-		exports.Set("GetDevices", Napi::Function::New(env, GetDevices));
-		exports.Set("GetDefaultDevice", Napi::Function::New(env, GetDefaultDevice));
-
-		exports.Set("SetDeviceVolume", Napi::Function::New(env, SetDeviceVolume));
-		exports.Set("GetDeviceVolume", Napi::Function::New(env, GetDeviceVolume));
-		exports.Set("SetDeviceMute", Napi::Function::New(env, SetDeviceMute));
-		exports.Set("GetDeviceMute", Napi::Function::New(env, GetDeviceMute));
-
-		exports.Set("SetAudioSessionVolume", Napi::Function::New(env, SetAudioSessionVolume));
-		exports.Set("GetAudioSessionVolume", Napi::Function::New(env, GetAudioSessionVolume));
-		exports.Set("SetAudioSessionMute", Napi::Function::New(env, SetAudioSessionMute));
-		exports.Set("GetAudioSessionMute", Napi::Function::New(env, GetAudioSessionMute));
+		MixerObject::Init(env, exports);
+		DeviceObject::Init(env, exports);
+		AudioSessionObject::Init(env, exports);
 
 		return exports;
 	}
 
-	Napi::Array GetAudioSessions(Napi::CallbackInfo const &info)
+	Napi::Object MixerObject::Init(Napi::Env env, Napi::Object exports)
 	{
+		Napi::Function sm = DefineClass(env, "SoundMixer", {StaticAccessor<&MixerObject::GetDevices>("devices"), StaticMethod<&MixerObject::GetDefaultDevice>("getDefaultDevice")});
 
-		Napi::Env env = info.Env();
+		exports.Set("SoundMixer", sm);
 
-		if (info.Length() != 2 || !info[0].IsString() || !info[1].IsNumber())
-		{
-			throw Napi::TypeError::New(env, "expected string as device id as only parameter");
-		}
-
-		std::string id = info[0].As<Napi::String>().Utf8Value();
-		Device *dev = mixer->GetDeviceById(id);
-		vector<AudioSession *> sessions = dev->GetAudioSessions();
-
-		Napi::Array sessionNames = Napi::Array::New(env, sessions.size());
-		int i = 0;
-		for (auto *pSession : sessions)
-		{
-
-			Napi::Object val = Napi::Object::New(env);
-			val.Set("id", pSession->id());
-			val.Set("path", pSession->path());
-			val.Set("name", pSession->name());
-			val.Set("state", (int)pSession->state());
-			sessionNames.Set(i++, val);
-		}
-
-		return sessionNames;
+		return exports;
 	}
 
-	Napi::Array GetDevices(Napi::CallbackInfo const &info)
+	Napi::Value MixerObject::GetDefaultDevice(const Napi::CallbackInfo &info)
 	{
+		DeviceType type = (DeviceType)info[0].As<Napi::Number>().Int32Value();
+		Device *pDevice = mixer->GetDefaultDevice(type);
+		return DeviceObject::New(info.Env(), pDevice);
+	}
 
-		Napi::Env env = info.Env();
-
-		vector<Device *> devices = mixer->GetDevices();
-		Napi::Array result = Napi::Array::New(env, devices.size());
+	Napi::Value MixerObject::GetDevices(const Napi::CallbackInfo &info)
+	{
 		int i = 0;
-		for (auto *dev : devices)
+		Napi::Array result = Napi::Array::New(info.Env());
+		for (Device *dev : mixer->GetDevices())
 		{
-			Napi::Object obj = Napi::Object::New(env);
-			DeviceDescriptor desc = dev->Desc();
-			obj.Set("id", desc.id);
-			obj.Set("name", desc.fullName);
-			obj.Set("type", (int)desc.type);
-			result.Set(i++, obj);
+			result.Set(i++, DeviceObject::New(info.Env(), dev));
 		}
+
 		return result;
 	}
 
-	Napi::Object GetDefaultDevice(Napi::CallbackInfo const &info)
+	Napi::Object DeviceObject::Init(Napi::Env env, Napi::Object exports)
 	{
-		Napi::Env env = info.Env();
-		Napi::Object obj = Napi::Object::New(env);
-		if (info.Length() != 1 || !info[0].IsNumber())
-		{
-			Napi::Error::New(env, "wrong argument passed, expected number").ThrowAsJavaScriptException();
-			return obj;
-		}
 
-		int val = info[0].As<Napi::Number>().Int32Value();
-		if (val < 0 || val >= EDataFlow::EDataFlow_enum_count)
-		{
-			Napi::Error::New(env, "illegal argument passed, expected number ranged from 0 to 3").ThrowAsJavaScriptException();
-			return obj;
-		}
+		constructor = Napi::Persistent(GetClass(env));
 
-		DeviceType type = (DeviceType)val;
-		DeviceDescriptor desc = mixer->GetDefaultDevice(type)->Desc();
-
-		obj.Set("id", desc.id);
-		obj.Set("name", desc.fullName);
-		obj.Set("type", (int)desc.type);
-
-		return obj;
+		return exports;
 	}
 
-	void SetDeviceVolume(Napi::CallbackInfo const &info)
+	Napi::Function DeviceObject::GetClass(Napi::Env env)
 	{
-		Napi::Env env = info.Env();
+		Napi::Function func = DefineClass(env, "Device", {InstanceAccessor<&DeviceObject::GetVolume, &DeviceObject::SetVolume>("volume"), InstanceAccessor<&DeviceObject::GetMute, &DeviceObject::SetMute>("mute"), InstanceAccessor<&DeviceObject::GetSessions>("sessions"), InstanceMethod<&DeviceObject::Release>("Release")});
 
-		if (info.Length() != 3 || !info[2].IsNumber() || !info[1].IsNumber() || !info[0].IsString())
-		{
-			throw Napi::TypeError::New(env, "expected 3 numbers as arguments");
-		}
+		return func;
+	}
 
-		float volume = info[2].As<Napi::Number>().FloatValue();
-		DeviceType type = (DeviceType)info[1].As<Napi::Number>().Int32Value();
-		if (volume > 1.F)
-		{
-			volume = 1.F;
-		}
-		else if (volume < 0.F)
-		{
-			volume = 0.F;
-		}
+	DeviceObject::DeviceObject(const Napi::CallbackInfo &info) : Napi::ObjectWrap<DeviceObject>(info)
+	{
+		pDevice = info.Env().GetInstanceData<Device *>();
+	}
 
-		std::string id = info[0].As<Napi::String>().Utf8Value();
-		Device *dev = mixer->GetDeviceById(id);
-		if (dev == nullptr)
-		{
-			Napi::Error::New(env, "could not find device for the specified id").ThrowAsJavaScriptException();
-			return;
-		}
+	void DeviceObject::Release(const Napi::CallbackInfo &)
+	{
+		delete this;
+	}
 
+	DeviceObject::~DeviceObject()
+	{
+		delete reinterpret_cast<Device *>(pDevice);
+	}
+
+	Napi::Value DeviceObject::New(Napi::Env env, void *device)
+	{
+
+		Device *dev = reinterpret_cast<Device *>(device);
+		env.SetInstanceData(dev);
+		Napi::Object result = constructor.New({});
+		result.Set("name", dev->Desc().fullName);
+		result.Set("type", (int)dev->Desc().type);
+
+		return result;
+	}
+
+	Napi::Value DeviceObject::GetVolume(const Napi::CallbackInfo &info)
+	{
+		Device *dev = reinterpret_cast<Device *>(pDevice);
+		return Napi::Number::New(info.Env(), dev->GetVolume());
+	}
+
+	void DeviceObject::SetVolume(const Napi::CallbackInfo &info, const Napi::Value &value)
+	{
+		float volume = value.As<Napi::Number>().FloatValue();
+		Device *dev = reinterpret_cast<Device *>(pDevice);
 		dev->SetVolume(volume);
 	}
 
-	Napi::Number GetDeviceVolume(Napi::CallbackInfo const &info)
+	Napi::Value DeviceObject::GetMute(const Napi::CallbackInfo &info)
 	{
-		Napi::Env env = info.Env();
-		if (info.Length() != 2 || !info[0].IsString() || !info[1].IsNumber())
-		{
-			throw Napi::TypeError::New(env, "expected string as device id");
-		}
-
-		DeviceType type = (DeviceType)info[1].As<Napi::Number>().Int32Value();
-
-		CoInitialize(NULL);
-
-		std::string id = info[0].As<Napi::String>().Utf8Value();
-		Device *pDevice = mixer->GetDeviceById(id);
-		if (pDevice == nullptr)
-		{
-			Napi::Error::New(env, "Invalid device id provided").ThrowAsJavaScriptException();
-			return Napi::Number::New(env, 0);
-		}
-
-		return Napi::Number::New(env, pDevice->GetVolume());
+		Device *dev = reinterpret_cast<Device *>(pDevice);
+		return Napi::Boolean::New(info.Env(), dev->GetMute());
 	}
 
-	void SetDeviceMute(Napi::CallbackInfo const &info)
+	void DeviceObject::SetMute(const Napi::CallbackInfo &info, const Napi::Value &value)
 	{
-		Napi::Env env = info.Env();
-
-		if (info.Length() != 3 || !info[2].IsBoolean() || !info[0].IsString() || !info[1].IsNumber())
-		{
-			throw Napi::TypeError::New(env, "expected {deviceId: string},{mute: boolean} as arguments");
-		}
-
-		DeviceType type = (DeviceType)info[1].As<Napi::Number>().Int32Value();
-		bool mute = info[2].As<Napi::Boolean>().Value();
-
-		std::string id = info[0].As<Napi::String>().Utf8Value();
-		Device *dev = mixer->GetDeviceById(id);
-		if (dev == nullptr)
-		{
-			Napi::Error::New(env, "could not find device for the specified id").ThrowAsJavaScriptException();
-			return;
-		}
-
-		dev->SetMute(mute);
+		bool val = value.As<Napi::Boolean>().Value();
+		Device *dev = reinterpret_cast<Device *>(pDevice);
+		dev->SetMute(val);
 	}
 
-	Napi::Boolean GetDeviceMute(Napi::CallbackInfo const &info)
+	Napi::Value DeviceObject::GetSessions(const Napi::CallbackInfo &info)
 	{
-		Napi::Env env = info.Env();
-		if (info.Length() != 2 || !info[0].IsString() || !info[1].IsNumber())
+		Device *dev = reinterpret_cast<Device *>(pDevice);
+		Napi::Array result = Napi::Array::New(info.Env());
+		int i = 0;
+		for (AudioSession *s : dev->GetAudioSessions())
 		{
-			throw Napi::TypeError::New(env, "device id as only argument");
-		}
-		DeviceType type = (DeviceType)info[1].As<Napi::Number>().Int32Value();
-		std::string id = info[0].As<Napi::String>().Utf8Value();
-		Device *dev = mixer->GetDeviceById(id);
-		if (dev == nullptr)
-		{
-			Napi::Error::New(env, "could not find device for the specified id").ThrowAsJavaScriptException();
-			return Napi::Boolean::New(env, false);
+			result.Set(i++, AudioSessionObject::New(info.Env(), s));
 		}
 
-		return Napi::Boolean::New(env, dev->GetMute());
+		return result;
 	}
 
-	void SetAudioSessionVolume(Napi::CallbackInfo const &info)
+	AudioSessionObject::AudioSessionObject(const Napi::CallbackInfo &info) : Napi::ObjectWrap<AudioSessionObject>(info)
 	{
-		Napi::Env env = info.Env();
-
-		if (info.Length() != 4 || !info[0].IsString() || !info[2].IsString() || !info[3].IsNumber() || !info[1].IsNumber())
-		{
-			throw Napi::TypeError::New(env, "expected 3 numbers as arguments");
-		}
-
-		DeviceType type = (DeviceType)info[1].As<Napi::Number>().Int32Value();
-
-		float volume = info[3].As<Napi::Number>().FloatValue();
-		if (volume > 1.F)
-		{
-			volume = 1.F;
-		}
-		else if (volume < 0.F)
-		{
-			volume = 0.F;
-		}
-
-		std::string deviceId = info[0].As<Napi::String>().Utf8Value();
-		Device *pDevice = mixer->GetDeviceById(deviceId);
-		if (pDevice == nullptr)
-		{
-			Napi::Error::New(env, "Invalid device id provided").ThrowAsJavaScriptException();
-			return;
-		}
-
-		std::string sessionId = info[2].As<Napi::String>().Utf8Value();
-		AudioSession *session = pDevice->GetAudioSessionById(sessionId);
-		if (session == nullptr)
-		{
-			Napi::Error::New(env, "Invalid session id provided").ThrowAsJavaScriptException();
-			return;
-		}
-
-		session->SetVolume(volume);
+		pSession = info.Env().GetInstanceData<AudioSession *>();
 	}
 
-	Napi::Number GetAudioSessionVolume(Napi::CallbackInfo const &info)
+	Napi::Function AudioSessionObject::GetClass(Napi::Env env)
 	{
-		Napi::Env env = info.Env();
-		if (info.Length() != 3 || !info[2].IsString() || !info[0].IsString() || !info[1].IsNumber())
-		{
-			throw Napi::TypeError::New(env, "expected {<deviceId>: string}, {<audio session id>: string} as arguments");
-		}
-
-		DeviceType type = (DeviceType)info[1].As<Napi::Number>().Int32Value();
-		std::string deviceId = info[0].As<Napi::String>().Utf8Value();
-		Device *pDevice = mixer->GetDeviceById(deviceId);
-		if (pDevice == nullptr)
-		{
-			Napi::Error::New(env, "Invalid device id provided").ThrowAsJavaScriptException();
-			return Napi::Number::New(env, 0);
-		}
-
-		std::string sessionId = info[2].As<Napi::String>().Utf8Value();
-		AudioSession *session = pDevice->GetAudioSessionById(sessionId);
-		if (session == nullptr)
-		{
-			Napi::Error::New(env, "Invalid session id provided").ThrowAsJavaScriptException();
-			return Napi::Number::New(env, 0);
-		}
-
-		return Napi::Number::New(env, session->GetVolume());
+		return DefineClass(env, "AudioSession", {InstanceAccessor<&AudioSessionObject::GetMute, &AudioSessionObject::SetMute>("mute"), InstanceAccessor<&AudioSessionObject::GetVolume, &AudioSessionObject::SetVolume>("volume"), InstanceMethod<&AudioSessionObject::Release>("Release")});
 	}
 
-	void SetAudioSessionMute(Napi::CallbackInfo const &info)
+	void AudioSessionObject::Release(const Napi::CallbackInfo &)
 	{
-		Napi::Env env = info.Env();
-		if (info.Length() != 4 || !info[0].IsString() || !info[2].IsString() || !info[3].IsBoolean() || !info[1].IsNumber())
-		{
-			throw Napi::TypeError::New(env, "expected 3 numbers as arguments");
-		}
-
-		bool mute = info[3].As<Napi::Boolean>().Value();
-
-		DeviceType type = (DeviceType)info[1].As<Napi::Number>().Int32Value();
-
-		std::string deviceId = info[0].As<Napi::String>().Utf8Value();
-		Device *pDevice = mixer->GetDeviceById(deviceId);
-		if (pDevice == nullptr)
-		{
-			Napi::Error::New(env, "Invalid device id provided").ThrowAsJavaScriptException();
-			return;
-		}
-
-		std::string sessionId = info[2].As<Napi::String>().Utf8Value();
-		AudioSession *session = pDevice->GetAudioSessionById(sessionId);
-		if (session == nullptr)
-		{
-			Napi::Error::New(env, "Invalid session id provided").ThrowAsJavaScriptException();
-			return;
-		}
-
-		session->SetMute(mute);
+		delete this;
 	}
 
-	Napi::Boolean GetAudioSessionMute(Napi::CallbackInfo const &info)
+	Napi::Object AudioSessionObject::Init(Napi::Env env, Napi::Object exports)
 	{
-		Napi::Env env = info.Env();
+		constructor = Napi::Persistent(GetClass(env));
 
-		if (info.Length() != 3 || !info[0].IsString() || !info[2].IsString() || !info[1].IsNumber())
-		{
-			throw Napi::TypeError::New(env, "expected 3 numbers as arguments");
-		}
-
-		DeviceType type = (DeviceType)info[1].As<Napi::Number>().Int32Value();
-		std::string deviceId = info[0].As<Napi::String>().Utf8Value();
-		Device *pDevice = mixer->GetDeviceById(deviceId);
-		if (pDevice == nullptr)
-		{
-			Napi::Error::New(env, "Invalid device id provided").ThrowAsJavaScriptException();
-			return Napi::Boolean::New(env, false);
-		}
-
-		std::string sessionId = info[2].As<Napi::String>().Utf8Value();
-		AudioSession *session = pDevice->GetAudioSessionById(sessionId);
-		if (session == nullptr)
-		{
-			Napi::Error::New(env, "Invalid session id provided").ThrowAsJavaScriptException();
-			return Napi::Boolean::New(env, false);
-		}
-
-		return Napi::Boolean::New(env, session->GetMute());
+		return exports;
 	}
 
-} // namespace SoundMixer
+	AudioSessionObject::~AudioSessionObject()
+	{
+		delete reinterpret_cast<AudioSession *>(pSession);
+	}
+
+	Napi::Value AudioSessionObject::New(Napi::Env env, void *data)
+	{
+		AudioSession *session = reinterpret_cast<AudioSession *>(data);
+		env.SetInstanceData(session);
+		Napi::Object result = constructor.New({});
+		result.Set("name", session->name());
+		result.Set("appName", session->path());
+
+		return result;
+	}
+
+	Napi::Value AudioSessionObject::GetVolume(const Napi::CallbackInfo &info)
+	{
+		return Napi::Number::New(info.Env(), reinterpret_cast<AudioSession *>(pSession)->GetVolume());
+	}
+
+	void AudioSessionObject::SetVolume(const Napi::CallbackInfo &info, const Napi::Value &value)
+	{
+		float volume = value.As<Napi::Number>().FloatValue();
+		reinterpret_cast<AudioSession *>(pSession)->SetVolume(volume);
+	}
+
+	Napi::Value AudioSessionObject::GetMute(const Napi::CallbackInfo &info)
+	{
+		return Napi::Boolean::New(info.Env(), reinterpret_cast<AudioSession *>(pSession)->GetMute());
+	}
+
+	void AudioSessionObject::SetMute(const Napi::CallbackInfo &info, const Napi::Value &value)
+	{
+		bool val = value.As<Napi::Boolean>().Value();
+		reinterpret_cast<AudioSession *>(pSession)->SetMute(val);
+	}
+
+}

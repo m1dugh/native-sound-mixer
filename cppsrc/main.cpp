@@ -4,7 +4,7 @@
 Napi::Object InitAll(Napi::Env env, Napi::Object exports)
 {
 
-	exports = SoundMixer::Init(env, exports);
+	SoundMixer::Init(env, exports);
 
 	return exports;
 }

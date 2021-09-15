@@ -51,8 +51,6 @@ namespace WinSoundMixer
 		virtual float GetVolume();
 		virtual void SetVolume(float);
 
-		virtual void Reload();
-
 		DeviceDescriptor Desc()
 		{
 			return desc;
@@ -64,7 +62,6 @@ namespace WinSoundMixer
 	protected:
 		IMMDevice *device;
 		IMMEndpoint *endpoint;
-		std::vector<AudioSession *> sessions;
 		DeviceDescriptor desc;
 
 		IAudioEndpointVolume *getAudioEndpointVolume();
@@ -76,13 +73,9 @@ namespace WinSoundMixer
 		SoundMixer();
 		~SoundMixer();
 		std::vector<Device *> GetDevices();
-		Device *GetDeviceById(std::string);
 		Device *GetDefaultDevice(DeviceType);
-		void Reload();
 
 	private:
-		std::vector<Device *> devices;
 		IMMDeviceEnumerator *pEnumerator = nullptr;
-		Device *defaultOutputDevice = nullptr, *defaultInputDevice = nullptr;
 	};
 };
