@@ -17,7 +17,8 @@ const sMixerModule: { SoundMixer: SoundMixer } = (() => {
 
 })()
 
-declare class Device {
+export declare class Device {
+	private constructor();
 	public volume: VolumeScalar;
 	public mute: boolean;
 	public readonly name: string;
@@ -25,36 +26,30 @@ declare class Device {
 	public readonly sessions: AudioSession[];
 }
 
-enum AudioSessionState {
+export enum AudioSessionState {
 	ACTIVE = 0,
 	INACTIVE = 1,
 	EXPIRED = 2
 }
 
-enum DeviceType {
+export enum DeviceType {
 	CAPTURE = 1,
 	RENDER = 0
 }
 
 export type VolumeScalar = number
 
-declare class AudioSession {
+export declare class AudioSession {
+	private constructor();
 	public volume: VolumeScalar;
 	public mute: boolean;
 	public readonly name: string;
 	public readonly appName: string;
 }
 
-declare type SoundMixer = {
+export declare type SoundMixer = {
 	devices: Device[];
 	getDefaultDevice(type: DeviceType): Device;
 }
 
 export default sMixerModule.SoundMixer
-
-export {
-	DeviceType,
-	Device,
-	AudioSession,
-	AudioSessionState
-}

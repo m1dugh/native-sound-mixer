@@ -30,7 +30,7 @@ namespace LinuxSoundMixer
 
 	public:
 		_AudioSession(_PAControls, uint32_t);
-		~_AudioSession();
+		virtual ~_AudioSession();
 		virtual float GetVolume() = 0;
 		virtual void SetVolume(float) = 0;
 		virtual bool GetMute() = 0;
@@ -41,7 +41,6 @@ namespace LinuxSoundMixer
 	{
 	public:
 		InputAudioSession(_PAControls, uint32_t);
-		~InputAudioSession();
 		float GetVolume();
 		void SetVolume(float);
 		bool GetMute();
@@ -60,7 +59,6 @@ namespace LinuxSoundMixer
 	{
 	public:
 		OutputAudioSession(_PAControls, uint32_t);
-		~OutputAudioSession();
 		float GetVolume();
 		void SetVolume(float);
 		bool GetMute();
@@ -89,7 +87,7 @@ namespace LinuxSoundMixer
 
 	public:
 		_Device(_PAControls, uint32_t index);
-		~_Device();
+		virtual ~_Device();
 		virtual float GetVolume() = 0;
 		virtual void SetVolume(float) = 0;
 		virtual bool GetMute() = 0;
@@ -139,9 +137,9 @@ namespace LinuxSoundMixer
 	{
 	public:
 		SoundMixer();
-		~SoundMixer();
+		virtual ~SoundMixer();
 		std::vector<_Device *> GetDevices();
-		bool isReady();
+		_Device* GetDefaultDevice(DeviceType);
 		_Device *GetDeviceByName(std::string name, DeviceType type);
 
 	private:

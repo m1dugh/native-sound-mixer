@@ -48,12 +48,10 @@ or using yarn :
 1. [SoundMixer](#1-SoundMixer): factory, default export
 	- [(static Attribute) devices](#get-devices): `readonly`
 	- [(static Method) getDefaulDevice](#getDefaultDevice)
-	- [(static Method) getDeviceById](#getDeviceById)
 2. [Device](#2-Device): Represents a physical/virtual device with channels and volume controls
 	- [(Attribute) sessions](#get-sessions): `readonly`
 	- [(Attribute) mute](#device-mute): `read-write`
 	- [(Attribute) volume](#device-volume): `read-write`
-	- [(Method) getSessionById](#getSessionById)
 
 3. [AudioSession](#3-AudioSession): Represents an app-linked audio channel with volume controls
 	- [(Attribute) mute](#session-mute): `read-write`
@@ -82,18 +80,22 @@ import SoundMixer, {Device, DeviceType} from "native-sound-mixer";
 const device: Device | undefined = SoundMixer.getDefaultDevice(DeviceType.RENDER);
 ```
 
- - ### getDeviceById
-returns the [`device`](#2-Device) corresponding to the given id, if none, returns `undefined`.
-
-```TypeScript
-// import ...
-
-const id = "<any id of device here>";
-const device: Device | undefined = SoundMixer.getDeviceById(id);
-```
 
 
 ### 2) Device
+
+```Typescript
+class Device {
+	private constructor(); // Device instantiation is disallowed
+	public volume: VolumeScalar;
+	public mute: boolean;
+	public readonly name: string;
+	public readonly type: DeviceType;
+	public readonly sessions: AudioSession[];
+}
+```
+
+
  - ### get sessions
 returns all the [`AudioSessions`](#3-AudioSession) linked to the `Device`.
 
@@ -130,17 +132,22 @@ const volume: VolumeScalar = device.volume;
 device.volume += .1;
 ```
 
- - ### getSessionById
-returns the [`AudioSession`](#3-AudioSession) linked to the given id. If not found, returns `undefined`.
-
-```TypeScript
-// import ...
-
-const id: string = "<any audio session id>";
-const session: AudioSession | undefined = device.getSessionById(id);
-```
 
 ### 3) AudioSession
+
+```Typescript
+// class declaration
+class AudioSession {
+	private constructor(); // AudioSession instantiation is disallowed
+
+	public volume: VolumeScalar;
+	public mute: boolean;
+	public readonly name: string;
+	public readonly appName: string;
+}
+```
+
+
  - ### session mute
 sets and gets the mute flag for the `AudioSession`.
 
@@ -194,7 +201,7 @@ DeviceType.ALL; // device type is both input and output
 -----
 
 ## Contributing
-As an open-source project, every one is free to modify the codebase. The [TODO](https://github.com/romlm/native-sound-mixer/blob/develop/TODO.md) file provides all future features with their current development state. Please test your code before committing to this repository.
+As an open-source project, every one is free to modify the codebase. Feel free to open any discussion or issue or PR to improve this project.
 
 -----
 

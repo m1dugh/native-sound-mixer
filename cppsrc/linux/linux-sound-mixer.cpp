@@ -8,6 +8,8 @@
 
 using std::vector;
 
+#define MAX_VOLUME PA_VOLUME_NORM
+
 // SoundMixer definition
 namespace LinuxSoundMixer
 {
@@ -60,9 +62,18 @@ namespace LinuxSoundMixer
 		pa_mainloop_free(pa.mainloop);
 	}
 
-	bool SoundMixer::isReady()
+	_Device *SoundMixer::GetDefaultDevice(DeviceType type)
 	{
-		return (bool)ready;
+		for (_Device *dev : GetDevices())
+		{
+			if (dev->type() == type)
+			{
+				return dev;
+			}
+			delete dev;
+		}
+
+		return nullptr;
 	}
 
 	typedef struct
@@ -188,7 +199,7 @@ namespace LinuxSoundMixer
 		auto *info = GetInfo(&op);
 		pa_volume_t volume = pa_cvolume_avg(&(info->volume));
 		pa_operation_unref(op);
-		return (float)volume / PA_VOLUME_NORM;
+		return (float)volume / MAX_VOLUME;
 	}
 
 	bool InputDevice::GetMute()
@@ -202,7 +213,16 @@ namespace LinuxSoundMixer
 
 	void InputDevice::SetVolume(float v)
 	{
-		uint32_t volume = v * PA_VOLUME_NORM;
+		if (v > 1)
+		{
+			v = 1.F;
+		}
+		else if (v < 0)
+		{
+			v = .0F;
+		}
+
+		uint32_t volume = v * MAX_VOLUME;
 		pa_operation *op;
 		pa_source_info *info = GetInfo(&op);
 
@@ -338,7 +358,7 @@ namespace LinuxSoundMixer
 		auto *info = GetInfo(&op);
 		pa_volume_t volume = pa_cvolume_avg(&(info->volume));
 		pa_operation_unref(op);
-		return (float)volume / PA_VOLUME_NORM;
+		return (float)volume / MAX_VOLUME;
 	}
 
 	bool OutputDevice::GetMute()
@@ -352,7 +372,15 @@ namespace LinuxSoundMixer
 
 	void OutputDevice::SetVolume(float v)
 	{
-		uint32_t volume = v * PA_VOLUME_NORM;
+		if (v > 1)
+		{
+			v = 1.F;
+		}
+		else if (v < 0)
+		{
+			v = .0F;
+		}
+		uint32_t volume = v * MAX_VOLUME;
 		pa_operation *op;
 		auto *info = GetInfo(&op);
 
@@ -505,7 +533,7 @@ namespace LinuxSoundMixer
 		auto *info = GetInfo(&op);
 		pa_volume_t volume = pa_cvolume_avg(&(info->volume));
 		pa_operation_unref(op);
-		return (float)volume / PA_VOLUME_NORM;
+		return (float)volume / MAX_VOLUME;
 	}
 
 	bool InputAudioSession::GetMute()
@@ -519,7 +547,15 @@ namespace LinuxSoundMixer
 
 	void InputAudioSession::SetVolume(float v)
 	{
-		uint32_t volume = v * PA_VOLUME_NORM;
+		if (v > 1)
+		{
+			v = 1.F;
+		}
+		else if (v < 0)
+		{
+			v = .0F;
+		}
+		uint32_t volume = v * MAX_VOLUME;
 		pa_operation *op;
 		auto *info = GetInfo(&op);
 
@@ -615,7 +651,7 @@ namespace LinuxSoundMixer
 		auto *info = GetInfo(&op);
 		pa_volume_t volume = pa_cvolume_avg(&(info->volume));
 		pa_operation_unref(op);
-		return (float)volume / PA_VOLUME_NORM;
+		return (float)volume / MAX_VOLUME;
 	}
 
 	bool OutputAudioSession::GetMute()
@@ -629,7 +665,15 @@ namespace LinuxSoundMixer
 
 	void OutputAudioSession::SetVolume(float v)
 	{
-		uint32_t volume = v * PA_VOLUME_NORM;
+		if (v > 1)
+		{
+			v = 1.F;
+		}
+		else if (v < 0)
+		{
+			v = .0F;
+		}
+		uint32_t volume = v * MAX_VOLUME;
 		pa_operation *op;
 		auto *info = GetInfo(&op);
 
