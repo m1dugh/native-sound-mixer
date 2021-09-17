@@ -27,6 +27,8 @@ namespace SoundMixer
 		return exports;
 	}
 
+	MixerObject::MixerObject(const Napi::CallbackInfo &info) : Napi::ObjectWrap<MixerObject>(info) {}
+
 	Napi::Value MixerObject::GetDefaultDevice(const Napi::CallbackInfo &info)
 	{
 		DeviceType type = (DeviceType)info[0].As<Napi::Number>().Int32Value();

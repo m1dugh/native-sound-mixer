@@ -6,7 +6,6 @@
 
 namespace SoundMixer
 {
-
 	Napi::Object Init(Napi::Env, Napi::Object);
 
 	class AudioSessionObject : public Napi::ObjectWrap<AudioSessionObject>
@@ -65,7 +64,7 @@ namespace SoundMixer
 	public:
 		static Napi::Object Init(Napi::Env, Napi::Object);
 		static Napi::Value GetDevices(const Napi::CallbackInfo &info);
-		MixerObject::MixerObject(const Napi::CallbackInfo &info) : Napi::ObjectWrap<MixerObject>(info) {}
+		MixerObject(const Napi::CallbackInfo &info);
 		static Napi::Value GetDefaultDevice(const Napi::CallbackInfo &info);
 	};
 
