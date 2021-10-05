@@ -1,15 +1,17 @@
 
-import { arch, platform } from "os";
+import * as os from "os";
 
 const sMixerModule: { SoundMixer: SoundMixer } = (() => {
 
 	const getModule = (platform: "macos" | "win" | "linux", arch: string | undefined = undefined) => require(`${__dirname}/addons/${platform}-sound-mixer${arch ? "_" + arch : ""}.node`)
-	if (platform() === "win32") {
-		if (arch() === "x32" || arch() === "x64") {
+	const platform = os.platform()
+	const arch = os.arch()
+	if (platform === "win32") {
+		if (arch === "x32" || arch === "x64" || arch === "ia32") {
 			return getModule("win");
 		}
-	} else if (platform() == "linux") {
-		if (arch() === "x32" || arch() === "x64")
+	} else if (platform == "linux") {
+		if (arch === "x32" || arch === "x64" || arch === "ia32")
 			return getModule("linux");
 	}
 
