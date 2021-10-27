@@ -1,6 +1,8 @@
 #include "../headers/sound-mixer.hpp"
 #include "./headers/win-sound-mixer.hpp"
 
+#include <iostream>
+
 using namespace WinSoundMixer;
 using std::vector;
 
@@ -58,7 +60,7 @@ namespace SoundMixer
 
 	Napi::Function DeviceObject::GetClass(Napi::Env env)
 	{
-		Napi::Function func = DefineClass(env, "Device", {InstanceAccessor<&DeviceObject::GetVolume, &DeviceObject::SetVolume>("volume"), InstanceAccessor<&DeviceObject::GetMute, &DeviceObject::SetMute>("mute"), InstanceAccessor<&DeviceObject::GetSessions>("sessions"), InstanceMethod<&DeviceObject::Release>("Release")});
+		Napi::Function func = DefineClass(env, "Device", {InstanceAccessor<&DeviceObject::GetVolume, &DeviceObject::SetVolume>("volume"), InstanceAccessor<&DeviceObject::GetMute, &DeviceObject::SetMute>("mute"), InstanceAccessor<&DeviceObject::GetSessions>("sessions"), InstanceAccessor<&DeviceObject::GetChannelVolume, &DeviceObject::SetChannelVolume>("balance")});
 
 		return func;
 	}
@@ -66,11 +68,6 @@ namespace SoundMixer
 	DeviceObject::DeviceObject(const Napi::CallbackInfo &info) : Napi::ObjectWrap<DeviceObject>(info)
 	{
 		pDevice = info.Env().GetInstanceData<Device *>();
-	}
-
-	void DeviceObject::Release(const Napi::CallbackInfo &)
-	{
-		delete this;
 	}
 
 	DeviceObject::~DeviceObject()
@@ -116,6 +113,33 @@ namespace SoundMixer
 		dev->SetMute(val);
 	}
 
+	Napi::Value DeviceObject::GetChannelVolume(const Napi::CallbackInfo &info)
+	{
+		Device *dev = reinterpret_cast<Device *>(pDevice);
+		VolumeBalance balance = dev->GetVolumeBalance();
+		Napi::Object result = Napi::Object::New(info.Env());
+		result.Set("right", balance.right);
+		result.Set("left", balance.left);
+		result.Set("stereo", balance.stereo);
+		return result;
+	}
+
+	void DeviceObject::SetChannelVolume(const Napi::CallbackInfo &info, const Napi::Value &value)
+	{
+		Napi::Object param = value.As<Napi::Object>();
+		if (!param.Has("right") || !param.Has("left"))
+		{
+			return;
+		}
+		Device *dev = reinterpret_cast<Device *>(pDevice);
+		VolumeBalance balance = {
+			param.Get("right").As<Napi::Number>().FloatValue(),
+			param.Get("left").As<Napi::Number>().FloatValue(),
+			true};
+
+		dev->SetVolumeBalance(balance);
+	}
+
 	Napi::Value DeviceObject::GetSessions(const Napi::CallbackInfo &info)
 	{
 		Device *dev = reinterpret_cast<Device *>(pDevice);
@@ -136,12 +160,7 @@ namespace SoundMixer
 
 	Napi::Function AudioSessionObject::GetClass(Napi::Env env)
 	{
-		return DefineClass(env, "AudioSession", {InstanceAccessor<&AudioSessionObject::GetMute, &AudioSessionObject::SetMute>("mute"), InstanceAccessor<&AudioSessionObject::GetVolume, &AudioSessionObject::SetVolume>("volume"), InstanceMethod<&AudioSessionObject::Release>("Release")});
-	}
-
-	void AudioSessionObject::Release(const Napi::CallbackInfo &)
-	{
-		delete this;
+		return DefineClass(env, "AudioSession", {InstanceAccessor<&AudioSessionObject::GetMute, &AudioSessionObject::SetMute>("mute"), InstanceAccessor<&AudioSessionObject::GetVolume, &AudioSessionObject::SetVolume>("volume")});
 	}
 
 	Napi::Object AudioSessionObject::Init(Napi::Env env, Napi::Object exports)

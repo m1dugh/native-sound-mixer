@@ -18,4 +18,10 @@ namespace SoundMixerUtils
 		std::string id;
 		DeviceType type;
 	} DeviceDescriptor;
+
+	typedef struct {
+		float right;
+		float left;
+		bool stereo;
+	} VolumeBalance;
 }

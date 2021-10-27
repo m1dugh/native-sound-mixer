@@ -19,10 +19,16 @@ const sMixerModule: { SoundMixer: SoundMixer } = (() => {
 
 })()
 
+export interface Balance {
+	right: Number;
+	left: Number;
+}
+
 export declare class Device {
 	private constructor();
 	public volume: VolumeScalar;
 	public mute: boolean;
+	public balance: Balance;
 	public readonly name: string;
 	public readonly type: DeviceType;
 	public readonly sessions: AudioSession[];

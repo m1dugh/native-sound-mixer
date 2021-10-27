@@ -8,15 +8,15 @@
 #include <endpointvolume.h>
 #include <vector>
 
+#define LEFT 0
+#define RIGHT 1
+
 using SoundMixerUtils::DeviceDescriptor;
 using SoundMixerUtils::DeviceType;
+using SoundMixerUtils::VolumeBalance;
 
 namespace WinSoundMixer
 {
-
-	class AudioSessionEvents : public IAudioSessionEvents
-	{
-	};
 
 	class AudioSession
 	{
@@ -50,6 +50,9 @@ namespace WinSoundMixer
 		virtual void SetMute(bool);
 		virtual float GetVolume();
 		virtual void SetVolume(float);
+
+		virtual void SetVolumeBalance(const VolumeBalance&);
+		virtual VolumeBalance GetVolumeBalance();
 
 		DeviceDescriptor Desc()
 		{

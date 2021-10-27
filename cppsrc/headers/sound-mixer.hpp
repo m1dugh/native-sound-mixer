@@ -16,12 +16,13 @@ namespace SoundMixer
 		AudioSessionObject(const Napi::CallbackInfo &info);
 		virtual ~AudioSessionObject();
 
-		void Release(const Napi::CallbackInfo &info);
-
 		Napi::Value GetVolume(const Napi::CallbackInfo &info);
 		Napi::Value GetMute(const Napi::CallbackInfo &info);
 		void SetVolume(const Napi::CallbackInfo &info, const Napi::Value &value);
 		void SetMute(const Napi::CallbackInfo &info, const Napi::Value &value);
+
+		// void SetChannelVolume(const Napi::CallbackInfo &info);
+		// Napi::Value GetChannelVolume(const Napi::CallbackInfo &info);
 
 	private:
 		static Napi::Function GetClass(Napi::Env);
@@ -40,12 +41,13 @@ namespace SoundMixer
 		virtual ~DeviceObject();
 		static Napi::Value New(Napi::Env, void *);
 
-		void Release(const Napi::CallbackInfo &info);
-
 		Napi::Value GetVolume(const Napi::CallbackInfo &info);
 		Napi::Value GetMute(const Napi::CallbackInfo &info);
 		void SetVolume(const Napi::CallbackInfo &info, const Napi::Value &value);
 		void SetMute(const Napi::CallbackInfo &info, const Napi::Value &value);
+
+		void SetChannelVolume(const Napi::CallbackInfo &info, const Napi::Value &value);
+		Napi::Value GetChannelVolume(const Napi::CallbackInfo &info);
 
 		Napi::Value GetSessions(const Napi::CallbackInfo &info);
 

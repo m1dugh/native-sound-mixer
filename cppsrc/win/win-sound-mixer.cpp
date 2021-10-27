@@ -247,6 +247,52 @@ namespace WinSoundMixer
 		return (bool)mute;
 	}
 
+	void Device::SetVolumeBalance(const VolumeBalance &balance)
+	{
+		IAudioEndpointVolume *pVolume = getAudioEndpointVolume();
+		UINT count = 0;
+		HRESULT res = pVolume->GetChannelCount(&count);
+		if (res != S_OK)
+		{
+			return;
+		}
+		else if (count <= 1)
+		{
+			return;
+		}
+
+		pVolume->SetChannelVolumeLevelScalar(RIGHT, balance.right, NULL);
+		pVolume->SetChannelVolumeLevelScalar(LEFT, balance.left, NULL);
+
+		SafeRelease(&pVolume);
+	}
+
+	VolumeBalance Device::GetVolumeBalance()
+	{
+		IAudioEndpointVolume *pVolume = getAudioEndpointVolume();
+		VolumeBalance result = {
+			0.F,
+			0.F,
+			false
+		};
+		UINT count = 0;
+		HRESULT res = pVolume->GetChannelCount(&count);
+		if (res != S_OK)
+		{
+			return result;
+		}
+		else if (count <= 1)
+		{
+			return result;
+		}
+		result.stereo = true;
+		pVolume->GetChannelVolumeLevelScalar(RIGHT, &result.right);
+		pVolume->GetChannelVolumeLevelScalar(LEFT, &result.left);
+		SafeRelease(&pVolume);
+
+		return result;
+	}
+
 	AudioSession::AudioSession(IAudioSessionControl2 *control) : control(control)
 	{
 	}
