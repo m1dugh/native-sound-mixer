@@ -273,8 +273,7 @@ namespace WinSoundMixer
 		VolumeBalance result = {
 			0.F,
 			0.F,
-			false
-		};
+			false};
 		UINT count = 0;
 		HRESULT res = pVolume->GetChannelCount(&count);
 		if (res != S_OK)
@@ -356,6 +355,54 @@ namespace WinSoundMixer
 		ISimpleAudioVolume *volume;
 		control->QueryInterface(__uuidof(ISimpleAudioVolume), (LPVOID *)&volume);
 		return volume;
+	}
+
+	void AudioSession::SetVolumeBalance(const VolumeBalance &balance)
+	{
+		IChannelAudioVolume *channelVolume;
+		control->QueryInterface(__uuidof(IChannelAudioVolume), (LPVOID *)&channelVolume);
+		UINT count = 0;
+		HRESULT res = channelVolume->GetChannelCount(&count);
+		if (res != S_OK)
+		{
+			return;
+		}
+		else if (count <= 1)
+		{
+			return;
+		}
+
+		channelVolume->SetChannelVolume(RIGHT, balance.right, NULL);
+		channelVolume->SetChannelVolume(LEFT, balance.left, NULL);
+
+		SafeRelease(&channelVolume);
+	}
+
+	VolumeBalance AudioSession::GetVolumeBalance()
+	{
+
+		IChannelAudioVolume *channelVolume;
+		control->QueryInterface(__uuidof(IChannelAudioVolume), (LPVOID *)&channelVolume);
+		VolumeBalance result = {
+			0.F,
+			0.F,
+			false};
+		UINT count = 0;
+		HRESULT res = channelVolume->GetChannelCount(&count);
+		if (res != S_OK)
+		{
+			return result;
+		}
+		else if (count <= 1)
+		{
+			return result;
+		}
+		result.stereo = true;
+		channelVolume->GetChannelVolume(RIGHT, &result.right);
+		channelVolume->GetChannelVolume(LEFT, &result.left);
+		SafeRelease(&channelVolume);
+
+		return result;
 	}
 
 	void AudioSession::SetVolume(float vol)

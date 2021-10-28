@@ -21,14 +21,14 @@ namespace SoundMixer
 		void SetVolume(const Napi::CallbackInfo &info, const Napi::Value &value);
 		void SetMute(const Napi::CallbackInfo &info, const Napi::Value &value);
 
-		// void SetChannelVolume(const Napi::CallbackInfo &info);
-		// Napi::Value GetChannelVolume(const Napi::CallbackInfo &info);
+		void SetChannelVolume(const Napi::CallbackInfo &info, const Napi::Value &);
+		Napi::Value GetChannelVolume(const Napi::CallbackInfo &info);
 
 	private:
 		static Napi::Function GetClass(Napi::Env);
 		inline static Napi::FunctionReference constructor;
 
-	private:
+	public:
 		void *pSession;
 	};
 
@@ -58,6 +58,7 @@ namespace SoundMixer
 
 	private:
 		SoundMixerUtils::DeviceDescriptor desc;
+
 		void *pDevice;
 	};
 

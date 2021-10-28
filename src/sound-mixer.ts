@@ -50,6 +50,7 @@ export type VolumeScalar = number
 export declare class AudioSession {
 	private constructor();
 	public volume: VolumeScalar;
+	public balance: Balance;
 	public mute: boolean;
 	public readonly name: string;
 	public readonly appName: string;

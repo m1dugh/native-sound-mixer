@@ -67,7 +67,6 @@ namespace SoundMixer
 
 	DeviceObject::DeviceObject(const Napi::CallbackInfo &info) : Napi::ObjectWrap<DeviceObject>(info)
 	{
-		pDevice = info.Env().GetInstanceData<Device *>();
 	}
 
 	DeviceObject::~DeviceObject()
@@ -79,8 +78,8 @@ namespace SoundMixer
 	{
 
 		Device *dev = reinterpret_cast<Device *>(device);
-		env.SetInstanceData(dev);
 		Napi::Object result = constructor.New({});
+		Napi::ObjectWrap<DeviceObject>::Unwrap(result)->pDevice = dev;
 		result.Set("name", dev->Desc().fullName);
 		result.Set("type", (int)dev->Desc().type);
 
@@ -155,18 +154,16 @@ namespace SoundMixer
 
 	AudioSessionObject::AudioSessionObject(const Napi::CallbackInfo &info) : Napi::ObjectWrap<AudioSessionObject>(info)
 	{
-		pSession = info.Env().GetInstanceData<AudioSession *>();
 	}
 
 	Napi::Function AudioSessionObject::GetClass(Napi::Env env)
 	{
-		return DefineClass(env, "AudioSession", {InstanceAccessor<&AudioSessionObject::GetMute, &AudioSessionObject::SetMute>("mute"), InstanceAccessor<&AudioSessionObject::GetVolume, &AudioSessionObject::SetVolume>("volume")});
+		return DefineClass(env, "AudioSession", {InstanceAccessor<&AudioSessionObject::GetMute, &AudioSessionObject::SetMute>("mute"), InstanceAccessor<&AudioSessionObject::GetVolume, &AudioSessionObject::SetVolume>("volume"), InstanceAccessor<&AudioSessionObject::GetChannelVolume, &AudioSessionObject::SetChannelVolume>("balance")});
 	}
 
 	Napi::Object AudioSessionObject::Init(Napi::Env env, Napi::Object exports)
 	{
 		constructor = Napi::Persistent(GetClass(env));
-
 		return exports;
 	}
 
@@ -178,8 +175,8 @@ namespace SoundMixer
 	Napi::Value AudioSessionObject::New(Napi::Env env, void *data)
 	{
 		AudioSession *session = reinterpret_cast<AudioSession *>(data);
-		env.SetInstanceData(session);
-		Napi::Object result = constructor.New({});
+		Napi::Object result = Napi::Persistent(GetClass(env)).New({});
+		Napi::ObjectWrap<AudioSessionObject>::Unwrap(result)->pSession = session;
 		result.Set("name", session->name());
 		result.Set("appName", session->path());
 
@@ -206,6 +203,32 @@ namespace SoundMixer
 	{
 		bool val = value.As<Napi::Boolean>().Value();
 		reinterpret_cast<AudioSession *>(pSession)->SetMute(val);
+	}
+
+	Napi::Value AudioSessionObject::GetChannelVolume(const Napi::CallbackInfo &info)
+	{
+		AudioSession *session = reinterpret_cast<AudioSession *>(pSession);
+		VolumeBalance balance = session->GetVolumeBalance();
+		Napi::Object result = Napi::Object::New(info.Env());
+		result.Set("right", balance.right);
+		result.Set("left", balance.left);
+		return result;
+	}
+
+	void AudioSessionObject::SetChannelVolume(const Napi::CallbackInfo &info, const Napi::Value &value)
+	{
+		Napi::Object param = value.As<Napi::Object>();
+		if (!param.Has("right") || !param.Has("left"))
+		{
+			return;
+		}
+		AudioSession *session = reinterpret_cast<AudioSession *>(pSession);
+		VolumeBalance balance = {
+			param.Get("right").As<Napi::Number>().FloatValue(),
+			param.Get("left").As<Napi::Number>().FloatValue(),
+			true};
+
+		session->SetVolumeBalance(balance);
 	}
 
 }

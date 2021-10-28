@@ -29,6 +29,9 @@ namespace WinSoundMixer
 		virtual float GetVolume();
 		virtual void SetVolume(float);
 
+		virtual void SetVolumeBalance(const VolumeBalance&);
+		virtual VolumeBalance GetVolumeBalance();
+
 		std::string id();
 		std::string name();
 		std::string path();
