@@ -175,7 +175,7 @@ namespace SoundMixer
 	Napi::Value AudioSessionObject::New(Napi::Env env, void *data)
 	{
 		AudioSession *session = reinterpret_cast<AudioSession *>(data);
-		Napi::Object result = Napi::Persistent(GetClass(env)).New({});
+		Napi::Object result = constructor.New({});
 		Napi::ObjectWrap<AudioSessionObject>::Unwrap(result)->pSession = session;
 		result.Set("name", session->name());
 		result.Set("appName", session->path());
