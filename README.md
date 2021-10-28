@@ -1,4 +1,4 @@
-# Windows Sound Mixer
+# Native Sound Mixer
 ## Introduction 
 ### Native cross-platform sound mixer
 
@@ -7,10 +7,6 @@ This `node.js` project is a sound mixer for node desktop apps providing control 
 The native `c++` code is provided in `cppsrc/` and compiled using [node-addon-api](https://github.com/nodejs/node-addon-api)
 
 postinstall scripts will automatically build bin files
-
-### What's new in v3.2
-
- - projects now works out of the box with both windows and linux
 
 
 ## Install
@@ -52,15 +48,18 @@ or using yarn :
 	- [(Attribute) sessions](#get-sessions): `readonly`
 	- [(Attribute) mute](#device-mute): `read-write`
 	- [(Attribute) volume](#device-volume): `read-write`
+	- [(Attribute) balance](#device-balance): `read-write`
 
 3. [AudioSession](#3-AudioSession): Represents an app-linked audio channel with volume controls
 	- [(Attribute) mute](#session-mute): `read-write`
 	- [(Attribute) volume](#session-volume): `read-write`
+	- [(Attribute) balance](#session-balance): `read-write`
 
 4. [Data Structures](#4-Data-Structures)
-	- [Volume Scalar](#VolumeScalar)
-	- [AudioSessionState](#AudioSessionState)
-	- [DeviceType](#DeviceType)
+	- [Volume Scalar](#volumescalar)
+	- [Volume Balance](#volumebalance)
+	- [AudioSessionState](#audiosessionstate)
+	- [DeviceType](#devicetype)
 
 
 
@@ -121,7 +120,7 @@ device.mute = !mute;
 ```
 
  - ### device volume
-gets and sets the [`volume scalar`](#VolumeScalar) for the device. 
+gets and sets the [`volume scalar`](#volumescalar) for the device. 
 ```TypeScript
 // import ...
 
@@ -130,6 +129,20 @@ const volume: VolumeScalar = device.volume;
 
 // adding 10% to volume
 device.volume += .1;
+```
+
+ - ### device balance
+gets and sets the [`volume balance`](#volumebalance) for the device.
+
+```TypeScript
+// import ...
+
+// retrieving the volume 
+const balance: VolumeBalance = device.balance;
+
+// sets right VolumeScalar to 1 and left VolumeScalar to .5
+// by default, left and right are equal to the VolumeScalar of the device
+device.balance = {right: 1, left: .5};
 ```
 
 
@@ -161,7 +174,7 @@ const mute: boolean = session.mute;
 session.mute = !mute;
 ```
  - ### session volume
-sets and gets the [`VolumeScalar`](#VolumeScalar) for the `AudioSession`.
+sets and gets the [`VolumeScalar`](#volumescalar) for the `AudioSession`.
 
 ```TypeScript
 // import ...
@@ -172,12 +185,37 @@ const volume: VolumeScalar = session.volume;
 // adding 10% to volume
 session.volume += .1;
 ```
+ - ### device balance
+gets and sets the [`volume balance`](#volumebalance) for the device.
+
+```TypeScript
+// import ...
+
+// retrieving the volume
+let session: AudioSession;
+const balance: VolumeBalance = session.balance;
+
+// sets right VolumeScalar to 1 and left VolumeScalar to .5
+// by default, left and right are equal to the VolumeScalar of the session
+session.balance = {right: 1, left: .5};
+```
 
 
 ### 4) Data Structures
 
  - ### VolumeScalar
  a clamped float betwen 0 and 1 representing the power of the volume, 1 is max power and 0 is no output.
+
+ - ### VolumeBalance
+ a structure representing the stereo balance for a device and an audio session
+```Typescript
+interface VolumeBalance {
+	right: Number; // float
+	left: Number; // float
+	stereo: Boolean; // only for Device::balance
+}
+```
+
  - ### AudioSessionState
  an enumeration representing the state of the audio session. Possible values are
 ```TypeScript
