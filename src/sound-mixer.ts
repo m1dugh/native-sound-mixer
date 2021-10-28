@@ -20,8 +20,9 @@ const sMixerModule: { SoundMixer: SoundMixer } = (() => {
 })()
 
 export interface Balance {
-	right: Number;
-	left: Number;
+	right: VolumeScalar;
+	left: VolumeScalar;
+	stereo?: Boolean;
 }
 
 export declare class Device {
