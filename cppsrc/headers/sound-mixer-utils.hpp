@@ -20,8 +20,8 @@ namespace SoundMixerUtils
 	} DeviceDescriptor;
 
 	typedef struct {
-		float right;
-		float left;
+		unsigned float right;
+		unsigned float left;
 		bool stereo;
 	} VolumeBalance;
 }
