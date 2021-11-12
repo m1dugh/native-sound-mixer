@@ -2,6 +2,8 @@
 
 #include <string>
 
+#define VALID_VOLUME_BALANCE(balance) ((balance.right < 1.F && balance.right > 0.F) && (balance.left < 1.F && balance.left > 0.F))
+
 namespace SoundMixerUtils
 {
 

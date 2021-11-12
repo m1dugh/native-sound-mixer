@@ -7,6 +7,7 @@
 
 using SoundMixerUtils::DeviceDescriptor;
 using SoundMixerUtils::DeviceType;
+using SoundMixerUtils::VolumeBalance;
 
 namespace LinuxSoundMixer
 {
@@ -51,7 +52,7 @@ namespace LinuxSoundMixer
 		std::string appName();
 
 	private:
-		pa_source_output_info *GetInfo(pa_operation **);
+		pa_source_output_info *GetInfo();
 		pa_proplist *GetProps();
 	};
 
@@ -69,7 +70,7 @@ namespace LinuxSoundMixer
 		std::string appName();
 
 	private:
-		pa_sink_input_info *GetInfo(pa_operation **);
+		pa_sink_input_info *GetInfo();
 		pa_proplist *GetProps();
 	};
 
@@ -92,6 +93,8 @@ namespace LinuxSoundMixer
 		virtual void SetVolume(float) = 0;
 		virtual bool GetMute() = 0;
 		virtual void SetMute(bool) = 0;
+		virtual void SetVolumeBalance(const VolumeBalance &) = 0;
+		virtual VolumeBalance GetVolumeBalance() = 0;
 		virtual std::vector<_AudioSession *> GetAudioSessions() = 0;
 	};
 
@@ -104,6 +107,8 @@ namespace LinuxSoundMixer
 		void SetVolume(float);
 		bool GetMute();
 		void SetMute(bool);
+		void SetVolumeBalance(const VolumeBalance &);
+		VolumeBalance GetVolumeBalance();
 
 	public:
 		std::string friendlyName();
@@ -111,14 +116,14 @@ namespace LinuxSoundMixer
 		DeviceType type();
 
 	private:
-		pa_sink_info *GetInfo(pa_operation **);
+		pa_sink_info *GetInfo();
 		pa_proplist *GetProps();
 	};
 
 	class InputDevice : public _Device
 	{
 	private:
-		pa_source_info *GetInfo(pa_operation **);
+		pa_source_info *GetInfo();
 		pa_proplist *GetProps();
 
 	public:
@@ -128,6 +133,10 @@ namespace LinuxSoundMixer
 		void SetVolume(float);
 		bool GetMute();
 		void SetMute(bool);
+		void SetVolumeBalance(const VolumeBalance &);
+		VolumeBalance GetVolumeBalance();
+
+	public:
 		std::string friendlyName();
 		std::string name();
 		DeviceType type();
@@ -139,7 +148,7 @@ namespace LinuxSoundMixer
 		SoundMixer();
 		virtual ~SoundMixer();
 		std::vector<_Device *> GetDevices();
-		_Device* GetDefaultDevice(DeviceType);
+		_Device *GetDefaultDevice(DeviceType);
 		_Device *GetDeviceByName(std::string name, DeviceType type);
 
 	private:

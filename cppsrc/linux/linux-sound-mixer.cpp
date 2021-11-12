@@ -1,5 +1,8 @@
 #include "./headers/linux-sound-mixer.hpp"
 
+#include <iostream>
+#include <cstring>
+
 #define WAIT(op, ml)                      \
 	do                                    \
 	{                                     \
@@ -152,7 +155,7 @@ namespace LinuxSoundMixer
 
 }
 
-//definition for Device
+// definition for Device
 namespace LinuxSoundMixer
 {
 
@@ -185,54 +188,44 @@ namespace LinuxSoundMixer
 		*data = info;
 	}
 
-	pa_source_info *InputDevice::GetInfo(pa_operation **op)
+	pa_source_info *InputDevice::GetInfo()
 	{
 		pa_source_info *info;
-		*op = pa_context_get_source_info_by_index(pa.ctx, index, (pa_source_info_cb_t)_output_device_get_info_cb, &info);
-		WAIT(*op, pa.mainloop);
+		pa_operation *op = pa_context_get_source_info_by_index(pa.ctx, index, (pa_source_info_cb_t)_output_device_get_info_cb, &info);
+		WAIT(op, pa.mainloop);
 		return info;
 	}
 
 	float InputDevice::GetVolume()
 	{
-		pa_operation *op;
-		auto *info = GetInfo(&op);
+		auto *info = GetInfo();
 		pa_volume_t volume = pa_cvolume_avg(&(info->volume));
-		pa_operation_unref(op);
 		return (float)volume / MAX_VOLUME;
 	}
 
 	bool InputDevice::GetMute()
 	{
-		pa_operation *op;
-		auto *info = GetInfo(&op);
+		auto *info = GetInfo();
 		int mute = info->mute;
-		pa_operation_unref(op);
 		return (bool)mute;
 	}
 
 	void InputDevice::SetVolume(float v)
 	{
-		if (v > 1)
+		if (v > 1 || v < 0)
 		{
-			v = 1.F;
-		}
-		else if (v < 0)
-		{
-			v = .0F;
+			return;
 		}
 
 		uint32_t volume = v * MAX_VOLUME;
-		pa_operation *op;
-		pa_source_info *info = GetInfo(&op);
+		pa_source_info *info = GetInfo();
 
 		pa_cvolume vol = info->volume;
 		for (size_t i = 0; i < vol.channels; i++)
 		{
 			vol.values[i] = volume;
 		}
-		pa_operation_unref(op);
-		op = pa_context_set_source_volume_by_index(pa.ctx, index, &vol, NULL, NULL);
+		pa_operation *op = pa_context_set_source_volume_by_index(pa.ctx, index, &vol, NULL, NULL);
 		WAIT(op, pa.mainloop);
 		pa_operation_unref(op);
 	}
@@ -240,6 +233,52 @@ namespace LinuxSoundMixer
 	void InputDevice::SetMute(bool mute)
 	{
 		pa_operation *op = pa_context_set_source_mute_by_index(pa.ctx, index, (int)mute, NULL, NULL);
+		WAIT(op, pa.mainloop);
+		pa_operation_unref(op);
+	}
+
+	VolumeBalance InputDevice::GetVolumeBalance()
+	{
+		pa_source_info *info = GetInfo();
+		VolumeBalance result = {0.F, 0.F, false};
+
+		if (info->channel_map.channels < 2)
+		{
+			return result;
+		}
+		result.stereo = true;
+
+		for (uint i = 0; i < info->channel_map.channels; i++)
+		{
+			switch (info->channel_map.map[i])
+			{
+			case PA_CHANNEL_POSITION_LEFT:
+				result.left = ((float)info->volume.values[i]) / (float)MAX_VOLUME;
+				break;
+			case PA_CHANNEL_POSITION_RIGHT:
+				result.right = ((float)info->volume.values[i]) / (float)MAX_VOLUME;
+				break;
+			default:
+				break;
+			}
+		}
+
+		return result;
+	}
+
+	void InputDevice::SetVolumeBalance(const VolumeBalance &balance)
+	{
+		auto *info = GetInfo();
+		pa_cvolume vol = info->volume;
+		if (vol.channels < 2 || !VALID_VOLUME_BALANCE(balance))
+		{
+			return;
+		}
+
+		// TODO : implement channel mapping
+		vol.values[0] = balance.left * MAX_VOLUME;
+		vol.values[1] = balance.right * MAX_VOLUME;
+		pa_operation *op = pa_context_set_sink_volume_by_index(pa.ctx, info->index, &vol, NULL, NULL);
 		WAIT(op, pa.mainloop);
 		pa_operation_unref(op);
 	}
@@ -321,10 +360,8 @@ namespace LinuxSoundMixer
 
 	std::string InputDevice::name()
 	{
-		pa_operation *op;
-		auto *info = GetInfo(&op);
+		auto *info = GetInfo();
 		std::string name = info->name;
-		pa_operation_unref(op);
 		return name;
 	}
 
@@ -344,53 +381,44 @@ namespace LinuxSoundMixer
 		*data = info;
 	}
 
-	pa_sink_info *OutputDevice::GetInfo(pa_operation **op)
+	pa_sink_info *OutputDevice::GetInfo()
 	{
 		pa_sink_info *info;
-		*op = pa_context_get_sink_info_by_index(pa.ctx, index, (pa_sink_info_cb_t)_input_device_get_info_cb, &info);
-		WAIT(*op, pa.mainloop);
+		pa_operation *op = pa_context_get_sink_info_by_index(pa.ctx, index, (pa_sink_info_cb_t)_input_device_get_info_cb, &info);
+		WAIT(op, pa.mainloop);
+		pa_operation_unref(op);
 		return info;
 	}
 
 	float OutputDevice::GetVolume()
 	{
-		pa_operation *op;
-		auto *info = GetInfo(&op);
+		auto *info = GetInfo();
 		pa_volume_t volume = pa_cvolume_avg(&(info->volume));
-		pa_operation_unref(op);
 		return (float)volume / MAX_VOLUME;
 	}
 
 	bool OutputDevice::GetMute()
 	{
-		pa_operation *op;
-		auto *info = GetInfo(&op);
+		auto *info = GetInfo();
 		int mute = info->mute;
-		pa_operation_unref(op);
 		return (bool)mute;
 	}
 
 	void OutputDevice::SetVolume(float v)
 	{
-		if (v > 1)
+		if (v > 1 || v < 0)
 		{
-			v = 1.F;
-		}
-		else if (v < 0)
-		{
-			v = .0F;
+			return;
 		}
 		uint32_t volume = v * MAX_VOLUME;
-		pa_operation *op;
-		auto *info = GetInfo(&op);
+		auto *info = GetInfo();
 
 		pa_cvolume vol = info->volume;
 		for (size_t i = 0; i < vol.channels; i++)
 		{
 			vol.values[i] = volume;
 		}
-		pa_operation_unref(op);
-		op = pa_context_set_sink_volume_by_index(pa.ctx, index, &vol, NULL, NULL);
+		pa_operation *op = pa_context_set_sink_volume_by_index(pa.ctx, info->index, &vol, NULL, NULL);
 		WAIT(op, pa.mainloop);
 		pa_operation_unref(op);
 	}
@@ -398,6 +426,46 @@ namespace LinuxSoundMixer
 	void OutputDevice::SetMute(bool mute)
 	{
 		pa_operation *op = pa_context_set_sink_mute_by_index(pa.ctx, index, (int)mute, NULL, NULL);
+		WAIT(op, pa.mainloop);
+		pa_operation_unref(op);
+	}
+
+	VolumeBalance OutputDevice::GetVolumeBalance()
+	{
+		pa_sink_info *info = GetInfo();
+		VolumeBalance result = {0.F, 0.F, false};
+
+		result.stereo = true;
+		for (uint i = 0; i < info->channel_map.channels; i++)
+		{
+			switch (info->channel_map.map[i])
+			{
+			case PA_CHANNEL_POSITION_LEFT:
+				result.left = ((float)info->volume.values[i]) / (float)MAX_VOLUME;
+				break;
+			case PA_CHANNEL_POSITION_RIGHT:
+				result.right = ((float)info->volume.values[i]) / (float)MAX_VOLUME;
+				break;
+			default:
+				break;
+			}
+		}
+		return result;
+	}
+
+	void OutputDevice::SetVolumeBalance(const VolumeBalance &balance)
+	{
+		auto *info = GetInfo();
+		pa_cvolume vol = info->volume;
+		if (vol.channels < 2 || !VALID_VOLUME_BALANCE(balance))
+		{
+			return;
+		}
+
+		// TODO : implement channel mapping
+		vol.values[0] = balance.left * MAX_VOLUME;
+		vol.values[1] = balance.right * MAX_VOLUME;
+		pa_operation *op = pa_context_set_sink_volume_by_index(pa.ctx, info->index, &vol, NULL, NULL);
 		WAIT(op, pa.mainloop);
 		pa_operation_unref(op);
 	}
@@ -440,10 +508,8 @@ namespace LinuxSoundMixer
 
 	std::string OutputDevice::name()
 	{
-		pa_operation *op;
-		auto *info = GetInfo(&op);
+		auto *info = GetInfo();
 		std::string name = info->name;
-		pa_operation_unref(op);
 		return name;
 	}
 
@@ -513,7 +579,7 @@ namespace LinuxSoundMixer
 		*data->info = info;
 	}
 
-	pa_source_output_info *InputAudioSession::GetInfo(pa_operation **op)
+	pa_source_output_info *InputAudioSession::GetInfo()
 	{
 		pa_source_output_info *info;
 		struct _SessionData<pa_source_output_info> data
@@ -521,51 +587,42 @@ namespace LinuxSoundMixer
 			&info,
 				index
 		};
-		*op = pa_context_get_source_output_info(pa.ctx, index, (pa_source_output_info_cb_t)_output_session_get_info_cb, &data);
-		WAIT(*op, pa.mainloop);
+		pa_operation *op = pa_context_get_source_output_info(pa.ctx, index, (pa_source_output_info_cb_t)_output_session_get_info_cb, &data);
+		WAIT(op, pa.mainloop);
+		pa_operation_unref(op);
 
 		return info;
 	}
 
 	float InputAudioSession::GetVolume()
 	{
-		pa_operation *op;
-		auto *info = GetInfo(&op);
+		auto *info = GetInfo();
 		pa_volume_t volume = pa_cvolume_avg(&(info->volume));
-		pa_operation_unref(op);
 		return (float)volume / MAX_VOLUME;
 	}
 
 	bool InputAudioSession::GetMute()
 	{
-		pa_operation *op;
-		auto *info = GetInfo(&op);
+		auto *info = GetInfo();
 		int mute = info->mute;
-		pa_operation_unref(op);
 		return (bool)mute;
 	}
 
 	void InputAudioSession::SetVolume(float v)
 	{
-		if (v > 1)
+		if (v > 1 || v < 0)
 		{
-			v = 1.F;
-		}
-		else if (v < 0)
-		{
-			v = .0F;
+			return;
 		}
 		uint32_t volume = v * MAX_VOLUME;
-		pa_operation *op;
-		auto *info = GetInfo(&op);
+		auto *info = GetInfo();
 
 		pa_cvolume vol = info->volume;
 		for (size_t i = 0; i < vol.channels; i++)
 		{
 			vol.values[i] = volume;
 		}
-		pa_operation_unref(op);
-		op = pa_context_set_source_output_volume(pa.ctx, index, &vol, NULL, NULL);
+		pa_operation *op = pa_context_set_source_output_volume(pa.ctx, index, &vol, NULL, NULL);
 		WAIT(op, pa.mainloop);
 		pa_operation_unref(op);
 	}
@@ -579,10 +636,8 @@ namespace LinuxSoundMixer
 
 	std::string InputAudioSession::description()
 	{
-		pa_operation *op;
-		auto *s = GetInfo(&op);
+		auto *s = GetInfo();
 		std::string name = s->name;
-		pa_operation_unref(op);
 		return name;
 	}
 
@@ -631,7 +686,7 @@ namespace LinuxSoundMixer
 		*data->info = info;
 	}
 
-	pa_sink_input_info *OutputAudioSession::GetInfo(pa_operation **op)
+	pa_sink_input_info *OutputAudioSession::GetInfo()
 	{
 		pa_sink_input_info *info;
 		struct _SessionData<pa_sink_input_info> data
@@ -639,51 +694,42 @@ namespace LinuxSoundMixer
 			&info,
 				index
 		};
-		*op = pa_context_get_sink_input_info(pa.ctx, index, (pa_sink_input_info_cb_t)_input_session_get_info_cb, &data);
-		WAIT(*op, pa.mainloop);
+		pa_operation *op = pa_context_get_sink_input_info(pa.ctx, index, (pa_sink_input_info_cb_t)_input_session_get_info_cb, &data);
+		WAIT(op, pa.mainloop);
+		pa_operation_unref(op);
 
 		return info;
 	}
 
 	float OutputAudioSession::GetVolume()
 	{
-		pa_operation *op;
-		auto *info = GetInfo(&op);
+		auto *info = GetInfo();
 		pa_volume_t volume = pa_cvolume_avg(&(info->volume));
-		pa_operation_unref(op);
 		return (float)volume / MAX_VOLUME;
 	}
 
 	bool OutputAudioSession::GetMute()
 	{
-		pa_operation *op;
-		auto *info = GetInfo(&op);
+		auto *info = GetInfo();
 		int mute = info->mute;
-		pa_operation_unref(op);
 		return (bool)mute;
 	}
 
 	void OutputAudioSession::SetVolume(float v)
 	{
-		if (v > 1)
+		if (v > 1 || v < 0)
 		{
-			v = 1.F;
-		}
-		else if (v < 0)
-		{
-			v = .0F;
+			return;
 		}
 		uint32_t volume = v * MAX_VOLUME;
-		pa_operation *op;
-		auto *info = GetInfo(&op);
+		auto *info = GetInfo();
 
 		pa_cvolume vol = info->volume;
 		for (size_t i = 0; i < vol.channels; i++)
 		{
 			vol.values[i] = volume;
 		}
-		pa_operation_unref(op);
-		op = pa_context_set_sink_input_volume(pa.ctx, index, &vol, NULL, NULL);
+		pa_operation *op = pa_context_set_sink_input_volume(pa.ctx, index, &vol, NULL, NULL);
 		WAIT(op, pa.mainloop);
 		pa_operation_unref(op);
 	}
@@ -697,10 +743,8 @@ namespace LinuxSoundMixer
 
 	std::string OutputAudioSession::description()
 	{
-		pa_operation *op;
-		auto *s = GetInfo(&op);
+		auto *s = GetInfo();
 		std::string name = s->name;
-		pa_operation_unref(op);
 		return name;
 	}
 
