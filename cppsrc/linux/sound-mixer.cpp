@@ -50,6 +50,7 @@ namespace SoundMixer
 	{
 
 		constructor = Napi::Persistent(GetClass(env));
+		constructor.SuppressDestruct();
 
 		return exports;
 	}
@@ -160,6 +161,7 @@ namespace SoundMixer
 	Napi::Object AudioSessionObject::Init(Napi::Env env, Napi::Object exports)
 	{
 		constructor = Napi::Persistent(GetClass(env));
+		constructor.SuppressDestruct();
 
 		return exports;
 	}
@@ -205,16 +207,16 @@ namespace SoundMixer
 	Napi::Value AudioSessionObject::GetChannelVolume(const Napi::CallbackInfo &info)
 	{
 		Napi::Object result = Napi::Object::New(info.Env());
-		/*_AudioSession *session = reinterpret_cast<_AudioSession *>(pSession);
+		_AudioSession *session = reinterpret_cast<_AudioSession *>(pSession);
 		VolumeBalance balance = session->GetVolumeBalance();
 		result.Set("right", balance.right);
-		result.Set("left", balance.left);*/
+		result.Set("left", balance.left);
 		return result;
 	}
 
 	void AudioSessionObject::SetChannelVolume(const Napi::CallbackInfo &info, const Napi::Value &value)
 	{
-		/*Napi::Object param = value.As<Napi::Object>();
+		Napi::Object param = value.As<Napi::Object>();
 		if (!param.Has("right") || !param.Has("left"))
 		{
 			return;
@@ -225,7 +227,7 @@ namespace SoundMixer
 			param.Get("left").As<Napi::Number>().FloatValue(),
 			true};
 
-		session->SetVolumeBalance(balance);*/
+		session->SetVolumeBalance(balance);
 	}
 
 }

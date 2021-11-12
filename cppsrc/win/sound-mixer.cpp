@@ -54,6 +54,7 @@ namespace SoundMixer
 	{
 
 		constructor = Napi::Persistent(GetClass(env));
+		constructor.SuppressDestruct();
 
 		return exports;
 	}

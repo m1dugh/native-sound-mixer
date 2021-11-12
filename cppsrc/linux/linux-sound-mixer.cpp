@@ -278,7 +278,7 @@ namespace LinuxSoundMixer
 		// TODO : implement channel mapping
 		vol.values[0] = balance.left * MAX_VOLUME;
 		vol.values[1] = balance.right * MAX_VOLUME;
-		pa_operation *op = pa_context_set_sink_volume_by_index(pa.ctx, info->index, &vol, NULL, NULL);
+		pa_operation *op = pa_context_set_source_volume_by_index(pa.ctx, info->index, &vol, NULL, NULL);
 		WAIT(op, pa.mainloop);
 		pa_operation_unref(op);
 	}
@@ -634,6 +634,52 @@ namespace LinuxSoundMixer
 		pa_operation_unref(op);
 	}
 
+	VolumeBalance InputAudioSession::GetVolumeBalance()
+	{
+		pa_source_output_info *info = GetInfo();
+		VolumeBalance result = {0.F, 0.F, false};
+
+		if (info->channel_map.channels < 2)
+		{
+			return result;
+		}
+		result.stereo = true;
+
+		for (uint i = 0; i < info->channel_map.channels; i++)
+		{
+			switch (info->channel_map.map[i])
+			{
+			case PA_CHANNEL_POSITION_LEFT:
+				result.left = ((float)info->volume.values[i]) / (float)MAX_VOLUME;
+				break;
+			case PA_CHANNEL_POSITION_RIGHT:
+				result.right = ((float)info->volume.values[i]) / (float)MAX_VOLUME;
+				break;
+			default:
+				break;
+			}
+		}
+
+		return result;
+	}
+
+	void InputAudioSession::SetVolumeBalance(const VolumeBalance &balance)
+	{
+		auto *info = GetInfo();
+		pa_cvolume vol = info->volume;
+		if (vol.channels < 2 || !VALID_VOLUME_BALANCE(balance))
+		{
+			return;
+		}
+
+		// TODO : implement channel mapping
+		vol.values[0] = balance.left * MAX_VOLUME;
+		vol.values[1] = balance.right * MAX_VOLUME;
+		pa_operation *op = pa_context_set_source_output_volume(pa.ctx, info->index, &vol, NULL, NULL);
+		WAIT(op, pa.mainloop);
+		pa_operation_unref(op);
+	}
+
 	std::string InputAudioSession::description()
 	{
 		auto *s = GetInfo();
@@ -737,6 +783,46 @@ namespace LinuxSoundMixer
 	void OutputAudioSession::SetMute(bool mute)
 	{
 		pa_operation *op = pa_context_set_sink_input_mute(pa.ctx, index, (int)mute, NULL, NULL);
+		WAIT(op, pa.mainloop);
+		pa_operation_unref(op);
+	}
+
+	VolumeBalance OutputAudioSession::GetVolumeBalance()
+	{
+		pa_sink_input_info *info = GetInfo();
+		VolumeBalance result = {0.F, 0.F, false};
+
+		result.stereo = true;
+		for (uint i = 0; i < info->channel_map.channels; i++)
+		{
+			switch (info->channel_map.map[i])
+			{
+			case PA_CHANNEL_POSITION_LEFT:
+				result.left = ((float)info->volume.values[i]) / (float)MAX_VOLUME;
+				break;
+			case PA_CHANNEL_POSITION_RIGHT:
+				result.right = ((float)info->volume.values[i]) / (float)MAX_VOLUME;
+				break;
+			default:
+				break;
+			}
+		}
+		return result;
+	}
+
+	void OutputAudioSession::SetVolumeBalance(const VolumeBalance &balance)
+	{
+		auto *info = GetInfo();
+		pa_cvolume vol = info->volume;
+		if (vol.channels < 2 || !VALID_VOLUME_BALANCE(balance))
+		{
+			return;
+		}
+
+		// TODO : implement channel mapping
+		vol.values[0] = balance.left * MAX_VOLUME;
+		vol.values[1] = balance.right * MAX_VOLUME;
+		pa_operation *op = pa_context_set_sink_input_volume(pa.ctx, info->index, &vol, NULL, NULL);
 		WAIT(op, pa.mainloop);
 		pa_operation_unref(op);
 	}

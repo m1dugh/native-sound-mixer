@@ -36,6 +36,8 @@ namespace LinuxSoundMixer
 		virtual void SetVolume(float) = 0;
 		virtual bool GetMute() = 0;
 		virtual void SetMute(bool) = 0;
+		virtual VolumeBalance GetVolumeBalance() = 0;
+		virtual void SetVolumeBalance(const VolumeBalance&) = 0;
 	};
 
 	class InputAudioSession : public _AudioSession
@@ -46,6 +48,8 @@ namespace LinuxSoundMixer
 		void SetVolume(float);
 		bool GetMute();
 		void SetMute(bool);
+		void SetVolumeBalance(const VolumeBalance &);
+		VolumeBalance GetVolumeBalance();
 
 	public:
 		std::string description();
@@ -64,6 +68,8 @@ namespace LinuxSoundMixer
 		void SetVolume(float);
 		bool GetMute();
 		void SetMute(bool);
+		void SetVolumeBalance(const VolumeBalance &);
+		VolumeBalance GetVolumeBalance();
 
 	public:
 		std::string description();
