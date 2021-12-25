@@ -1,6 +1,6 @@
 {
 	"name": "native-sound-mixer",
-	"version": "3.3.0-win",
+	"version": "3.3.0",
 	"description": "node js native sound mixer module",
 	"main": "./dist/sound-mixer.js",
 	"type": "commonjs",
@@ -14,7 +14,8 @@
 		"prepublishOnly": "npm run build && npm run test && node scripts/check-bins.js"
 	},
 	"os": [
-		"win32"
+		"win32",
+		"linux"
 	],
 	"types": "dist/@types/sound-mixer.d.ts",
 	"author": "romlm",
