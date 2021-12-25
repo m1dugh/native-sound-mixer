@@ -33,6 +33,7 @@ or using yarn :
 ## Features
  - Per-device volume control and monitoring
  - Per-audio session volume control and monitoring within each device
+ - stereo volume control for session and device
  - Fully compatible with [TypeScript](https://www.typescriptlang.org/)
 
 
@@ -185,8 +186,8 @@ const volume: VolumeScalar = session.volume;
 // adding 10% to volume
 session.volume += .1;
 ```
- - ### device balance
-gets and sets the [`volume balance`](#volumebalance) for the device.
+ - ### session balance
+gets and sets the [`volume balance`](#volumebalance) for the session.
 
 ```TypeScript
 // import ...
