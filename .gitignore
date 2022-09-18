@@ -1,6 +1,5 @@
 # node config
 node_modules
-package-lock.json
 
 #IDE config
 .vscode/
