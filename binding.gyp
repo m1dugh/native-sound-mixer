@@ -37,6 +37,9 @@
                         "include_dirs": [
                             "<!(node -p \"require('node-addon-api').include_dir\")"
                         ],
+                        "ldflags": [
+                            "-Wl,-z,defs"
+                        ],
                         "libraries": [],
                         "defines": ["NAPI_CPP_EXCEPTIONS", "_HAS_EXCEPTIONS=1"],
                         "sources": [

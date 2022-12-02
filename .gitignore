@@ -11,8 +11,6 @@ build/
 dist/
 
 #test files
-test/
-jest.config.js
 coverage/
 
 #cpp linux test files
