@@ -8,6 +8,9 @@ using std::vector;
 
 namespace SoundMixer
 {
+Napi::FunctionReference *AudioSessionObject::constructor;
+Napi::FunctionReference *DeviceObject::constructor;
+
 	WinSoundMixer::SoundMixer *mixer;
 
 	Napi::Object Init(Napi::Env env, Napi::Object exports)
@@ -53,9 +56,8 @@ namespace SoundMixer
 	Napi::Object DeviceObject::Init(Napi::Env env, Napi::Object exports)
 	{
 
-		constructor = Napi::Persistent(GetClass(env));
-		constructor.SuppressDestruct();
-
+        constructor = new Napi::FunctionReference();
+		*constructor = Napi::Persistent(GetClass(env));
 		return exports;
 	}
 
@@ -79,7 +81,7 @@ namespace SoundMixer
 	{
 
 		Device *dev = reinterpret_cast<Device *>(device);
-		Napi::Object result = constructor.New({});
+		Napi::Object result = constructor->New({});
 		Napi::ObjectWrap<DeviceObject>::Unwrap(result)->pDevice = dev;
 		result.Set("name", dev->Desc().fullName);
 		result.Set("type", (int)dev->Desc().type);
@@ -164,7 +166,8 @@ namespace SoundMixer
 
 	Napi::Object AudioSessionObject::Init(Napi::Env env, Napi::Object exports)
 	{
-		constructor = Napi::Persistent(GetClass(env));
+        constructor = new Napi::FunctionReference();
+		*constructor = Napi::Persistent(GetClass(env));
 		return exports;
 	}
 
@@ -176,7 +179,7 @@ namespace SoundMixer
 	Napi::Value AudioSessionObject::New(Napi::Env env, void *data)
 	{
 		AudioSession *session = reinterpret_cast<AudioSession *>(data);
-		Napi::Object result = constructor.New({});
+		Napi::Object result = constructor->New({});
 		Napi::ObjectWrap<AudioSessionObject>::Unwrap(result)->pSession = session;
 		result.Set("name", session->name());
 		result.Set("appName", session->path());
