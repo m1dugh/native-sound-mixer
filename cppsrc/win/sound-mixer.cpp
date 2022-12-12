@@ -34,6 +34,12 @@ Napi::FunctionReference *DeviceObject::constructor;
 
 	MixerObject::MixerObject(const Napi::CallbackInfo &info) : Napi::ObjectWrap<MixerObject>(info) {}
 
+    MixerObject::~MixerObject() {
+        delete mixer;
+        delete AudioSessionObject::constructor;
+        delete DeviceObject::constructor;
+    }
+
 	Napi::Value MixerObject::GetDefaultDevice(const Napi::CallbackInfo &info)
 	{
 		DeviceType type = (DeviceType)info[0].As<Napi::Number>().Int32Value();
@@ -57,7 +63,9 @@ Napi::FunctionReference *DeviceObject::constructor;
 	{
 
         constructor = new Napi::FunctionReference();
-		*constructor = Napi::Persistent(GetClass(env));
+        Napi::Function f = GetClass(env);
+        exports.Set("Device", f);
+		*constructor = Napi::Persistent(f);
 		return exports;
 	}
 

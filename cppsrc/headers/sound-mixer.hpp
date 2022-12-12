@@ -34,7 +34,6 @@ namespace SoundMixer
 
     class DeviceObject : public Napi::ObjectWrap<DeviceObject>
     {
-        static Napi::FunctionReference *constructor;
         public:
         static Napi::Object Init(Napi::Env, Napi::Object);
         DeviceObject(const Napi::CallbackInfo &info);
@@ -51,13 +50,15 @@ namespace SoundMixer
 
         Napi::Value GetSessions(const Napi::CallbackInfo &info);
 
+        public:
+        static Napi::FunctionReference *constructor;
+
         private:
         Napi::Value GetName();
         static Napi::Function GetClass(Napi::Env);
 
         private:
         SoundMixerUtils::DeviceDescriptor desc;
-
         void *pDevice;
     };
 
@@ -67,6 +68,7 @@ namespace SoundMixer
             static Napi::Object Init(Napi::Env, Napi::Object);
             static Napi::Value GetDevices(const Napi::CallbackInfo &info);
             MixerObject(const Napi::CallbackInfo &info);
+            virtual ~MixerObject();
             static Napi::Value GetDefaultDevice(const Napi::CallbackInfo &info);
     };
 

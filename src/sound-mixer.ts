@@ -1,7 +1,9 @@
-
 import * as os from "os";
+import * as util from "util";
+import { EventEmitter } from "events";
 
-const sMixerModule: { SoundMixer: SoundMixer } = (() => {
+
+const sMixerModule: { SoundMixer: SoundMixer, Device: any } = (() => {
 
 	const getModule = (platform: "macos" | "win" | "linux", arch: string | undefined = undefined) => require(`${__dirname}/addons/${platform}-sound-mixer${arch ? "_" + arch : ""}.node`)
 	const platform = os.platform()
@@ -18,6 +20,8 @@ const sMixerModule: { SoundMixer: SoundMixer } = (() => {
 	throw new Error("could not get the binary file")
 
 })()
+
+util.inherits(sMixerModule.Device, EventEmitter)
 
 export interface VolumeBalance {
 	right: VolumeScalar;
