@@ -1,7 +1,4 @@
 import * as os from "os";
-import * as util from "util";
-import { EventEmitter } from "events";
-
 
 const sMixerModule: { SoundMixer: SoundMixer, Device: any } = (() => {
 
@@ -21,8 +18,6 @@ const sMixerModule: { SoundMixer: SoundMixer, Device: any } = (() => {
 
 })()
 
-util.inherits(sMixerModule.Device, EventEmitter)
-
 export interface VolumeBalance {
 	right: VolumeScalar;
 	left: VolumeScalar;
@@ -37,6 +32,9 @@ export declare class Device {
 	public readonly name: string;
 	public readonly type: DeviceType;
 	public readonly sessions: AudioSession[];
+
+    public on(ev: string, callback: any): Number
+    public removeListener(callback: any): boolean
 }
 
 export enum AudioSessionState {

@@ -5,6 +5,8 @@ node_modules
 .vscode/
 .vs/
 *.code-workspace
+*.swp
+*.vim
 
 #build files
 build/
