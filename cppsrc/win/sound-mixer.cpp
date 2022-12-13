@@ -11,14 +11,27 @@ namespace SoundMixer
 {
 Napi::FunctionReference *AudioSessionObject::constructor;
 Napi::FunctionReference *DeviceObject::constructor;
-EventPool *MixerObject::eventPool;
+Napi::FunctionReference *MixerObject::constructor;
 
-	WinSoundMixer::SoundMixer *mixer;
+    Napi::Value MixerObject::Singleton(const Napi::CallbackInfo &info) {
+        if(MixerObject::_instance == NULL) {
+            _instance = new Napi::Object();
+            Napi::Object res = constructor->New({});
+
+            MixerObject::Unwrap(res)->mixer =
+                new WinSoundMixer::SoundMixer(MixerObject::on_device_change_cb);
+            MixerObject::Unwrap(res)->eventPool =
+                new EventPool();
+
+            *_instance = res;
+        }
+        return *_instance;
+    }
 
     void MixerObject::on_device_change_cb(DeviceDescriptor desc, NotificationHandler data) {
         if(data.flags & DEVICE_CHANGE_MASK_MUTE) {
             vector<Napi::FunctionReference *> listeners =
-                MixerObject::eventPool->GetListeners(desc, EventType::MUTE);
+                eventPool->GetListeners(desc, EventType::MUTE);
 
             for (Napi::FunctionReference *cb : listeners) {
                 // TODO: execute callback
@@ -28,17 +41,16 @@ EventPool *MixerObject::eventPool;
 
         if(data.flags & DEVICE_CHANGE_MASK_VOLUME) {
             vector<Napi::FunctionReference *> listeners =
-                MixerObject::eventPool->GetListeners(desc, EventType::VOLUME);
+                eventPool->GetListeners(desc, EventType::VOLUME);
             for(Napi::FunctionReference *cb : listeners) {
                 // TODO: execute callback
-                // cb->Call({NULL});
+                cb->Call({NULL});
             }
         }
     }
 
 	Napi::Object Init(Napi::Env env, Napi::Object exports)
 	{
-		mixer = new WinSoundMixer::SoundMixer(MixerObject::on_device_change_cb);
 		MixerObject::Init(env, exports);
 		DeviceObject::Init(env, exports);
 		AudioSessionObject::Init(env, exports);
@@ -49,13 +61,15 @@ EventPool *MixerObject::eventPool;
 	Napi::Object MixerObject::Init(Napi::Env env, Napi::Object exports)
 	{
 		Napi::Function sm = DefineClass(env, "SoundMixer", {
-            StaticAccessor<&MixerObject::GetDevices>("devices"),
-            StaticMethod<&MixerObject::GetDefaultDevice>("getDefaultDevice")
+            InstanceAccessor<&MixerObject::GetDevices>("devices"),
+            InstanceMethod<&MixerObject::GetDefaultDevice>("getDefaultDevice"),
+            StaticAccessor<&MixerObject::Singleton>("Singleton")
         });
-
+        constructor = new Napi::FunctionReference();
+        *constructor = Napi::Persistent(sm);
+        _instance = NULL;
 
 		exports.Set("SoundMixer", sm);
-        eventPool = new EventPool();
 		return exports;
 	}
 
