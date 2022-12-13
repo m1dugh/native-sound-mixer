@@ -3,6 +3,7 @@
 
 #include <iostream>
 
+using namespace SoundMixerUtils;
 using namespace WinSoundMixer;
 using std::vector;
 
@@ -10,6 +11,7 @@ namespace SoundMixer
 {
 Napi::FunctionReference *AudioSessionObject::constructor;
 Napi::FunctionReference *DeviceObject::constructor;
+EventPool *MixerObject::eventPool;
 
 	WinSoundMixer::SoundMixer *mixer;
 
@@ -27,14 +29,16 @@ Napi::FunctionReference *DeviceObject::constructor;
 	{
 		Napi::Function sm = DefineClass(env, "SoundMixer", {StaticAccessor<&MixerObject::GetDevices>("devices"), StaticMethod<&MixerObject::GetDefaultDevice>("getDefaultDevice")});
 
-		exports.Set("SoundMixer", sm);
 
+		exports.Set("SoundMixer", sm);
+        eventPool = new EventPool();
 		return exports;
 	}
 
 	MixerObject::MixerObject(const Napi::CallbackInfo &info) : Napi::ObjectWrap<MixerObject>(info) {}
 
     MixerObject::~MixerObject() {
+        delete eventPool;
         delete mixer;
         delete AudioSessionObject::constructor;
         delete DeviceObject::constructor;
@@ -61,7 +65,6 @@ Napi::FunctionReference *DeviceObject::constructor;
 
 	Napi::Object DeviceObject::Init(Napi::Env env, Napi::Object exports)
 	{
-
         constructor = new Napi::FunctionReference();
         Napi::Function f = GetClass(env);
         exports.Set("Device", f);
@@ -71,7 +74,14 @@ Napi::FunctionReference *DeviceObject::constructor;
 
 	Napi::Function DeviceObject::GetClass(Napi::Env env)
 	{
-		Napi::Function func = DefineClass(env, "Device", {InstanceAccessor<&DeviceObject::GetVolume, &DeviceObject::SetVolume>("volume"), InstanceAccessor<&DeviceObject::GetMute, &DeviceObject::SetMute>("mute"), InstanceAccessor<&DeviceObject::GetSessions>("sessions"), InstanceAccessor<&DeviceObject::GetChannelVolume, &DeviceObject::SetChannelVolume>("balance")});
+		Napi::Function func = DefineClass(env, "Device", {
+            InstanceAccessor<&DeviceObject::GetVolume, &DeviceObject::SetVolume>("volume"),
+            InstanceAccessor<&DeviceObject::GetMute, &DeviceObject::SetMute>("mute"),
+            InstanceAccessor<&DeviceObject::GetSessions>("sessions"),
+            InstanceAccessor<&DeviceObject::GetChannelVolume, &DeviceObject::SetChannelVolume>("balance"),
+            InstanceMethod<&DeviceObject::RegisterEvent>("on"),
+            InstanceMethod<&DeviceObject::RemoveEvent>("removeListener")
+        });
 
 		return func;
 	}
@@ -90,6 +100,7 @@ Napi::FunctionReference *DeviceObject::constructor;
 
 		Device *dev = reinterpret_cast<Device *>(device);
 		Napi::Object result = constructor->New({});
+        Napi::ObjectWrap<DeviceObject>::Unwrap(result)->desc = dev->Desc();
 		Napi::ObjectWrap<DeviceObject>::Unwrap(result)->pDevice = dev;
 		result.Set("name", dev->Desc().fullName);
 		result.Set("type", (int)dev->Desc().type);
@@ -122,6 +133,51 @@ Napi::FunctionReference *DeviceObject::constructor;
 		Device *dev = reinterpret_cast<Device *>(pDevice);
 		dev->SetMute(val);
 	}
+
+    Napi::Value DeviceObject::RegisterEvent(const Napi::CallbackInfo &info) {
+        Napi::Env env = info.Env();
+        if(info.Length() != 2 || !info[0].IsString() || !info[1].IsFunction()) {
+            Napi::Error::New(env, "Expected <event-type> <function>").ThrowAsJavaScriptException();
+            return Napi::Number::New(env, -1);
+        }
+
+        std::string eventName = info[0].As<Napi::String>().Utf8Value();
+        EventType eventType;
+        if(eventName == "volume")
+            eventType = EventType::VOLUME;
+        else if(eventName == "mute")
+            eventType = EventType::MUTE;
+        else
+            return Napi::Number::New(env, -1);
+
+        Napi::Function func = info[1].As<Napi::Function>();
+        Napi::FunctionReference *ref = new Napi::FunctionReference();
+        *ref = Napi::Persistent(func);
+
+        int handler = MixerObject::eventPool->RegisterEvent(desc, eventType, ref);
+        return Napi::Number::New(env, handler);
+    }
+
+    Napi::Value DeviceObject::RemoveEvent(const Napi::CallbackInfo &info) {
+        Napi::Env env = info.Env();
+        // expects EventType and event id
+        if(info.Length() != 2 || !info[0].IsString() || !info[1].IsNumber()) {
+            Napi::Error::New(env, "Expected <event-type> <callback-handler>").ThrowAsJavaScriptException();
+            return Napi::Boolean::New(env, false);
+        }
+        std::string eventName = info[0].As<Napi::String>().Utf8Value();
+        EventType eventType;
+        if(eventName == "volume")
+            eventType = EventType::VOLUME;
+        else if(eventName == "mute")
+            eventType = EventType::MUTE;
+        else
+            return Napi::Number::New(env, -1);
+        int handler = info[1].As<Napi::Number>().Int32Value();
+        bool res = MixerObject::eventPool->RemoveEvent(desc, eventType, handler);
+
+        return Napi::Boolean::New(env, res);
+    }
 
 	Napi::Value DeviceObject::GetChannelVolume(const Napi::CallbackInfo &info)
 	{

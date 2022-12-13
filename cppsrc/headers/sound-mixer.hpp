@@ -1,11 +1,13 @@
 #pragma once
 
 #include "./sound-mixer-utils.hpp"
-
 #include <napi.h>
+#include <map>
+#include <vector>
 
 namespace SoundMixer
 {
+
     Napi::Object Init(Napi::Env, Napi::Object);
 
     class AudioSessionObject : public Napi::ObjectWrap<AudioSessionObject>
@@ -45,10 +47,14 @@ namespace SoundMixer
         void SetVolume(const Napi::CallbackInfo &info, const Napi::Value &value);
         void SetMute(const Napi::CallbackInfo &info, const Napi::Value &value);
 
+        Napi::Value RegisterEvent(const Napi::CallbackInfo &info);
+        Napi::Value RemoveEvent(const Napi::CallbackInfo &info);
+
         void SetChannelVolume(const Napi::CallbackInfo &info, const Napi::Value &value);
         Napi::Value GetChannelVolume(const Napi::CallbackInfo &info);
 
         Napi::Value GetSessions(const Napi::CallbackInfo &info);
+
 
         public:
         static Napi::FunctionReference *constructor;
@@ -58,8 +64,8 @@ namespace SoundMixer
         static Napi::Function GetClass(Napi::Env);
 
         private:
-        SoundMixerUtils::DeviceDescriptor desc;
         void *pDevice;
+        SoundMixerUtils::DeviceDescriptor desc;
     };
 
     class MixerObject : public Napi::ObjectWrap<MixerObject>
@@ -70,6 +76,8 @@ namespace SoundMixer
             MixerObject(const Napi::CallbackInfo &info);
             virtual ~MixerObject();
             static Napi::Value GetDefaultDevice(const Napi::CallbackInfo &info);
-    };
 
+        public:
+            static SoundMixerUtils::EventPool *eventPool;
+    };
 } // namespace SoundMixer
