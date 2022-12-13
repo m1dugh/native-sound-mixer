@@ -102,7 +102,7 @@ namespace WinSoundMixer
 		}
 	}
 
-	SoundMixer::SoundMixer()
+	SoundMixer::SoundMixer(on_device_changed_cb_t cb) : deviceCallback(cb)
 	{
 		CoInitialize(NULL);
 		HRESULT ok = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (LPVOID *)&pEnumerator);
@@ -143,7 +143,7 @@ namespace WinSoundMixer
                 continue;
             std::string key = toString(winId);
             if(devices.count(key) <= 0) {
-                devices[key] = new Device(dev);
+                devices[key] = new Device(dev, deviceCallback);
             }
             res.push_back(devices[key]);
             CoTaskMemFree(winId);
@@ -158,10 +158,14 @@ namespace WinSoundMixer
             pEnumerator->GetDefaultAudioEndpoint(EDataFlow::eRender, ERole::eConsole, &dev);
         else
             pEnumerator->GetDefaultAudioEndpoint(EDataFlow::eCapture, ERole::eConsole, &dev);
-        return new Device(dev);
+        return new Device(dev, deviceCallback);
     }
 
-    Device::Device(IMMDevice *dev) : device(dev), endpoint(NULL), endpointVolume(NULL)
+    Device::Device(IMMDevice *dev, on_device_changed_cb_t cb):
+        device(dev),
+        endpoint(NULL),
+        endpointVolume(NULL),
+        _deviceCallback(cb)
     {
         LPWSTR winId;
         device->GetId(&winId);
@@ -238,7 +242,7 @@ namespace WinSoundMixer
 
         // TODO: properly implement callbacks.
         endpointVolume->RegisterControlChangeNotify(
-                new SoundMixerAudioEndpointVolumeCallback()
+                new SoundMixerAudioEndpointVolumeCallback(this)
                 );
 
         SafeRelease(&enumerator);
@@ -510,11 +514,13 @@ namespace WinSoundMixer
 
 
     IFACEMETHODIMP SoundMixerAudioEndpointVolumeCallback::OnNotify(PAUDIO_VOLUME_NOTIFICATION_DATA pNotify) {
-        std::cout << "master volume: " << pNotify->fMasterVolume << std::endl;
+        if(device->_deviceCallback == NULL)
+            return S_OK;
+        device->_deviceCallback(device->Desc(), 0, pNotify);
         return S_OK;
     }
 
-    SoundMixerAudioEndpointVolumeCallback::SoundMixerAudioEndpointVolumeCallback() {}
+    SoundMixerAudioEndpointVolumeCallback::SoundMixerAudioEndpointVolumeCallback(Device *dev): device(dev) {}
     IFACEMETHODIMP SoundMixerAudioEndpointVolumeCallback::QueryInterface(const IID& iid, void **ppUnk) {
         return S_OK;
     }

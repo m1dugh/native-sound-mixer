@@ -15,9 +15,13 @@ EventPool *MixerObject::eventPool;
 
 	WinSoundMixer::SoundMixer *mixer;
 
+    void on_device_changed_cb(DeviceDescriptor desc, int flags, PAUDIO_VOLUME_NOTIFICATION_DATA data) {
+        std::cout << "triggered device " << desc.fullName << std::endl;
+    }
+
 	Napi::Object Init(Napi::Env env, Napi::Object exports)
 	{
-		mixer = new WinSoundMixer::SoundMixer();
+		mixer = new WinSoundMixer::SoundMixer(on_device_changed_cb);
 		MixerObject::Init(env, exports);
 		DeviceObject::Init(env, exports);
 		AudioSessionObject::Init(env, exports);
