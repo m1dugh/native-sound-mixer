@@ -42,6 +42,9 @@ namespace SoundMixer
         virtual ~DeviceObject();
         static Napi::Value New(Napi::Env, void *);
 
+        Napi::Value GetName(const Napi::CallbackInfo &info);
+        Napi::Value GetType(const Napi::CallbackInfo &info);
+
         Napi::Value GetVolume(const Napi::CallbackInfo &info);
         Napi::Value GetMute(const Napi::CallbackInfo &info);
         void SetVolume(const Napi::CallbackInfo &info, const Napi::Value &value);
@@ -55,6 +58,8 @@ namespace SoundMixer
 
         Napi::Value GetSessions(const Napi::CallbackInfo &info);
 
+        bool Update();
+
 
         public:
         static Napi::FunctionReference *constructor;
@@ -65,7 +70,7 @@ namespace SoundMixer
 
         private:
         void *pDevice;
-        SoundMixerUtils::DeviceDescriptor desc;
+        SoundMixerUtils::DeviceDescriptor Desc();
     };
 
     class MixerObject : public Napi::ObjectWrap<MixerObject>
@@ -76,6 +81,8 @@ namespace SoundMixer
             MixerObject(const Napi::CallbackInfo &info);
             virtual ~MixerObject();
             static Napi::Value GetDefaultDevice(const Napi::CallbackInfo &info);
+            
+            static void on_device_change_cb(SoundMixerUtils::DeviceDescriptor d, SoundMixerUtils::NotificationHandler data);
 
         public:
             static SoundMixerUtils::EventPool *eventPool;

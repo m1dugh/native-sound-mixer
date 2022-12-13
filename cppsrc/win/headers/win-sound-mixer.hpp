@@ -15,6 +15,8 @@
 #define DEVICE_CHANGE_MASK_VOLUME 2*DEVICE_CHANGE_MASK_MUTE
 #define DEVICE_CHANGE_MASK_CHANNEL_COUNT 2 * DEVICE_CHANGE_MASK_VOLUME
 
+using SoundMixerUtils::NotificationHandler;
+using SoundMixerUtils::DeviceDescriptor;
 using SoundMixerUtils::DeviceDescriptor;
 using SoundMixerUtils::DeviceType;
 using SoundMixerUtils::VolumeBalance;
@@ -24,8 +26,7 @@ namespace WinSoundMixer
 
     typedef void (*on_device_changed_cb_t)(
             DeviceDescriptor dev,
-            int flags,
-            PAUDIO_VOLUME_NOTIFICATION_DATA
+            NotificationHandler
         );
 
 	class AudioSession

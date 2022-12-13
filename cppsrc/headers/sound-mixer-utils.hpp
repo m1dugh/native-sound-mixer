@@ -31,6 +31,12 @@ namespace SoundMixerUtils
 		DeviceType type;
 	} DeviceDescriptor;
 
+    typedef struct {
+        int flags;
+        float volume;
+        bool mute;
+    } NotificationHandler;
+
     bool deviceEquals(DeviceDescriptor a, DeviceDescriptor b);
     uint32_t hashcode(DeviceDescriptor device);
 

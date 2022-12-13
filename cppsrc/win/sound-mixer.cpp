@@ -15,8 +15,8 @@ EventPool *MixerObject::eventPool;
 
 	WinSoundMixer::SoundMixer *mixer;
 
-    void on_device_changed_cb(DeviceDescriptor desc, int flags, PAUDIO_VOLUME_NOTIFICATION_DATA data) {
-        if(flags & DEVICE_CHANGE_MASK_MUTE) {
+    void MixerObject::on_device_change_cb(DeviceDescriptor desc, NotificationHandler data) {
+        if(data.flags & DEVICE_CHANGE_MASK_MUTE) {
             vector<Napi::FunctionReference *> listeners =
                 MixerObject::eventPool->GetListeners(desc, EventType::MUTE);
 
@@ -26,7 +26,7 @@ EventPool *MixerObject::eventPool;
             }
         }
 
-        if(flags & DEVICE_CHANGE_MASK_VOLUME) {
+        if(data.flags & DEVICE_CHANGE_MASK_VOLUME) {
             vector<Napi::FunctionReference *> listeners =
                 MixerObject::eventPool->GetListeners(desc, EventType::VOLUME);
             for(Napi::FunctionReference *cb : listeners) {
@@ -38,7 +38,7 @@ EventPool *MixerObject::eventPool;
 
 	Napi::Object Init(Napi::Env env, Napi::Object exports)
 	{
-		mixer = new WinSoundMixer::SoundMixer(NULL);
+		mixer = new WinSoundMixer::SoundMixer(MixerObject::on_device_change_cb);
 		MixerObject::Init(env, exports);
 		DeviceObject::Init(env, exports);
 		AudioSessionObject::Init(env, exports);
@@ -48,7 +48,10 @@ EventPool *MixerObject::eventPool;
 
 	Napi::Object MixerObject::Init(Napi::Env env, Napi::Object exports)
 	{
-		Napi::Function sm = DefineClass(env, "SoundMixer", {StaticAccessor<&MixerObject::GetDevices>("devices"), StaticMethod<&MixerObject::GetDefaultDevice>("getDefaultDevice")});
+		Napi::Function sm = DefineClass(env, "SoundMixer", {
+            StaticAccessor<&MixerObject::GetDevices>("devices"),
+            StaticMethod<&MixerObject::GetDefaultDevice>("getDefaultDevice")
+        });
 
 
 		exports.Set("SoundMixer", sm);
@@ -99,6 +102,8 @@ EventPool *MixerObject::eventPool;
             InstanceAccessor<&DeviceObject::GetVolume, &DeviceObject::SetVolume>("volume"),
             InstanceAccessor<&DeviceObject::GetMute, &DeviceObject::SetMute>("mute"),
             InstanceAccessor<&DeviceObject::GetSessions>("sessions"),
+            InstanceAccessor<&DeviceObject::GetName>("name"),
+            InstanceAccessor<&DeviceObject::GetType>("type"),
             InstanceAccessor<&DeviceObject::GetChannelVolume, &DeviceObject::SetChannelVolume>("balance"),
             InstanceMethod<&DeviceObject::RegisterEvent>("on"),
             InstanceMethod<&DeviceObject::RemoveEvent>("removeListener")
@@ -111,6 +116,25 @@ EventPool *MixerObject::eventPool;
 	{
 	}
 
+    DeviceDescriptor DeviceObject::Desc() {
+        if(pDevice == NULL)
+            return DeviceDescriptor{};
+        Device *d = reinterpret_cast<Device *>(pDevice);
+        return d->Desc();
+    }
+    
+    bool DeviceObject::Update() {
+        if(pDevice == NULL)
+            return false;
+        Device *d = reinterpret_cast<Device *>(pDevice);
+        if(d->Update() == false) {
+            pDevice = NULL;
+            return false;
+        } else {
+            return true;
+        }
+    }
+
 	DeviceObject::~DeviceObject() {}
 
 	Napi::Value DeviceObject::New(Napi::Env env, void *device)
@@ -118,13 +142,29 @@ EventPool *MixerObject::eventPool;
 
 		Device *dev = reinterpret_cast<Device *>(device);
 		Napi::Object result = constructor->New({});
-        Napi::ObjectWrap<DeviceObject>::Unwrap(result)->desc = dev->Desc();
 		Napi::ObjectWrap<DeviceObject>::Unwrap(result)->pDevice = dev;
 		result.Set("name", dev->Desc().fullName);
 		result.Set("type", (int)dev->Desc().type);
-
 		return result;
 	}
+
+    Napi::Value DeviceObject::GetName(const Napi::CallbackInfo &info) {
+        if(!Update()) {
+            Napi::Error::New(info.Env(), "This Device is no longer available").ThrowAsJavaScriptException();
+            return Napi::String::New(info.Env(), "");
+        }
+
+        return Napi::String::New(info.Env(), Desc().fullName);
+    }
+
+    Napi::Value DeviceObject::GetType(const Napi::CallbackInfo &info) {
+        if(!Update()) {
+            Napi::Error::New(info.Env(), "This Device is no longer available").ThrowAsJavaScriptException();
+            return Napi::Number::New(info.Env(), -1);
+        }
+
+        return Napi::Number::New(info.Env(), (int) Desc().type);
+    }
 
 	Napi::Value DeviceObject::GetVolume(const Napi::CallbackInfo &info)
 	{
@@ -172,7 +212,7 @@ EventPool *MixerObject::eventPool;
         Napi::FunctionReference *ref = new Napi::FunctionReference();
         *ref = Napi::Persistent(func);
 
-        int handler = MixerObject::eventPool->RegisterEvent(desc, eventType, ref);
+        int handler = MixerObject::eventPool->RegisterEvent(Desc(), eventType, ref);
         return Napi::Number::New(env, handler);
     }
 
@@ -192,7 +232,7 @@ EventPool *MixerObject::eventPool;
         else
             return Napi::Number::New(env, -1);
         int handler = info[1].As<Napi::Number>().Int32Value();
-        bool res = MixerObject::eventPool->RemoveEvent(desc, eventType, handler);
+        bool res = MixerObject::eventPool->RemoveEvent(Desc(), eventType, handler);
 
         return Napi::Boolean::New(env, res);
     }

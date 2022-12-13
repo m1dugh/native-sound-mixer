@@ -534,7 +534,12 @@ namespace WinSoundMixer
             flags |= DEVICE_CHANGE_MASK_VOLUME;
             device->_oldVolume = pNotify->fMasterVolume;
         }
-        device->_deviceCallback(device->Desc(), flags, pNotify);
+        NotificationHandler handler = NotificationHandler{
+            flags,
+            pNotify->fMasterVolume,
+            (bool) pNotify->bMuted
+        };
+        device->_deviceCallback(device->Desc(), handler);
         return S_OK;
     }
 
