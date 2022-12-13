@@ -128,24 +128,32 @@ namespace WinSoundMixer
 	{
         filterDevices();
 		IMMDeviceCollection *pDevices;
-		HRESULT ok = pEnumerator->EnumAudioEndpoints(EDataFlow::eAll, DEVICE_STATE_ACTIVE, &pDevices);
-
 		std::vector<Device *> res;
+
+		HRESULT code = pEnumerator->EnumAudioEndpoints(EDataFlow::eAll, DEVICE_STATE_ACTIVE, &pDevices);
+        if(code != S_OK)
+            return res;
+
 		IMMDevice *dev = NULL;
 		UINT count = 0;
 		pDevices->GetCount(&count);
 		for (UINT i = 0; i < count; i++)
 		{
-            pDevices->Item(i, &dev);
-            LPWSTR winId = NULL;
-            dev->GetId(&winId);
-            if(winId == NULL)
+            code = pDevices->Item(i, &dev);
+            if(code != S_OK)
                 continue;
+            LPWSTR winId = NULL;
+            code = dev->GetId(&winId);
+            if(code != S_OK)
+                continue;
+
             std::string key = toString(winId);
             if(devices.count(key) <= 0) {
                 devices[key] = new Device(dev, deviceCallback);
             }
-            res.push_back(devices[key]);
+
+            if(devices[key]->IsValid())
+                res.push_back(devices[key]);
             CoTaskMemFree(winId);
         }
         return res;
@@ -516,7 +524,17 @@ namespace WinSoundMixer
     IFACEMETHODIMP SoundMixerAudioEndpointVolumeCallback::OnNotify(PAUDIO_VOLUME_NOTIFICATION_DATA pNotify) {
         if(device->_deviceCallback == NULL)
             return S_OK;
-        device->_deviceCallback(device->Desc(), 0, pNotify);
+
+        int flags = 0;
+        if(pNotify->bMuted != device->_oldMute) {
+            flags |= DEVICE_CHANGE_MASK_MUTE;
+            device->_oldMute = pNotify->bMuted;
+        }
+        if(pNotify->fMasterVolume != device->_oldVolume) {
+            flags |= DEVICE_CHANGE_MASK_VOLUME;
+            device->_oldVolume = pNotify->fMasterVolume;
+        }
+        device->_deviceCallback(device->Desc(), flags, pNotify);
         return S_OK;
     }
 

@@ -88,6 +88,9 @@ namespace WinSoundMixer
         static IMMDeviceEnumerator *GetEnumerator();
         on_device_changed_cb_t _deviceCallback;
 
+        float _oldVolume = 0.F;
+        BOOL _oldMute = 0.F;
+
 	protected:
 		IMMDevice *device;
 		IMMEndpoint *endpoint;

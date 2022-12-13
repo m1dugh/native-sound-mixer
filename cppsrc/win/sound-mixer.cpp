@@ -16,12 +16,29 @@ EventPool *MixerObject::eventPool;
 	WinSoundMixer::SoundMixer *mixer;
 
     void on_device_changed_cb(DeviceDescriptor desc, int flags, PAUDIO_VOLUME_NOTIFICATION_DATA data) {
-        std::cout << "triggered device " << desc.fullName << std::endl;
+        if(flags & DEVICE_CHANGE_MASK_MUTE) {
+            vector<Napi::FunctionReference *> listeners =
+                MixerObject::eventPool->GetListeners(desc, EventType::MUTE);
+
+            for (Napi::FunctionReference *cb : listeners) {
+                // TODO: execute callback
+                // cb->Call({ NULL });
+            }
+        }
+
+        if(flags & DEVICE_CHANGE_MASK_VOLUME) {
+            vector<Napi::FunctionReference *> listeners =
+                MixerObject::eventPool->GetListeners(desc, EventType::VOLUME);
+            for(Napi::FunctionReference *cb : listeners) {
+                // TODO: execute callback
+                // cb->Call({NULL});
+            }
+        }
     }
 
 	Napi::Object Init(Napi::Env env, Napi::Object exports)
 	{
-		mixer = new WinSoundMixer::SoundMixer(on_device_changed_cb);
+		mixer = new WinSoundMixer::SoundMixer(NULL);
 		MixerObject::Init(env, exports);
 		DeviceObject::Init(env, exports);
 		AudioSessionObject::Init(env, exports);
@@ -94,10 +111,7 @@ EventPool *MixerObject::eventPool;
 	{
 	}
 
-	DeviceObject::~DeviceObject()
-	{
-		delete reinterpret_cast<Device *>(pDevice);
-	}
+	DeviceObject::~DeviceObject() {}
 
 	Napi::Value DeviceObject::New(Napi::Env env, void *device)
 	{
