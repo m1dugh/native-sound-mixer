@@ -15,6 +15,7 @@
                         "defines": ["NAPI_CPP_EXCEPTIONS"],
                         "sources": [
 							"cppsrc/main.cpp",
+                            "cppsrc/shared/sound-mixer-utils.cpp",
                             "cppsrc/linux/sound-mixer.cpp",
                             "cppsrc/linux/linux-sound-mixer.cpp"
                         ],
@@ -44,6 +45,7 @@
                         "defines": ["NAPI_CPP_EXCEPTIONS", "_HAS_EXCEPTIONS=1"],
                         "sources": [
 							"cppsrc/main.cpp",
+                            "cppsrc/shared/sound-mixer-utils.cpp",
                             "cppsrc/win/sound-mixer.cpp",
                             "cppsrc/win/win-sound-mixer.cpp"
                         ],
