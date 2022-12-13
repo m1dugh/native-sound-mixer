@@ -57,6 +57,16 @@ namespace WinSoundMixer
 		virtual void SetVolumeBalance(const VolumeBalance&);
 		virtual VolumeBalance GetVolumeBalance();
 
+        /**
+         *  \brief      Updates the info of the Device.
+         */
+        virtual bool Update();
+
+        /**
+         *  \brief      Returns whether the device is still available.
+         */
+        bool IsValid();
+
 		DeviceDescriptor Desc()
 		{
 			return desc;
@@ -65,12 +75,17 @@ namespace WinSoundMixer
 		std::vector<AudioSession *> GetAudioSessions();
 		AudioSession *GetAudioSessionById(std::string);
 
+        static IMMDeviceEnumerator *GetEnumerator();
+
 	protected:
 		IMMDevice *device;
 		IMMEndpoint *endpoint;
 		DeviceDescriptor desc;
+        IAudioEndpointVolume *endpointVolume;
 
-		IAudioEndpointVolume *getAudioEndpointVolume();
+    private:
+        bool valid = true;
+
 	};
 
 	class SoundMixer
@@ -83,5 +98,20 @@ namespace WinSoundMixer
 
 	private:
 		IMMDeviceEnumerator *pEnumerator = nullptr;
+        std::map<std::string, Device *> devices;
+
+    private:
+        void filterDevices();
 	};
+
+    class SoundMixerAudioEndpointVolumeCallback : public IAudioEndpointVolumeCallback {
+    public:
+        SoundMixerAudioEndpointVolumeCallback();
+
+        IFACEMETHODIMP_(ULONG) AddRef();
+        IFACEMETHODIMP_(ULONG) Release();
+    private:
+        IFACEMETHODIMP OnNotify(PAUDIO_VOLUME_NOTIFICATION_DATA pNotify);
+        IFACEMETHODIMP QueryInterface(const IID& iid, void **ppUnk);
+    };
 };

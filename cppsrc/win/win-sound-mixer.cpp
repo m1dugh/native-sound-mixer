@@ -3,6 +3,7 @@
 #include <WinUser.h>
 #include <string>
 #include <wchar.h>
+#include <iostream>
 
 #include <sstream>
 
@@ -113,336 +114,416 @@ namespace WinSoundMixer
 		CoUninitialize();
 	}
 
+    void SoundMixer::filterDevices() {
+        for(auto it = devices.begin(); it != devices.end(); ++it) {
+            std::string key = it->first;
+            if(devices[key]->Update() == false) {
+                delete devices[key];
+                devices.erase(key);
+            }
+        }
+    }
+
 	vector<Device *> SoundMixer::GetDevices()
 	{
-		CoInitialize(NULL);
+        filterDevices();
 		IMMDeviceCollection *pDevices;
 		HRESULT ok = pEnumerator->EnumAudioEndpoints(EDataFlow::eAll, DEVICE_STATE_ACTIVE, &pDevices);
 
-		std::vector<Device *> devices;
-		IMMDevice *dev;
+		std::vector<Device *> res;
+		IMMDevice *dev = NULL;
 		UINT count = 0;
 		pDevices->GetCount(&count);
 		for (UINT i = 0; i < count; i++)
 		{
-			pDevices->Item(i, &dev);
-			devices.push_back(new Device(dev));
-		}
-		return devices;
-	}
+            pDevices->Item(i, &dev);
+            LPWSTR winId = NULL;
+            dev->GetId(&winId);
+            if(winId == NULL)
+                continue;
+            std::string key = toString(winId);
+            if(devices.count(key) <= 0) {
+                devices[key] = new Device(dev);
+            }
+            res.push_back(devices[key]);
+            CoTaskMemFree(winId);
+        }
+        return res;
+    }
 
-	Device *SoundMixer::GetDefaultDevice(DeviceType type)
-	{
-		IMMDevice *dev;
-		if (type == DeviceType::OUTPUT)
-			pEnumerator->GetDefaultAudioEndpoint(EDataFlow::eRender, ERole::eConsole, &dev);
-		else
-			pEnumerator->GetDefaultAudioEndpoint(EDataFlow::eCapture, ERole::eConsole, &dev);
-		return new Device(dev);
-	}
+    Device *SoundMixer::GetDefaultDevice(DeviceType type)
+    {
+        IMMDevice *dev;
+        if (type == DeviceType::OUTPUT)
+            pEnumerator->GetDefaultAudioEndpoint(EDataFlow::eRender, ERole::eConsole, &dev);
+        else
+            pEnumerator->GetDefaultAudioEndpoint(EDataFlow::eCapture, ERole::eConsole, &dev);
+        return new Device(dev);
+    }
 
-	Device::Device(IMMDevice *dev) : device(dev)
-	{
-		device->QueryInterface(&endpoint);
-		IPropertyStore *store;
-		device->OpenPropertyStore(STGM_READ, &store);
-		LPWSTR winId;
-		PROPVARIANT var;
-		PropVariantInit(&var);
-		device->GetId(&winId);
-		store->GetValue(PKEY_Device_FriendlyName, &var);
-		EDataFlow flow;
-		endpoint->GetDataFlow(&flow);
+    Device::Device(IMMDevice *dev) : device(dev), endpoint(NULL), endpointVolume(NULL)
+    {
+        LPWSTR winId;
+        device->GetId(&winId);
+        desc = DeviceDescriptor{};
+        desc.id = toString(winId);
 
-		desc = DeviceDescriptor{
-			toString(var.pwszVal),
-			toString(winId),
-			(DeviceType)flow};
+        valid = Update();
 
-		PropVariantClear(&var);
-		SafeRelease(&store);
-		CoTaskMemFree(winId);
-	}
+        CoTaskMemFree(winId);
+    }
 
-	Device::~Device()
-	{
-		SafeRelease(&endpoint);
-		SafeRelease(&device);
-	}
+    IMMDeviceEnumerator *Device::GetEnumerator() {
 
-	vector<AudioSession *> Device::GetAudioSessions()
-	{
+        IMMDeviceEnumerator *enumerator = NULL;
+        HRESULT result =
+            CoCreateInstance(__uuidof(MMDeviceEnumerator),
+                    NULL,
+                    CLSCTX_ALL,
+                    __uuidof(IMMDeviceEnumerator),
+                    (LPVOID *)&enumerator
+                    );
+        if(result != S_OK)
+            return NULL;
+        return enumerator;
+    }
 
-		IAudioSessionManager2 *manager;
-		device->Activate(__uuidof(IAudioSessionManager2), CLSCTX_ALL, NULL, (LPVOID *)&manager);
+    bool Device::IsValid() {
+        return valid;
+    }
 
-		IAudioSessionEnumerator *pEnumerator;
-		manager->GetSessionEnumerator(&pEnumerator);
-		SafeRelease(&manager);
+    bool Device::Update() {
+        LPCWSTR id = toLPWSTR(desc.id);
+        IMMDeviceEnumerator *enumerator = GetEnumerator();
+        if(enumerator == NULL) {
+            valid = false;
+            return false;
+        }
 
-		std::vector<AudioSession *> sessions;
+        IMMDevice *dev = NULL;
+        HRESULT res = enumerator->GetDevice(id, &dev);
+        if(res != S_OK)
+            return false;
+        if(dev == device)
+            return true;
+        if(device != NULL)
+            SafeRelease(&device);
+        device = dev;
 
-		int count;
-		pEnumerator->GetCount(&count);
-		IAudioSessionControl *control;
-		IAudioSessionControl2 *control2;
-		for (int i = 0; i < count; i++)
-		{
-			if (pEnumerator->GetSession(i, &control) == S_OK &&
-				control->QueryInterface(&control2) == S_OK)
-			{
-				sessions.push_back(new AudioSession(control2));
-			}
-			SafeRelease(&control);
-		}
-		SafeRelease(&pEnumerator);
+        device->QueryInterface(&endpoint);
+        IPropertyStore *store;
+        device->OpenPropertyStore(STGM_READ, &store);
+        PROPVARIANT var;
+        PropVariantInit(&var);
 
-		return sessions;
-	}
+        store->GetValue(PKEY_Device_FriendlyName, &var);
+        EDataFlow flow;
+        endpoint->GetDataFlow(&flow);
 
-	IAudioEndpointVolume *Device::getAudioEndpointVolume()
-	{
-		IAudioEndpointVolume *volume;
-		device->Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, NULL, (LPVOID *)&volume);
-		return volume;
-	}
+        desc.fullName = toString(var.pwszVal);
+        desc.type = (DeviceType) flow;
 
-	void Device::SetVolume(float volume)
-	{
-		if (volume > 1.F)
-		{
-			volume = 1.F;
-		}
-		else if (volume < .0F)
-		{
-			volume = .0F;
-		}
-		IAudioEndpointVolume *endpointVol = getAudioEndpointVolume();
-		endpointVol->SetMasterVolumeLevelScalar(volume, NULL);
-		SafeRelease(&endpointVol);
-	}
+        PropVariantClear(&var);
+        SafeRelease(&store);
 
-	void Device::SetMute(bool volume)
-	{
-		IAudioEndpointVolume *endpointVol = getAudioEndpointVolume();
-		endpointVol->SetMute((BOOL)volume, NULL);
-		SafeRelease(&endpointVol);
-	}
+        if(endpointVolume != NULL)
+            SafeRelease(&endpointVolume);
 
-	float Device::GetVolume()
-	{
-		IAudioEndpointVolume *endpointVol = getAudioEndpointVolume();
-		float volume;
-		endpointVol->GetMasterVolumeLevelScalar(&volume);
-		SafeRelease(&endpointVol);
-		return volume;
-	}
+        device->Activate(
+                __uuidof(IAudioEndpointVolume),
+                CLSCTX_ALL,
+                NULL,
+                (LPVOID *)&endpointVolume
+                );
 
-	bool Device::GetMute()
-	{
-		IAudioEndpointVolume *endpointVol = getAudioEndpointVolume();
-		BOOL mute;
-		endpointVol->GetMute(&mute);
-		SafeRelease(&endpointVol);
-		return (bool)mute;
-	}
+        // TODO: properly implement callbacks.
+        endpointVolume->RegisterControlChangeNotify(
+                new SoundMixerAudioEndpointVolumeCallback()
+                );
 
-	void Device::SetVolumeBalance(const VolumeBalance &balance)
-	{
-		IAudioEndpointVolume *pVolume = getAudioEndpointVolume();
-		UINT count = 0;
-		HRESULT res = pVolume->GetChannelCount(&count);
-		if (res != S_OK)
-		{
-			return;
-		}
-		else if (count <= 1)
-		{
-			return;
-		}
+        SafeRelease(&enumerator);
+        return true;
+    }
 
-		pVolume->SetChannelVolumeLevelScalar(RIGHT, balance.right, NULL);
-		pVolume->SetChannelVolumeLevelScalar(LEFT, balance.left, NULL);
+    Device::~Device()
+    {
+        SafeRelease(&endpointVolume);
+        SafeRelease(&endpoint);
+        SafeRelease(&device);
+    }
 
-		SafeRelease(&pVolume);
-	}
+    vector<AudioSession *> Device::GetAudioSessions()
+    {
 
-	VolumeBalance Device::GetVolumeBalance()
-	{
-		IAudioEndpointVolume *pVolume = getAudioEndpointVolume();
-		VolumeBalance result = {
-			0.F,
-			0.F,
-			false};
-		UINT count = 0;
-		HRESULT res = pVolume->GetChannelCount(&count);
-		if (res != S_OK)
-		{
-			return result;
-		}
-		else if (count <= 1)
-		{
-			return result;
-		}
-		result.stereo = true;
-		pVolume->GetChannelVolumeLevelScalar(RIGHT, &result.right);
-		pVolume->GetChannelVolumeLevelScalar(LEFT, &result.left);
-		SafeRelease(&pVolume);
+        IAudioSessionManager2 *manager;
+        device->Activate(__uuidof(IAudioSessionManager2), CLSCTX_ALL, NULL, (LPVOID *)&manager);
 
-		return result;
-	}
+        IAudioSessionEnumerator *pEnumerator;
+        manager->GetSessionEnumerator(&pEnumerator);
+        SafeRelease(&manager);
 
-	AudioSession::AudioSession(IAudioSessionControl2 *control) : control(control)
-	{
-	}
+        std::vector<AudioSession *> sessions;
 
-	AudioSession::~AudioSession()
-	{
-		SafeRelease(&control);
-	}
+        int count;
+        pEnumerator->GetCount(&count);
+        IAudioSessionControl *control;
+        IAudioSessionControl2 *control2;
+        for (int i = 0; i < count; i++)
+        {
+            if (pEnumerator->GetSession(i, &control) == S_OK &&
+                    control->QueryInterface(&control2) == S_OK)
+            {
+                sessions.push_back(new AudioSession(control2));
+            }
+            SafeRelease(&control);
+        }
+        SafeRelease(&pEnumerator);
 
-	std::string AudioSession::name()
-	{
-		DWORD pId;
-		std::string result;
-		if (control->GetProcessId(&pId) == S_OK)
-		{
-			if ((result = GetWindowNameFromProcId(pId)).size() <= 0)
-			{
+        return sessions;
+    }
 
-				std::stringstream stream(GetProcNameFromId(pId));
-				while (getline(stream, result, '\\'))
-					;
-				getline(std::stringstream(result), result, '.');
-			}
-		}
-		return result;
-	}
+    void Device::SetVolume(float volume)
+    {
+        if (volume > 1.F)
+        {
+            volume = 1.F;
+        }
+        else if (volume < .0F)
+        {
+            volume = .0F;
+        }
+        endpointVolume->SetMasterVolumeLevelScalar(volume, NULL);
+    }
 
-	AudioSessionState AudioSession::state()
-	{
-		AudioSessionState state;
-		control->GetState(&state);
-		return state;
-	}
+    void Device::SetMute(bool volume)
+    {
+        endpointVolume->SetMute((BOOL)volume, NULL);
+    }
 
-	std::string AudioSession::id()
-	{
+    float Device::GetVolume()
+    {
+        float volume;
+        endpointVolume->GetMasterVolumeLevelScalar(&volume);
+        return volume;
+    }
 
-		LPWSTR guid;
-		std::string result;
-		if (control->GetSessionInstanceIdentifier(&guid) == S_OK)
-		{
-			result = toString(guid);
-			CoTaskMemFree(guid);
-		}
+    bool Device::GetMute()
+    {
+        BOOL mute;
+        endpointVolume->GetMute(&mute);
+        return (bool)mute;
+    }
 
-		return result;
-	}
+    void Device::SetVolumeBalance(const VolumeBalance &balance)
+    {
+        UINT count = 0;
+        HRESULT res = endpointVolume->GetChannelCount(&count);
+        if (res != S_OK)
+        {
+            return;
+        }
+        else if (count <= 1)
+        {
+            return;
+        }
 
-	std::string AudioSession::path()
-	{
-		DWORD pId;
-		if (control->GetProcessId(&pId) == S_OK)
-		{
-			return GetProcNameFromId(pId);
-		}
-		return "";
-	}
+        endpointVolume->SetChannelVolumeLevelScalar(RIGHT, balance.right, NULL);
+        endpointVolume->SetChannelVolumeLevelScalar(LEFT, balance.left, NULL);
 
-	ISimpleAudioVolume *AudioSession::getAudioVolume()
-	{
-		ISimpleAudioVolume *volume;
-		control->QueryInterface(__uuidof(ISimpleAudioVolume), (LPVOID *)&volume);
-		return volume;
-	}
+    }
 
-	void AudioSession::SetVolumeBalance(const VolumeBalance &balance)
-	{
-		IChannelAudioVolume *channelVolume;
-		control->QueryInterface(__uuidof(IChannelAudioVolume), (LPVOID *)&channelVolume);
-		UINT count = 0;
-		HRESULT res = channelVolume->GetChannelCount(&count);
-		if (res != S_OK)
-		{
-			return;
-		}
-		else if (count <= 1)
-		{
-			return;
-		}
+    VolumeBalance Device::GetVolumeBalance()
+    {
+        VolumeBalance result = {
+            0.F,
+            0.F,
+            false};
+        UINT count = 0;
+        HRESULT res = endpointVolume->GetChannelCount(&count);
+        if (res != S_OK)
+        {
+            return result;
+        }
+        else if (count <= 1)
+        {
+            return result;
+        }
+        result.stereo = true;
+        endpointVolume->GetChannelVolumeLevelScalar(RIGHT, &result.right);
+        endpointVolume->GetChannelVolumeLevelScalar(LEFT, &result.left);
 
-		channelVolume->SetChannelVolume(RIGHT, balance.right, NULL);
-		channelVolume->SetChannelVolume(LEFT, balance.left, NULL);
+        return result;
+    }
 
-		SafeRelease(&channelVolume);
-	}
+    AudioSession::AudioSession(IAudioSessionControl2 *control) : control(control)
+    {
+    }
 
-	VolumeBalance AudioSession::GetVolumeBalance()
-	{
+    AudioSession::~AudioSession()
+    {
+        SafeRelease(&control);
+    }
 
-		IChannelAudioVolume *channelVolume;
-		control->QueryInterface(__uuidof(IChannelAudioVolume), (LPVOID *)&channelVolume);
-		VolumeBalance result = {
-			0.F,
-			0.F,
-			false};
-		UINT count = 0;
-		HRESULT res = channelVolume->GetChannelCount(&count);
-		if (res != S_OK)
-		{
-			return result;
-		}
-		else if (count <= 1)
-		{
-			return result;
-		}
-		result.stereo = true;
-		channelVolume->GetChannelVolume(RIGHT, &result.right);
-		channelVolume->GetChannelVolume(LEFT, &result.left);
-		SafeRelease(&channelVolume);
+    std::string AudioSession::name()
+    {
+        DWORD pId;
+        std::string result;
+        if (control->GetProcessId(&pId) == S_OK)
+        {
+            if ((result = GetWindowNameFromProcId(pId)).size() <= 0)
+            {
 
-		return result;
-	}
+                std::stringstream stream(GetProcNameFromId(pId));
+                while (getline(stream, result, '\\'))
+                    ;
+                getline(std::stringstream(result), result, '.');
+            }
+        }
+        return result;
+    }
 
-	void AudioSession::SetVolume(float vol)
-	{
-		if (vol > 1.F)
-		{
-			vol = 1.F;
-		}
-		else if (vol < .0F)
-		{
-			vol = .0F;
-		}
-		ISimpleAudioVolume *volume = getAudioVolume();
-		volume->SetMasterVolume(vol, NULL);
-		SafeRelease(&volume);
-	}
+    AudioSessionState AudioSession::state()
+    {
+        AudioSessionState state;
+        control->GetState(&state);
+        return state;
+    }
 
-	void AudioSession::SetMute(bool mute)
-	{
-		ISimpleAudioVolume *volume = getAudioVolume();
-		volume->SetMute(mute, NULL);
-		SafeRelease(&volume);
-	}
+    std::string AudioSession::id()
+    {
 
-	bool AudioSession::GetMute()
-	{
-		ISimpleAudioVolume *volume = getAudioVolume();
-		BOOL mute;
-		volume->GetMute(&mute);
-		SafeRelease(&volume);
-		return (bool)mute;
-	}
+        LPWSTR guid;
+        std::string result;
+        if (control->GetSessionInstanceIdentifier(&guid) == S_OK)
+        {
+            result = toString(guid);
+            CoTaskMemFree(guid);
+        }
 
-	float AudioSession::GetVolume()
-	{
-		ISimpleAudioVolume *volume = getAudioVolume();
-		float vol;
-		volume->GetMasterVolume(&vol);
-		SafeRelease(&volume);
-		return vol;
-	}
+        return result;
+    }
+
+    std::string AudioSession::path()
+    {
+        DWORD pId;
+        if (control->GetProcessId(&pId) == S_OK)
+        {
+            return GetProcNameFromId(pId);
+        }
+        return "";
+    }
+
+    ISimpleAudioVolume *AudioSession::getAudioVolume()
+    {
+        ISimpleAudioVolume *volume;
+        control->QueryInterface(__uuidof(ISimpleAudioVolume), (LPVOID *)&volume);
+        return volume;
+    }
+
+    void AudioSession::SetVolumeBalance(const VolumeBalance &balance)
+    {
+        IChannelAudioVolume *channelVolume;
+        control->QueryInterface(__uuidof(IChannelAudioVolume), (LPVOID *)&channelVolume);
+        UINT count = 0;
+        HRESULT res = channelVolume->GetChannelCount(&count);
+        if (res != S_OK)
+        {
+            return;
+        }
+        else if (count <= 1)
+        {
+            return;
+        }
+
+        channelVolume->SetChannelVolume(RIGHT, balance.right, NULL);
+        channelVolume->SetChannelVolume(LEFT, balance.left, NULL);
+
+        SafeRelease(&channelVolume);
+    }
+
+    VolumeBalance AudioSession::GetVolumeBalance()
+    {
+
+        IChannelAudioVolume *channelVolume;
+        control->QueryInterface(__uuidof(IChannelAudioVolume), (LPVOID *)&channelVolume);
+        VolumeBalance result = {
+            0.F,
+            0.F,
+            false};
+        UINT count = 0;
+        HRESULT res = channelVolume->GetChannelCount(&count);
+        if (res != S_OK)
+        {
+            return result;
+        }
+        else if (count <= 1)
+        {
+            return result;
+        }
+        result.stereo = true;
+        channelVolume->GetChannelVolume(RIGHT, &result.right);
+        channelVolume->GetChannelVolume(LEFT, &result.left);
+        SafeRelease(&channelVolume);
+
+        return result;
+    }
+
+    void AudioSession::SetVolume(float vol)
+    {
+        if (vol > 1.F)
+        {
+            vol = 1.F;
+        }
+        else if (vol < .0F)
+        {
+            vol = .0F;
+        }
+        ISimpleAudioVolume *volume = getAudioVolume();
+        volume->SetMasterVolume(vol, NULL);
+        SafeRelease(&volume);
+    }
+
+    void AudioSession::SetMute(bool mute)
+    {
+        ISimpleAudioVolume *volume = getAudioVolume();
+        volume->SetMute(mute, NULL);
+        SafeRelease(&volume);
+    }
+
+    bool AudioSession::GetMute()
+    {
+        ISimpleAudioVolume *volume = getAudioVolume();
+        BOOL mute;
+        volume->GetMute(&mute);
+        SafeRelease(&volume);
+        return (bool)mute;
+    }
+
+    float AudioSession::GetVolume()
+    {
+        ISimpleAudioVolume *volume = getAudioVolume();
+        float vol;
+        volume->GetMasterVolume(&vol);
+        SafeRelease(&volume);
+        return vol;
+    }
+
+
+    IFACEMETHODIMP SoundMixerAudioEndpointVolumeCallback::OnNotify(PAUDIO_VOLUME_NOTIFICATION_DATA pNotify) {
+        std::cout << "master volume: " << pNotify->fMasterVolume << std::endl;
+        return S_OK;
+    }
+
+    SoundMixerAudioEndpointVolumeCallback::SoundMixerAudioEndpointVolumeCallback() {}
+    IFACEMETHODIMP SoundMixerAudioEndpointVolumeCallback::QueryInterface(const IID& iid, void **ppUnk) {
+        return S_OK;
+    }
+
+    IFACEMETHODIMP_(ULONG) SoundMixerAudioEndpointVolumeCallback::AddRef() {
+        return 0;
+    }
+    IFACEMETHODIMP_(ULONG) SoundMixerAudioEndpointVolumeCallback::Release() {
+        return 0;
+    }
 
 } // namespace SoundMixerUtils
