@@ -78,21 +78,13 @@ namespace SoundMixer
     {
         public:
             static Napi::Object Init(Napi::Env, Napi::Object);
-            Napi::Value GetDevices(const Napi::CallbackInfo &info);
+            static Napi::Value GetDevices(const Napi::CallbackInfo &info);
             MixerObject(const Napi::CallbackInfo &info);
             virtual ~MixerObject();
-            Napi::Value GetDefaultDevice(const Napi::CallbackInfo &info);
-            
-            void on_device_change_cb(SoundMixerUtils::DeviceDescriptor d, SoundMixerUtils::NotificationHandler data);
-
-            static Napi::Value Singleton(const Napi::CallbackInfo &info);
+            static Napi::Value GetDefaultDevice(const Napi::CallbackInfo &info);
+            static void on_device_change_cb(SoundMixerUtils::DeviceDescriptor d, SoundMixerUtils::NotificationHandler data);
 
         public:
-            SoundMixerUtils::EventPool *eventPool;
-            static Napi::FunctionReference *constructor;
-        private:
-            static Napi::Object* _instance;
-
-            WinSoundMixer::SoundMixer *mixer = NULL;
+            static SoundMixerUtils::EventPool *eventPool;
     };
 } // namespace SoundMixer

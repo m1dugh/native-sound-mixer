@@ -11,10 +11,6 @@
 #define LEFT 0
 #define RIGHT 1
 
-#define DEVICE_CHANGE_MASK_MUTE 1
-#define DEVICE_CHANGE_MASK_VOLUME 2*DEVICE_CHANGE_MASK_MUTE
-#define DEVICE_CHANGE_MASK_CHANNEL_COUNT 2 * DEVICE_CHANGE_MASK_VOLUME
-
 using SoundMixerUtils::NotificationHandler;
 using SoundMixerUtils::DeviceDescriptor;
 using SoundMixerUtils::DeviceDescriptor;

@@ -7,8 +7,21 @@
 
 #define VALID_VOLUME_BALANCE(balance) ((balance.right < 1.F && balance.right > 0.F) && (balance.left < 1.F && balance.left > 0.F))
 
+#define DEVICE_CHANGE_MASK_MUTE 1
+#define DEVICE_CHANGE_MASK_VOLUME 2*DEVICE_CHANGE_MASK_MUTE
+#define DEVICE_CHANGE_MASK_CHANNEL_COUNT 2 * DEVICE_CHANGE_MASK_VOLUME
+
 namespace SoundMixerUtils
 {
+    typedef struct {
+        int flags;
+        float volume;
+        bool mute;
+    } NotificationHandler;
+
+    void CallJs(Napi::Env env, Napi::Function cb, Napi::Reference<Napi::Value> *context, NotificationHandler *data);
+
+    using TSFN = Napi::TypedThreadSafeFunction<Napi::Reference<Napi::Value>, NotificationHandler, CallJs>;
 
 	enum DeviceType
 	{
@@ -31,11 +44,6 @@ namespace SoundMixerUtils
 		DeviceType type;
 	} DeviceDescriptor;
 
-    typedef struct {
-        int flags;
-        float volume;
-        bool mute;
-    } NotificationHandler;
 
     bool deviceEquals(DeviceDescriptor a, DeviceDescriptor b);
     uint32_t hashcode(DeviceDescriptor device);
@@ -52,14 +60,14 @@ namespace SoundMixerUtils
             EventPool();
             virtual ~EventPool();
 
-            int RegisterEvent(DeviceDescriptor device, EventType type, Napi::FunctionReference* value);
+            int RegisterEvent(DeviceDescriptor device, EventType type, TSFN value);
             bool RemoveEvent(DeviceDescriptor device, EventType type, int id);
-            std::vector<Napi::FunctionReference*> GetListeners(DeviceDescriptor dev, EventType type);
+            std::vector<TSFN> GetListeners(DeviceDescriptor dev, EventType type);
             void RemoveAllListeners(DeviceDescriptor device, EventType type);
             void Clear();
 
         private:
+            std::map<uint32_t, std::map<int, TSFN>> m_events;
             int counter = 0;
-            std::map<uint32_t, std::map<int, Napi::FunctionReference*>> m_events;
     };
 }

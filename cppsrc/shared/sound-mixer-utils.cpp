@@ -42,17 +42,18 @@ namespace SoundMixerUtils {
         return hashcode(device) ^ typeval;
     }
 
-    EventPool::EventPool(): m_events(), counter(0) {}
+    EventPool::EventPool(): counter(0) {
+    }
 
     EventPool::~EventPool() {
         Clear();
     }
 
-    int EventPool::RegisterEvent(DeviceDescriptor device, EventType type, Napi::FunctionReference* func) {
+    int EventPool::RegisterEvent(DeviceDescriptor device, EventType type, TSFN func) {
         uint32_t key = combine_hashes(device, type);
 
         if(m_events.count(key) <= 0) {
-            std::map<int, Napi::FunctionReference*> res;
+            std::map<int, TSFN> res;
             res[counter] = func;
             m_events[key] = res;
         } else {
@@ -67,19 +68,19 @@ namespace SoundMixerUtils {
             return false;
 
         if(m_events[key].count(id) > 0) {
-            delete m_events[key][id];
+            m_events[key][id].Release();
             return m_events[key].erase(id) > 0;
         } else {
             return false;
         }
     }
 
-    std::vector<Napi::FunctionReference*> EventPool::GetListeners(DeviceDescriptor device, EventType type) {
+    std::vector<TSFN> EventPool::GetListeners(DeviceDescriptor device, EventType type) {
         uint32_t key = combine_hashes(device, type);
-        std::vector<Napi::FunctionReference*> res;
+        std::vector<TSFN> res;
         if(m_events.count(key) <= 0)
             return res;
-        std::map<int, Napi::FunctionReference*> contained = m_events[key];
+        std::map<int, TSFN> contained = m_events[key];
         for (auto it = contained.begin(); it != contained.end(); ++it) {
             res.push_back(it->second);
         }
@@ -89,21 +90,41 @@ namespace SoundMixerUtils {
 
     void EventPool::RemoveAllListeners(DeviceDescriptor device, EventType type) {
         uint32_t key = combine_hashes(device, type);
-        std::map<int, Napi::FunctionReference*> contained = m_events[key];
+        std::map<int, TSFN> contained = m_events[key];
         for (auto it = contained.begin(); it != contained.end(); ++it) {
-            delete it->second;
+            it->second.Release();
         }
         m_events.erase(key);
     }
 
     void EventPool::Clear() {
         for(auto it1 = m_events.begin(); it1 != m_events.end(); ++it1) {
-            std::map<int, Napi::FunctionReference*> el = it1->second;
+            std::map<int, TSFN> el = it1->second;
             for(auto it2 = el.begin(); it2 != el.end(); ++it2) {
-                delete it2->second;
+                it2->second.Release();
             }
         }
         m_events.clear();
         counter = 0;
+    }
+
+    void CallJs(Napi::Env env, Napi::Function cb, Napi::Reference<Napi::Value> *owner, NotificationHandler *data) {
+        if(env == nullptr || cb == nullptr) {
+            if(data != nullptr)
+                delete data;
+            return;
+        }
+
+        if(data != nullptr) {
+            Napi::Value value;
+            if(data->flags & DEVICE_CHANGE_MASK_MUTE) {
+                value = Napi::Boolean::New(env, data->mute);
+            } else /*if (data->flags & DEVICE_CHANGE_MASK_VOLUME) */ {
+                value = Napi::Number::New(env, data->volume);
+            }
+            cb.Call(owner->Value(), { value });
+
+            delete data;
+        }
     }
 }

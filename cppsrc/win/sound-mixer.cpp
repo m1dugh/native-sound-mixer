@@ -1,4 +1,4 @@
-#include "../headers/sound-mixer.hpp"
+#include "./headers/sound-mixer.hpp"
 #include "./headers/win-sound-mixer.hpp"
 
 #include <iostream>
@@ -11,41 +11,26 @@ namespace SoundMixer
 {
 Napi::FunctionReference *AudioSessionObject::constructor;
 Napi::FunctionReference *DeviceObject::constructor;
-Napi::FunctionReference *MixerObject::constructor;
+SoundMixerUtils::EventPool *MixerObject::eventPool;
 
-    Napi::Value MixerObject::Singleton(const Napi::CallbackInfo &info) {
-        if(MixerObject::_instance == NULL) {
-            _instance = new Napi::Object();
-            Napi::Object res = constructor->New({});
-
-            MixerObject::Unwrap(res)->mixer =
-                new WinSoundMixer::SoundMixer(MixerObject::on_device_change_cb);
-            MixerObject::Unwrap(res)->eventPool =
-                new EventPool();
-
-            *_instance = res;
-        }
-        return *_instance;
-    }
+WinSoundMixer::SoundMixer *mixer;
 
     void MixerObject::on_device_change_cb(DeviceDescriptor desc, NotificationHandler data) {
         if(data.flags & DEVICE_CHANGE_MASK_MUTE) {
-            vector<Napi::FunctionReference *> listeners =
+            vector<TSFN> listeners =
                 eventPool->GetListeners(desc, EventType::MUTE);
-
-            for (Napi::FunctionReference *cb : listeners) {
-                // TODO: execute callback
-                // cb->Call({ NULL });
+            for(TSFN cb : listeners) {
+                NotificationHandler *pData = new NotificationHandler();
+                *pData = data;
+                cb.Acquire();
+                cb.BlockingCall(pData);
+                cb.Release();
             }
         }
 
         if(data.flags & DEVICE_CHANGE_MASK_VOLUME) {
-            vector<Napi::FunctionReference *> listeners =
+            vector<TSFN> listeners =
                 eventPool->GetListeners(desc, EventType::VOLUME);
-            for(Napi::FunctionReference *cb : listeners) {
-                // TODO: execute callback
-                cb->Call({NULL});
-            }
         }
     }
 
@@ -60,14 +45,12 @@ Napi::FunctionReference *MixerObject::constructor;
 
 	Napi::Object MixerObject::Init(Napi::Env env, Napi::Object exports)
 	{
+        mixer = new WinSoundMixer::SoundMixer(MixerObject::on_device_change_cb);
+        eventPool = new SoundMixerUtils::EventPool();
 		Napi::Function sm = DefineClass(env, "SoundMixer", {
-            InstanceAccessor<&MixerObject::GetDevices>("devices"),
-            InstanceMethod<&MixerObject::GetDefaultDevice>("getDefaultDevice"),
-            StaticAccessor<&MixerObject::Singleton>("Singleton")
+            StaticAccessor<&MixerObject::GetDevices>("devices"),
+            StaticMethod<&MixerObject::GetDefaultDevice>("getDefaultDevice"),
         });
-        constructor = new Napi::FunctionReference();
-        *constructor = Napi::Persistent(sm);
-        _instance = NULL;
 
 		exports.Set("SoundMixer", sm);
 		return exports;
@@ -76,8 +59,6 @@ Napi::FunctionReference *MixerObject::constructor;
 	MixerObject::MixerObject(const Napi::CallbackInfo &info) : Napi::ObjectWrap<MixerObject>(info) {}
 
     MixerObject::~MixerObject() {
-        delete eventPool;
-        delete mixer;
         delete AudioSessionObject::constructor;
         delete DeviceObject::constructor;
     }
@@ -223,8 +204,7 @@ Napi::FunctionReference *MixerObject::constructor;
             return Napi::Number::New(env, -1);
 
         Napi::Function func = info[1].As<Napi::Function>();
-        Napi::FunctionReference *ref = new Napi::FunctionReference();
-        *ref = Napi::Persistent(func);
+        TSFN ref = TSFN::New(env, func, "test", 0, 1, new Napi::Reference<Napi::Value>(Napi::Persistent(info.This())));
 
         int handler = MixerObject::eventPool->RegisterEvent(Desc(), eventType, ref);
         return Napi::Number::New(env, handler);
@@ -297,7 +277,20 @@ Napi::FunctionReference *MixerObject::constructor;
 
 	Napi::Function AudioSessionObject::GetClass(Napi::Env env)
 	{
-		return DefineClass(env, "AudioSession", {InstanceAccessor<&AudioSessionObject::GetMute, &AudioSessionObject::SetMute>("mute"), InstanceAccessor<&AudioSessionObject::GetVolume, &AudioSessionObject::SetVolume>("volume"), InstanceAccessor<&AudioSessionObject::GetChannelVolume, &AudioSessionObject::SetChannelVolume>("balance")});
+		return DefineClass(env, "AudioSession", {
+            InstanceAccessor<
+                &AudioSessionObject::GetMute,
+                &AudioSessionObject::SetMute
+            >("mute"),
+            InstanceAccessor<
+                &AudioSessionObject::GetVolume,
+                &AudioSessionObject::SetVolume
+            >("volume"),
+            InstanceAccessor<
+                &AudioSessionObject::GetChannelVolume,
+                &AudioSessionObject::SetChannelVolume
+            >("balance")
+        });
 	}
 
 	Napi::Object AudioSessionObject::Init(Napi::Env env, Napi::Object exports)
