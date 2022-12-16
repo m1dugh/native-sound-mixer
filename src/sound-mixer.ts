@@ -1,8 +1,20 @@
-import * as os from "os";
+import * as os from "os"
 
-const sMixerModule: { SoundMixer: SoundMixer, Device: any } = (() => {
+/*
+ */
+type platform = "macos" | "win" | "linux";
+type arch = string | undefined
 
-	const getModule = (platform: "macos" | "win" | "linux", arch: string | undefined = undefined) => require(`${__dirname}/addons/${platform}-sound-mixer${arch ? "_" + arch : ""}.node`)
+const sMixerModule: { SoundMixer: SoundMixer } = (() => {
+
+	const getModule = (platform: platform, arch: arch = undefined) => {
+        const archString = arch ? `_${arch}` : ""
+        const path = 
+            `${__dirname}/addons/${platform}-sound-mixer${archString}.node`
+        const res = require(path)
+        return res;
+    }
+
 	const platform = os.platform()
 	const arch = os.arch()
 	if (platform === "win32") {
@@ -18,9 +30,23 @@ const sMixerModule: { SoundMixer: SoundMixer, Device: any } = (() => {
 
 })()
 
+/**
+ *  An interface indicating the balance level of each channel on a stereo device or channel.
+ */
 export interface VolumeBalance {
+    /**
+     *  right: The volume for the right channel.
+     */
 	right: VolumeScalar;
+
+    /**
+     *  left: The volume for the left channel.
+     */
 	left: VolumeScalar;
+
+    /**
+     *  stereo: A flag indicating whether the owner is stereo.
+     */
 	stereo?: Boolean;
 }
 

@@ -21,10 +21,10 @@ setInterval(() => {
 	for (const d of SoundMixer.devices) {
 		d.mute = d.mute
 		d.volume = d.volume
-		/*for (const s of d.sessions) {
+		for (const s of d.sessions) {
 			s.volume = s.volume
 			s.mute = s.mute
-		}*/
+		}
 	}
 
 }, 1);

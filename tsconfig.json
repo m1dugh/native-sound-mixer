@@ -19,5 +19,12 @@
 		"test/**",
 		"**/*.spec.ts",
 		"**/*.test.ts"
-	]
+	],
+
+    "typedocOptions": {
+        "entryPoints": [
+            "src/sound-mixer.ts"
+        ],
+        "out": "docs"
+    }
 }
