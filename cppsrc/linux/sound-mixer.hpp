@@ -82,9 +82,9 @@ namespace SoundMixer
             virtual ~MixerObject();
             static Napi::Value GetDefaultDevice(const Napi::CallbackInfo &info);
             
-            static void on_device_change_cb(SoundMixerUtils::DeviceDescriptor d, SoundMixerUtils::NotificationHandler data);
+ /*           static void on_device_change_cb(SoundMixerUtils::DeviceDescriptor d, SoundMixerUtils::NotificationHandler data);
 
         public:
-            static SoundMixerUtils::EventPool *eventPool;
+            static SoundMixerUtils::EventPool *eventPool;*/
     };
 } // namespace SoundMixer
