@@ -248,8 +248,12 @@ namespace WinSoundMixer
 
         PropVariantClear(&var);
 
-        if(endpointVolume != NULL)
+        if(endpointVolume != NULL) {
+            if(device_cb != NULL) {
+                endpointVolume->UnregisterControlChangeNotify(device_cb);
+            }
             SafeRelease(&endpointVolume);
+        }
 
         device->Activate(
                 __uuidof(IAudioEndpointVolume),
@@ -257,10 +261,9 @@ namespace WinSoundMixer
                 NULL,
                 (LPVOID *)&endpointVolume
                 );
-        if(device_cb == NULL) {
-            device_cb = new SoundMixerAudioEndpointVolumeCallback(this);
-        }
 
+        if(device_cb == NULL)
+            device_cb = new SoundMixerAudioEndpointVolumeCallback(this);
         endpointVolume->RegisterControlChangeNotify(device_cb);
 
         return true;
@@ -270,6 +273,7 @@ namespace WinSoundMixer
     {
         if(endpointVolume != NULL)
             endpointVolume->UnregisterControlChangeNotify(device_cb);
+        delete device_cb
         SafeRelease(&endpointVolume);
         SafeRelease(&endpoint);
         SafeRelease(&device);

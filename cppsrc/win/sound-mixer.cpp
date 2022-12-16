@@ -31,6 +31,13 @@ WinSoundMixer::SoundMixer *mixer;
         if(data.flags & DEVICE_CHANGE_MASK_VOLUME) {
             vector<TSFN> listeners =
                 eventPool->GetListeners(desc, EventType::VOLUME);
+            for(TSFN cb : listeners) {
+                NotificationHandler *pData = new NotificationHandler();
+                *pData = data;
+                cb.Acquire();
+                cb.BlockingCall(pData);
+                cb.Release();
+            }
         }
     }
 

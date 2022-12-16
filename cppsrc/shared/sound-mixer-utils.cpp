@@ -51,7 +51,6 @@ namespace SoundMixerUtils {
 
     int EventPool::RegisterEvent(DeviceDescriptor device, EventType type, TSFN func) {
         uint32_t key = combine_hashes(device, type);
-
         if(m_events.count(key) <= 0) {
             std::map<int, TSFN> res;
             res[counter] = func;
