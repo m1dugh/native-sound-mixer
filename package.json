@@ -10,10 +10,16 @@
 		"build": "npm run build:ts && npm run build:bin",
 		"clean": "node-gyp clean && node scripts/clean.js",
 		"test": "jest",
+        "docs": "typedoc",
 		":prepublishOnly": "npm run build && npm run test && node scripts/check-bins.js"
 	},
 	"os": [
-		"win32"
+		"win32",
+		"linux"
+	],
+	"arch": [
+		"x86",
+		"x64"
 	],
 	"types": "dist/@types/sound-mixer.d.ts",
 	"author": "romlm",
@@ -27,6 +33,7 @@
 		"node-addon-api": "^4.2.0",
 		"node-gyp": "^9.3.0",
 		"ts-jest": "^29.0.3",
+		"typedoc": "^0.23.22",
 		"typescript": "^4.2.4"
 	},
 	"repository": {

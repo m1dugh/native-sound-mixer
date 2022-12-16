@@ -25,3 +25,6 @@ cppsrc/linux/out
 *.a
 *.o
 *.exe
+
+# documentation files
+docs/
