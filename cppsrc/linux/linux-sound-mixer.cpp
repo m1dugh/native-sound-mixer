@@ -1,4 +1,4 @@
-#include "./headers/linux-sound-mixer.hpp"
+#include "linux-sound-mixer.hpp"
 
 #include <iostream>
 #include <cstring>

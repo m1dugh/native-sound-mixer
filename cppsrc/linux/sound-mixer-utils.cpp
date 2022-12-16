@@ -1,4 +1,4 @@
-#include "../headers/sound-mixer-utils.hpp"
+#include "sound-mixer-utils.hpp"
 #include <string>
 #include <iostream>
 
