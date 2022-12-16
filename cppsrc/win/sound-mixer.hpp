@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../headers/sound-mixer-utils.hpp"
-#include "./win-sound-mixer.hpp"
+#include "sound-mixer-utils.hpp"
+#include "win-sound-mixer.hpp"
 #include <napi.h>
 #include <map>
 #include <vector>
@@ -86,5 +86,6 @@ namespace SoundMixer
 
         public:
             static SoundMixerUtils::EventPool *eventPool;
+            static WinSoundMixer::SoundMixer *mixer;
     };
 } // namespace SoundMixer

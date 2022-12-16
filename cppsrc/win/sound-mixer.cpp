@@ -1,7 +1,5 @@
-#include "./headers/sound-mixer.hpp"
-#include "./headers/win-sound-mixer.hpp"
-
-#include <iostream>
+#include "sound-mixer.hpp"
+#include "win-sound-mixer.hpp"
 
 using namespace SoundMixerUtils;
 using namespace WinSoundMixer;
@@ -13,7 +11,7 @@ Napi::FunctionReference *AudioSessionObject::constructor;
 Napi::FunctionReference *DeviceObject::constructor;
 SoundMixerUtils::EventPool *MixerObject::eventPool;
 
-WinSoundMixer::SoundMixer *mixer;
+WinSoundMixer::SoundMixer *MixerObject::mixer;
 
     void MixerObject::on_device_change_cb(DeviceDescriptor desc, NotificationHandler data) {
         if(data.flags & DEVICE_CHANGE_MASK_MUTE) {

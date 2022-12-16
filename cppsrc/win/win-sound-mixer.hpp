@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../headers/sound-mixer-utils.hpp"
+#include "sound-mixer-utils.hpp"
 #include <string>
 #include <mmdeviceapi.h>
 #include <Audioclient.h>
