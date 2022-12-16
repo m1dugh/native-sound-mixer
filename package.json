@@ -2,8 +2,7 @@
 	"name": "native-sound-mixer",
 	"version": "3.4.0-win-beta",
 	"description": "node js native sound mixer module",
-	"main": "./dist/sound-mixer.js",
-	"type": "commonjs",
+	"main": "dist/sound-mixer.js",
 	"gypfile": true,
 	"scripts": {
 		"build:ts": "tsc",

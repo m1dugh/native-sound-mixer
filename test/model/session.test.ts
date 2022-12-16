@@ -1,5 +1,6 @@
 import { random } from "lodash";
-import SoundMixer, {AudioSession, Device} from "../../";
+import "../../dist/@types/sound-mixer.d.ts"
+import SoundMixer, { DeviceType, Device, AudioSession } from "../../dist/sound-mixer.js"
 
 describe("audio session", () => {
 

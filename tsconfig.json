@@ -2,13 +2,14 @@
 	"compilerOptions": {
 		"target": "ES5",
 		"module": "commonjs",
+        "esModuleInterop": true,
 		"rootDir": "src",
 		"outDir": "dist",
 		"allowJs": false,
-		"strict": true,
+		"strict": false,
 		"declaration": true,
 		"sourceMap": true,
-		"declarationDir": "./dist/@types/",
+		"declarationDir": "./dist/@types/"
 	},
 	"include": [
 		"./src/sound-mixer.ts"

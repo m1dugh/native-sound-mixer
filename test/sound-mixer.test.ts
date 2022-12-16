@@ -1,4 +1,5 @@
-import SoundMixer, { DeviceType } from "../"
+import "../dist/@types/sound-mixer.d.ts"
+import SoundMixer, { DeviceType, Device } from "../dist/sound-mixer.js"
 
 describe("sound mixer", () => {
 

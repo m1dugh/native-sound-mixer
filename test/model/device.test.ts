@@ -1,5 +1,6 @@
 import { random, clamp } from "lodash";
-import SoundMixer, { Device } from "../../";
+import "../../dist/@types/sound-mixer.d.ts"
+import SoundMixer, { Device, DeviceType } from "../../dist/sound-mixer.js"
 
 
 
