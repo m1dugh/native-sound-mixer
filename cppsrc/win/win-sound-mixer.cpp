@@ -273,7 +273,7 @@ namespace WinSoundMixer
     {
         if(endpointVolume != NULL)
             endpointVolume->UnregisterControlChangeNotify(device_cb);
-        delete device_cb
+        delete device_cb;
         SafeRelease(&endpointVolume);
         SafeRelease(&endpoint);
         SafeRelease(&device);

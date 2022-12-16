@@ -11,7 +11,7 @@
 		"build": "npm run build:ts && npm run build:bin",
 		"clean": "node-gyp clean && node scripts/clean.js",
 		"test": "jest",
-		"prepublishOnly": "npm run build && npm run test && node scripts/check-bins.js"
+		":prepublishOnly": "npm run build && npm run test && node scripts/check-bins.js"
 	},
 	"os": [
 		"win32",
