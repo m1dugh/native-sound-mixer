@@ -7,6 +7,7 @@ stdenv.mkDerivation {
     src = ./.;
 
     nativeBuildInputs = [
+        clang-tools
         nodejs
         python3
     ];
