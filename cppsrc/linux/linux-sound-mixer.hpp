@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../headers/sound-mixer-utils.hpp"
+#include "sound-mixer-utils.hpp"
 #include <pulse/pulseaudio.h>
 #include <vector>
 #include <string>

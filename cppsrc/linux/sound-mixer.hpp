@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./sound-mixer-utils.hpp"
+#include "sound-mixer-utils.hpp"
 #include <napi.h>
 #include <map>
 #include <vector>

@@ -1,5 +1,5 @@
-#include "./headers/linux-sound-mixer.hpp"
-#include "../headers/sound-mixer.hpp"
+#include "linux-sound-mixer.hpp"
+#include "sound-mixer.hpp"
 
 using namespace LinuxSoundMixer;
 
