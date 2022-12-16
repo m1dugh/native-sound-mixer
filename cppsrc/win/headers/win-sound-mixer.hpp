@@ -93,6 +93,7 @@ namespace WinSoundMixer
 		IMMEndpoint *endpoint;
 		DeviceDescriptor desc;
         IAudioEndpointVolume *endpointVolume;
+        IAudioEndpointVolumeCallback *device_cb;
 
     private:
         bool valid = true;

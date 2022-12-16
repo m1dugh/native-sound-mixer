@@ -28,7 +28,6 @@ inline LPWSTR toLPWSTR(std::string str)
 {
 
 	size_t size = str.length() + 1;
-
 	LPWSTR chars = (LPWSTR)CoTaskMemAlloc(size * sizeof(wchar_t));
 	std::mbstowcs(chars, str.c_str(), size);
 	return (LPWSTR)chars;
@@ -144,18 +143,23 @@ namespace WinSoundMixer
                 continue;
             LPWSTR winId = NULL;
             code = dev->GetId(&winId);
-            if(code != S_OK)
+            if(code != S_OK) {
+                SafeRelease(&dev);
                 continue;
+            }
 
             std::string key = toString(winId);
             if(devices.count(key) <= 0) {
                 devices[key] = new Device(dev, deviceCallback);
+            } else {
+                SafeRelease(&dev);
             }
 
             if(devices[key]->IsValid())
                 res.push_back(devices[key]);
             CoTaskMemFree(winId);
         }
+        SafeRelease(&pDevices);
         return res;
     }
 
@@ -173,7 +177,8 @@ namespace WinSoundMixer
         device(dev),
         endpoint(NULL),
         endpointVolume(NULL),
-        _deviceCallback(cb)
+        _deviceCallback(cb),
+        device_cb(NULL)
     {
         LPWSTR winId;
         device->GetId(&winId);
@@ -205,30 +210,36 @@ namespace WinSoundMixer
     }
 
     bool Device::Update() {
-        LPCWSTR id = toLPWSTR(desc.id);
         IMMDeviceEnumerator *enumerator = GetEnumerator();
         if(enumerator == NULL) {
             valid = false;
             return false;
         }
 
-        IMMDevice *dev = NULL;
-        HRESULT res = enumerator->GetDevice(id, &dev);
-        if(res != S_OK)
-            return false;
-        if(dev == device)
-            return true;
+        LPWSTR id = toLPWSTR(desc.id);
+
         if(device != NULL)
             SafeRelease(&device);
-        device = dev;
 
+        HRESULT res = enumerator->GetDevice(id, &device);
+        CoTaskMemFree(id);
+        SafeRelease(&enumerator);
+        if(res != S_OK) {
+            return false;
+        }
+
+        if(endpoint != NULL)
+            SafeRelease(&endpoint);
         device->QueryInterface(&endpoint);
+
         IPropertyStore *store;
         device->OpenPropertyStore(STGM_READ, &store);
         PROPVARIANT var;
         PropVariantInit(&var);
 
         store->GetValue(PKEY_Device_FriendlyName, &var);
+        SafeRelease(&store);
+
         EDataFlow flow;
         endpoint->GetDataFlow(&flow);
 
@@ -236,7 +247,6 @@ namespace WinSoundMixer
         desc.type = (DeviceType) flow;
 
         PropVariantClear(&var);
-        SafeRelease(&store);
 
         if(endpointVolume != NULL)
             SafeRelease(&endpointVolume);
@@ -247,18 +257,19 @@ namespace WinSoundMixer
                 NULL,
                 (LPVOID *)&endpointVolume
                 );
+        if(device_cb == NULL) {
+            device_cb = new SoundMixerAudioEndpointVolumeCallback(this);
+        }
 
-        // TODO: properly implement callbacks.
-        endpointVolume->RegisterControlChangeNotify(
-                new SoundMixerAudioEndpointVolumeCallback(this)
-                );
+        endpointVolume->RegisterControlChangeNotify(device_cb);
 
-        SafeRelease(&enumerator);
         return true;
     }
 
     Device::~Device()
     {
+        if(endpointVolume != NULL)
+            endpointVolume->UnregisterControlChangeNotify(device_cb);
         SafeRelease(&endpointVolume);
         SafeRelease(&endpoint);
         SafeRelease(&device);
