@@ -1,0 +1,42 @@
+name: build
+on: [push]
+jobs:
+  build-typescript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with: 
+          node-version: '18'
+      - name: Typescript build
+        run: |
+          npm ci
+          npm run build:ts
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libpulse-dev
+      - name: Node build
+        run: |
+          npm ci
+          npm run build:bin
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Node build
+        run: |
+          npm ci
+          npm run build:bin
