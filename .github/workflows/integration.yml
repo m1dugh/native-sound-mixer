@@ -11,11 +11,12 @@ jobs:
           node-version: '18'
       - name: CPP lint test
         run: |
+          npm ci
           npm run format
           git diff | tee .ci-temp
           exit $(test -f .ci-temp && cat .ci-temp | wc -l)
 
-  test-linux:
+  build-linux:
     needs: lint
     runs-on: ubuntu-latest
     steps:
@@ -32,7 +33,7 @@ jobs:
           npm ci
           npm run build
 
-  test-windows:
+  build-windows:
     needs: lint
     runs-on: windows-latest
     steps:
