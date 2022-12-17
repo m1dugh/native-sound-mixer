@@ -71,6 +71,9 @@ class EventPool {
     void Clear();
 
   private:
+    static uint32_t getHashCode(DeviceDescriptor, EventType type);
+
+  private:
     std::map<uint32_t, std::map<int, TSFN>> m_events;
     int counter = 0;
 };

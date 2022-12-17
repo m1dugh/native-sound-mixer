@@ -30,21 +30,11 @@ uint32_t jenkins_hash(const char *key)
     return hash;
 }
 
-uint32_t hashcode(DeviceDescriptor device)
-{
-    uint32_t name = jenkins_hash(device.fullName.c_str());
-    uint32_t id = jenkins_hash(device.id.c_str());
-    uint32_t res = device.type << 16;
-    res ^= name ^ id;
-
-    return res;
-}
-
-uint32_t combine_hashes(DeviceDescriptor device, EventType type)
+uint32_t EventPool::getHashCode(DeviceDescriptor device, EventType type)
 {
     uint32_t typeval = 0;
     typeval |= type;
-    return hashcode(device) ^ typeval;
+    return jenkins_hash(device.id.c_str()) ^ typeval;
 }
 
 EventPool::EventPool() : counter(0)
@@ -59,7 +49,7 @@ EventPool::~EventPool()
 int EventPool::RegisterEvent(
     DeviceDescriptor device, EventType type, TSFN func)
 {
-    uint32_t key = combine_hashes(device, type);
+    uint32_t key = getHashCode(device, type);
     if (m_events.count(key) <= 0)
     {
         std::map<int, TSFN> res;
@@ -75,7 +65,7 @@ int EventPool::RegisterEvent(
 
 bool EventPool::RemoveEvent(DeviceDescriptor device, EventType type, int id)
 {
-    uint32_t key = combine_hashes(device, type);
+    uint32_t key = getHashCode(device, type);
     if (m_events.count(key) <= 0)
         return false;
 
@@ -93,7 +83,7 @@ bool EventPool::RemoveEvent(DeviceDescriptor device, EventType type, int id)
 std::vector<TSFN> EventPool::GetListeners(
     DeviceDescriptor device, EventType type)
 {
-    uint32_t key = combine_hashes(device, type);
+    uint32_t key = getHashCode(device, type);
     std::vector<TSFN> res;
     if (m_events.count(key) <= 0)
         return res;
@@ -108,7 +98,7 @@ std::vector<TSFN> EventPool::GetListeners(
 
 void EventPool::RemoveAllListeners(DeviceDescriptor device, EventType type)
 {
-    uint32_t key = combine_hashes(device, type);
+    uint32_t key = getHashCode(device, type);
     std::map<int, TSFN> contained = m_events[key];
     for (auto it = contained.begin(); it != contained.end(); ++it)
     {
