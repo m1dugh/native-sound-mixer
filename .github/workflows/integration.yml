@@ -16,6 +16,7 @@ jobs:
           exit $(test -f .ci-temp && cat .ci-temp | wc -l)
 
   build-linux:
+    needs: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -31,7 +32,14 @@ jobs:
           npm ci
           npm run build
 
+  test-linux:
+    needs: build-linux
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm run test
+
   build-windows:
+    needs: lint
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
@@ -42,3 +50,9 @@ jobs:
         run: |
           npm ci
           npm run build
+
+  test-windows:
+    needs: build-windows
+    runs-on: windows-latest
+    steps:
+      - run: npm run test
