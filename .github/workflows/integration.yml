@@ -31,9 +31,6 @@ jobs:
         run: |
           npm ci
           npm run build
-      - name: Unit Testing
-        run: |
-          npm run test
 
   test-windows:
     needs: lint
@@ -47,6 +44,3 @@ jobs:
         run: |
           npm ci
           npm run build
-      - name: Unit Testing
-        run: |
-          npm run test
