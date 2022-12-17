@@ -12,7 +12,7 @@
 		"clean": "node-gyp clean && node scripts/clean.js",
 		"test": "jest",
 		"docs": "typedoc",
-		"format": "sh ./scripts/format.sh ./cppsrc ./cppsrc/.clang-format",
+		"format": "eslint --fix 'src/**' && sh ./scripts/format.sh ./cppsrc ./cppsrc/.clang-format",
 		":prepublishOnly": "npm run build && npm run test && node scripts/check-bins.js"
 	},
 	"os": [

@@ -19,14 +19,14 @@ if [ ! -d "$path" ];then
     exit 1
 fi
 
-which find
+which find > /dev/null
 exit_code=$?
 if [ $exit_code -ne 0 ];then
     echo "could not locate 'find'"
     exit 1
 fi
 
-which clang-format
+which clang-format > /dev/null
 exit_code=$?
 if [ $exit_code -ne 0 ];then
     echo "could not locate 'clang-format'"
