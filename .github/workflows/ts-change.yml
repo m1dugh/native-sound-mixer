@@ -4,6 +4,10 @@ on:
   push:
     paths:
       - ./src
+  pull_request:
+    branches:
+      - develop
+      - master
 
 jobs:
   lint:

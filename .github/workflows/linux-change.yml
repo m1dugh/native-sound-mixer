@@ -3,6 +3,10 @@ on:
   push:
     paths:
       - ./cppsrc/linux
+  pull_request:
+    branches: 
+      - develop
+      - master
 
 jobs:
   lint:

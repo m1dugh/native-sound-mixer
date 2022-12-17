@@ -3,6 +3,10 @@ on:
   push:
     paths:
       - ./cppsrc/win
+  pull_request:
+    branches:
+      - master
+      - develop
 
 jobs:
   lint:
