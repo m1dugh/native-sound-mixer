@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y libpulse-dev
+          sudo apt install -y build-essential libpulse-dev
       - name: Node build
         run: |
           npm ci
