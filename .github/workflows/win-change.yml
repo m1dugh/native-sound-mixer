@@ -1,0 +1,32 @@
+name: Windows change
+on:
+  push:
+    paths:
+      - ./cppsrc/win
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Windows API lint
+        run: |
+          npm ci
+          npm run format:win
+          git diff | tee .ci-temp
+          exit $(test -f .ci-temp && cat .ci-temp | wc -l)
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Windows API build
+        run: |
+          npm ci
+          npm run build:win
+

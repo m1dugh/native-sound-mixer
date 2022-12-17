@@ -1,51 +1,54 @@
 {
-	"name": "native-sound-mixer",
-	"version": "3.4.0-win-beta",
-	"description": "node js native sound mixer module",
-	"main": "dist/sound-mixer.js",
-	"gypfile": true,
-	"scripts": {
-		"install": "exit 0",
-		"build:ts": "tsc",
-		"build:bin": "node-gyp rebuild && node scripts/copy-bins.js",
-		"build": "npm run build:ts && npm run build:bin",
-		"clean": "node-gyp clean && node scripts/clean.js",
-		"test": "jest",
-		"docs": "typedoc",
-		"format": "eslint --fix 'src/**' && sh ./scripts/format.sh ./cppsrc ./cppsrc/.clang-format",
-		":prepublishOnly": "npm run build && npm run test && node scripts/check-bins.js"
-	},
-	"os": [
-		"win32",
-		"linux"
-	],
-	"arch": [
-		"x86",
-		"x64"
-	],
-	"types": "dist/@types/sound-mixer.d.ts",
-	"author": "romlm",
-	"license": "MIT",
-	"devDependencies": {
-		"@types/jest": "^29.2.4",
-		"@types/lodash": "^4.14.191",
-		"@types/node": "^14.14.41",
-		"@typescript-eslint/eslint-plugin": "^5.46.1",
-		"@typescript-eslint/parser": "^5.46.1",
-		"eslint": "^8.30.0",
-		"jest": "^29.3.1",
-		"lodash": "^4.17.21",
-		"node-addon-api": "^4.2.0",
-		"node-gyp": "^9.3.0",
-		"ts-jest": "^29.0.3",
-		"typedoc": "^0.23.22",
-		"typescript": "^4.2.4"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/m1dugh/native-sound-mixer.git"
-	},
-	"files": [
-		"dist"
-	]
+    "name": "native-sound-mixer",
+    "version": "3.4.0-win-beta",
+    "description": "node js native sound mixer module",
+    "main": "dist/sound-mixer.js",
+    "gypfile": true,
+    "scripts": {
+        "install": "exit 0",
+        "build:ts": "tsc",
+        "build:bin": "node-gyp rebuild && node scripts/copy-bins.js",
+        "build": "npm run build:ts && npm run build:bin",
+        "clean": "node-gyp clean && node scripts/clean.js",
+        "test": "jest",
+        "docs": "typedoc",
+        "format:ts": "eslint --fix 'src/**'",
+        "format:win": "sh ./scripts/format.sh ./cppsrc/win ./cppsrc/.clang-format",
+        "format:linux": "sh ./scripts/format.sh ./cppsrc/linux ./cppsrc/.clang-format",
+        "format": "npm run format:ts && npm run format:win && npm run format:linux",
+        ":prepublishOnly": "npm run build && npm run test && node scripts/check-bins.js"
+    },
+    "os": [
+        "win32",
+        "linux"
+    ],
+    "arch": [
+        "x86",
+        "x64"
+    ],
+    "types": "dist/@types/sound-mixer.d.ts",
+    "author": "romlm",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/jest": "^29.2.4",
+        "@types/lodash": "^4.14.191",
+        "@types/node": "^14.14.41",
+        "@typescript-eslint/eslint-plugin": "^5.46.1",
+        "@typescript-eslint/parser": "^5.46.1",
+        "eslint": "^8.30.0",
+        "jest": "^29.3.1",
+        "lodash": "^4.17.21",
+        "node-addon-api": "^4.2.0",
+        "node-gyp": "^9.3.0",
+        "ts-jest": "^29.0.3",
+        "typedoc": "^0.23.22",
+        "typescript": "^4.2.4"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/m1dugh/native-sound-mixer.git"
+    },
+    "files": [
+        "dist"
+    ]
 }
