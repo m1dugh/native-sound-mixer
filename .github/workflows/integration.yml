@@ -15,7 +15,7 @@ jobs:
           git diff | tee .ci-temp
           exit $(test -f .ci-temp && cat .ci-temp | wc -l)
 
-  build-linux:
+  test-linux:
     needs: lint
     runs-on: ubuntu-latest
     steps:
@@ -31,14 +31,11 @@ jobs:
         run: |
           npm ci
           npm run build
+      - name: Unit Testing
+        run: |
+          npm run test
 
-  test-linux:
-    needs: build-linux
-    runs-on: ubuntu-latest
-    steps:
-      - run: npm run test
-
-  build-windows:
+  test-windows:
     needs: lint
     runs-on: windows-latest
     steps:
@@ -50,9 +47,6 @@ jobs:
         run: |
           npm ci
           npm run build
-
-  test-windows:
-    needs: build-windows
-    runs-on: windows-latest
-    steps:
-      - run: npm run test
+      - name: Unit Testing
+        run: |
+          npm run test
