@@ -5,6 +5,7 @@
 	"main": "dist/sound-mixer.js",
 	"gypfile": true,
 	"scripts": {
+        "install": "exit 0",
 		"build:ts": "tsc",
 		"build:bin": "node-gyp rebuild && node scripts/copy-bins.js",
 		"build": "npm run build:ts && npm run build:bin",
