@@ -23,6 +23,7 @@ jobs:
           git diff | tee .ci-temp
           exit $(test -f .ci-temp && cat .ci-temp | wc -l)
   build:
+    needs: lint
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
