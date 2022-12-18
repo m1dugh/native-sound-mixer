@@ -32,5 +32,5 @@ jobs:
       - name: Windows API build
         run: |
           npm ci
-          npm run build:win
+          npm run build:bin
 
