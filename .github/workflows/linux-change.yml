@@ -25,13 +25,16 @@ jobs:
   build:
     needs: lint
     runs-on: ubuntu-latest
+    container: node:18
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+      - name: Install dependencies
+        run: |
+          apt update
+          apt install -y libpulse-dev build-essential
       - name: Linux API build
         run: |
           npm ci
-          npm run build:bin
+          npx node-gyp configure
+          npx node-gyp build
 
