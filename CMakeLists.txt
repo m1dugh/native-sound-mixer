@@ -21,13 +21,6 @@ execute_process(
 include_directories(${napi_includes})
 option(ENABLE_SHARED "" 0)
 
-set(
-    CMAKE_LIBRARY_OUTPUT_DIRECTORY "../dist/addons/"
-)
-
-project (linux)
-
-
 set(LINUX_HEADER_FILES
     "cppsrc/linux/sound-mixer.hpp"
     "cppsrc/linux/sound-mixer-utils.hpp"
@@ -40,16 +33,6 @@ set(LINUX_SOURCE_FILES
     "cppsrc/linux/sound-mixer-utils.cpp"
     "cppsrc/linux/linux-sound-mixer.cpp"
 )
-
-add_library(${PROJECT_NAME} SHARED ${LINUX_SOURCE_FILES} ${LINUX_HEADER_FILES} ${CMAKE_JS_SRC})
-set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX "-sound-mixer.node")
-target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_JS_LIB} -lpulse)
-
-if(GNU AND CMAKE_JS_NODELIB_DEF AND CMAKE_JS_NODELIB_TARGET)
-    execute_process(COMMAND ${CMAKE_AR} /def:${CMAKE_JS_NODELIB_DEF} /out:${CMAKE_JS_NODELIB_TARGET} ${CMAKE_STATIC_LINKER_FLAG})
-endif()
-
-project(win)
 
 set(WIN_HEADER_FILES
     "cppsrc/win/sound-mixer.hpp"
@@ -64,10 +47,66 @@ set(WIN_SOURCE_FILES
     "cppsrc/win/win-sound-mixer.cpp"
 )
 
-add_library(${PROJECT_NAME} SHARED ${WIN_SOURCE_FILES} ${WIN_HEADER_FILES} ${CMAKE_JS_SRC})
-set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX "-sound-mixer.node")
-target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_JS_LIB})
+if(UNIX AND NOT APPLE)
+    set(LINUX TRUE)
+endif()
 
-if(MSVC AND CMAKE_JS_NODELIB_DEF AND CMAKE_JS_NODELIB_TARGET)
-    execute_process(COMMAND ${CMAKE_AR} /def:${CMAKE_JS_NODELIB_DEF} /out:${CMAKE_JS_NODELIB_TARGET} ${CMAKE_STATIC_LINKER_FLAG})
+if(LINUX)
+    project (linux)
+
+    add_library(${PROJECT_NAME} SHARED ${LINUX_SOURCE_FILES} ${LINUX_HEADER_FILES} ${CMAKE_JS_SRC})
+    set_target_properties(${PROJECT_NAME}
+        PROPERTIES
+        PREFIX ""
+        SUFFIX "-sound-mixer.node"
+        RUNTIME_OUTPUT_DIRECTORY "${PROJECT_NAME}"
+    )
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_JS_LIB} -lpulse)
+
+    add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy
+            "$<TARGET_FILE:${PROJECT_NAME}>"
+            "${PROJECT_SOURCE_DIR}/dist/addons/${PROJECT_NAME}-sound-mixer.node"
+        COMMENT "Copying ${PROJECT_NAME}-sound-mixer.node -> ${PROJECT_SOURCE_DIR}/dist/addons"
+    )
+
+    if(GNU AND CMAKE_JS_NODELIB_DEF AND CMAKE_JS_NODELIB_TARGET)
+        execute_process(COMMAND ${CMAKE_AR} /def:${CMAKE_JS_NODELIB_DEF} /out:${CMAKE_JS_NODELIB_TARGET} ${CMAKE_STATIC_LINKER_FLAG})
+    endif()
+endif()
+
+if(WIN32)
+    project(win)
+
+    add_library(${PROJECT_NAME}
+        SHARED
+        ${WIN_SOURCE_FILES}
+        ${WIN_HEADER_FILES}
+        ${CMAKE_JS_SRC}
+    )
+
+    set_target_properties(
+        ${PROJECT_NAME}
+        PROPERTIES
+        PREFIX ""
+        SUFFIX "-sound-mixer.node"
+        RUNTIME_OUTPUT_DIRECTORY "${PROJECT_NAME}"
+    )
+
+
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_JS_LIB})
+
+    add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy
+            "$<TARGET_FILE:${PROJECT_NAME}>"
+            "${PROJECT_SOURCE_DIR}/dist/addons/${PROJECT_NAME}-sound-mixer.node"
+        COMMENT "Copying ${PROJECT_NAME}-sound-mixer.node -> ${PROJECT_SOURCE_DIR}/dist/addons"
+    )
+
+    if(MSVC AND CMAKE_JS_NODELIB_DEF AND CMAKE_JS_NODELIB_TARGET)
+        execute_process(COMMAND ${CMAKE_AR} /def:${CMAKE_JS_NODELIB_DEF} /out:${CMAKE_JS_NODELIB_TARGET} ${CMAKE_STATIC_LINKER_FLAG})
+    endif()
+
 endif()
