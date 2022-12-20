@@ -13,7 +13,7 @@ bool deviceEquals(DeviceDescriptor a, DeviceDescriptor b)
     return a.type == b.type;
 }
 
-uint32_t jenkins_hash(const char *key)
+static uint32_t jenkins_hash(const char *key, char eventType)
 {
     size_t i = 0;
     size_t len = strlen(key);
@@ -24,6 +24,12 @@ uint32_t jenkins_hash(const char *key)
         hash += hash << 10;
         hash ^= hash >> 6;
     }
+
+    // adding event type
+    hash += eventType;
+    hash += hash << 10;
+    hash ^= hash >> 6;
+
     hash += hash << 3;
     hash ^= hash >> 11;
     hash += hash << 15;
@@ -32,9 +38,7 @@ uint32_t jenkins_hash(const char *key)
 
 uint32_t EventPool::getHashCode(DeviceDescriptor device, EventType type)
 {
-    uint32_t typeval = 0;
-    typeval |= type;
-    return jenkins_hash(device.id.c_str()) ^ typeval;
+    return jenkins_hash(device.id.c_str(), (char) type);
 }
 
 EventPool::EventPool() : counter(0)
