@@ -32,10 +32,17 @@ jobs:
           node-version: '18'
       - name: Install dependencies
         shell: bash
-        working-directory: ${{github.workspace}}
         run: |
           sudo apt update
           sudo apt install libpulse-dev -yq
+      - name: directory without change
+        shell: bash
+        run: |
+          pwd
+          ls
+          ls cppsrc
+          tree
+          cmake -v
       - name: Linux API build
         working-directory: ${{github.workspace}}
         shell: bash

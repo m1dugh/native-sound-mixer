@@ -22,16 +22,16 @@ include_directories(${napi_includes})
 option(ENABLE_SHARED "" 0)
 
 set(LINUX_HEADER_FILES
-    "./cppsrc/linux/sound-mixer.hpp"
-    "./cppsrc/linux/sound-mixer-utils.hpp"
-    "./cppsrc/linux/linux-sound-mixer.hpp"
+    "cppsrc/linux/sound-mixer.hpp"
+    "cppsrc/linux/sound-mixer-utils.hpp"
+    "cppsrc/linux/linux-sound-mixer.hpp"
 )
 
 set(LINUX_SOURCE_FILES
-    "./cppsrc/linux/main.cpp"
-    "./cppsrc/linux/sound-mixer.cpp"
-    "./cppsrc/linux/sound-mixer-utils.cpp"
-    "./cppsrc/linux/linux-sound-mixer.cpp"
+    "cppsrc/linux/main.cpp"
+    "cppsrc/linux/sound-mixer.cpp"
+    "cppsrc/linux/sound-mixer-utils.cpp"
+    "cppsrc/linux/linux-sound-mixer.cpp"
 )
 
 set(WIN_HEADER_FILES
