@@ -21,7 +21,12 @@ execute_process(
 include_directories(${napi_includes})
 option(ENABLE_SHARED "" 0)
 
+set(
+    CMAKE_LIBRARY_OUTPUT_DIRECTORY "../dist/addons/"
+)
+
 project (linux)
+
 
 set(LINUX_HEADER_FILES
     "cppsrc/linux/sound-mixer.hpp"
