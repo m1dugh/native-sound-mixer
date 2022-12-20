@@ -29,6 +29,9 @@ jobs:
     container: node:18
     steps:
       - uses: actions/checkout@v3
+      - uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: '3.15'
       - name: Install dependencies
         run: |
           apt update
@@ -36,6 +39,5 @@ jobs:
       - name: Linux API build
         run: |
           npm ci
-          npx node-gyp configure
-          npx node-gyp build
+          npm run build:bin
 
