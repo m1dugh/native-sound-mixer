@@ -27,14 +27,12 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: jwlawson/actions-setup-cmake@v1.13
-        with:
-          cmake-version: '3.15'
       - uses: actions/setup-node@v3
         with:
           node-version: '18'
-      - uses: ilammy/msvc-dev-cmd@v1
       - name: Windows API build
+        working-directory: ${{github.workspace}}
+        shell: bash
         run: |
           npm ci
           npm run build:bin

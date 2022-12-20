@@ -38,7 +38,7 @@ static uint32_t jenkins_hash(const char *key, char eventType)
 
 uint32_t EventPool::getHashCode(DeviceDescriptor device, EventType type)
 {
-    return jenkins_hash(device.id.c_str(), (char) type);
+    return jenkins_hash(device.id.c_str(), (char)type);
 }
 
 EventPool::EventPool() : counter(0)
