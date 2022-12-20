@@ -21,7 +21,7 @@ execute_process(
 include_directories(${napi_includes})
 option(ENABLE_SHARED "" 0)
 
-project (linux-sound-mixer)
+project (linux)
 
 set(LINUX_HEADER_FILES
     "cppsrc/linux/sound-mixer.hpp"
@@ -37,14 +37,14 @@ set(LINUX_SOURCE_FILES
 )
 
 add_library(${PROJECT_NAME} SHARED ${LINUX_SOURCE_FILES} ${LINUX_HEADER_FILES} ${CMAKE_JS_SRC})
-set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX "-sound-mixer.node")
 target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_JS_LIB} -lpulse)
 
 if(GNU AND CMAKE_JS_NODELIB_DEF AND CMAKE_JS_NODELIB_TARGET)
     execute_process(COMMAND ${CMAKE_AR} /def:${CMAKE_JS_NODELIB_DEF} /out:${CMAKE_JS_NODELIB_TARGET} ${CMAKE_STATIC_LINKER_FLAG})
 endif()
 
-project(win-sound-mixer)
+project(win)
 
 set(WIN_HEADER_FILES
     "cppsrc/win/sound-mixer.hpp"
@@ -60,7 +60,7 @@ set(WIN_SOURCE_FILES
 )
 
 add_library(${PROJECT_NAME} SHARED ${WIN_SOURCE_FILES} ${WIN_HEADER_FILES} ${CMAKE_JS_SRC})
-set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX "-sound-mixer.node")
 target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_JS_LIB})
 
 if(MSVC AND CMAKE_JS_NODELIB_DEF AND CMAKE_JS_NODELIB_TARGET)

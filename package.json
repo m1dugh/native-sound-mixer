@@ -7,7 +7,7 @@
     "scripts": {
         "install": "cmake-js install",
         "build:ts": "tsc",
-        "build:bin": "node-gyp rebuild && node scripts/copy-bins.js",
+        "build:bin": "cmake-js compile && node scripts/copy-bins.js",
         "build": "npm run build:ts && npm run build:bin",
         "clean": "node-gyp clean && node scripts/clean.js",
         "test": "jest",
