@@ -7,7 +7,7 @@
     "scripts": {
         "install": "cmake-js install",
         "build:ts": "tsc",
-        "build:bin": "cmake-js compile",
+        "build:bin": "cmake-js rebuild",
         "build": "npm run build:ts && npm run build:bin",
         "clean": "cmake-js clean && node scripts/clean.js",
         "test": "jest",
