@@ -11,19 +11,22 @@ const sMixerModule: { SoundMixer: SoundMixer } = (() => {
         const archString = arch ? `_${arch}` : ""
         const path = 
             `${__dirname}/addons/${platform}-sound-mixer${archString}.node`
+
+        /* eslint-disable */
         const res = require(path)
-        return res;
+        /* eslint-enable */
+        return res
     }
 
 	const platform = os.platform()
 	const arch = os.arch()
 	if (platform === "win32") {
 		if (arch === "x32" || arch === "x64" || arch === "ia32") {
-			return getModule("win");
+			return getModule("win")
 		}
 	} else if (platform == "linux") {
 		if (arch === "x32" || arch === "x64" || arch === "ia32")
-			return getModule("linux");
+			return getModule("linux")
 	}
 
 	throw new Error("could not get the binary file")
@@ -47,7 +50,7 @@ export interface VolumeBalance {
     /**
      *  stereo: A flag indicating whether the owner is stereo.
      */
-	stereo?: Boolean;
+	stereo?: boolean;
 }
 
 /**
@@ -61,36 +64,36 @@ export declare class Device {
      *  The current volume of the device.
      *  @remarks Writing to this property changes the volume of the device.
      */
-	public volume: VolumeScalar;
+	public volume: VolumeScalar
 
     /**
      *  A flag indicating the mute state of a device.
      *  @remarks Writing to this property changes the mute state of the device.
      */
-	public mute: boolean;
+	public mute: boolean
 
     /**
      *  The stereo balance of the device if available.
      */
-	public balance: VolumeBalance;
+	public balance: VolumeBalance
 
     /**
      *  The name of the device.
      *  @readonly
      */
-	public readonly name: string;
+	public readonly name: string
 
     /**
      *  The type of the device (input or output).
      *  @readonly
      */
-	public readonly type: DeviceType;
+	public readonly type: DeviceType
 
     /**
      *  Returns the audio sessions bound to the device.
      *  @readonly 
      */
-	public readonly sessions: AudioSession[];
+	public readonly sessions: AudioSession[]
 
     /**
      *  @param {string} ev - The type of event to subscribe to. 
@@ -108,7 +111,7 @@ export declare class Device {
      *
      *  @see {@link Device.removeListener | removing a listener}
      */
-    public on(ev: string, callback: any): number
+    public on(ev: string, callback: (payload) => void): number
 
     /**
      *  @param {string} ev - The type of event to remove the listener of. 
@@ -175,19 +178,19 @@ export declare class AudioSession {
      *  The volume of the {@link AudioSession}
      *  @see {@link Device.volume}
      */
-	public volume: VolumeScalar;
+	public volume: VolumeScalar
 
     /**
      *  The volume balance of the {@link AudioSession} if stereo.
      *  @see {@link Device.balance}.
      */
-	public balance: VolumeBalance;
+	public balance: VolumeBalance
 
     /**
      *  The mute flag of the {@link AudioSession}.
      *  @see {@link Device.mute}.
      */
-	public mute: boolean;
+	public mute: boolean
 
     /**
      *  The name of the {@link AudioSession}.
@@ -195,7 +198,7 @@ export declare class AudioSession {
      *  this attribute might not behave the same on all distributions.
      *  @readonly
      */
-	public readonly name: string;
+	public readonly name: string
 
     /**
      *  The path to the application using the {@link AudioSession}.
@@ -203,7 +206,7 @@ export declare class AudioSession {
      *  this attribute might not behave the same on all distributions.
      *  @readonly
      */
-	public readonly appName: string;
+	public readonly appName: string
 }
 
 /**

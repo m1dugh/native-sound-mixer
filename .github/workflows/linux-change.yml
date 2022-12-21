@@ -1,0 +1,44 @@
+name: Linux change
+on:
+  push:
+    paths:
+      - ./cppsrc/linux
+  pull_request:
+    branches: 
+      - develop
+      - master
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Linux API lint
+        run: |
+          npm ci
+          npm run format:linux
+          git diff | tee .ci-temp
+          exit $(test -f .ci-temp && cat .ci-temp | wc -l)
+  build:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        shell: bash
+        run: |
+          sudo apt update
+          sudo apt install libpulse-dev -yq
+      - name: Linux API build
+        working-directory: ${{github.workspace}}
+        shell: bash
+        run: |
+          npm ci
+          npm run build:bin
+

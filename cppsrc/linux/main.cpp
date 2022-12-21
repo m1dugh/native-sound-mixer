@@ -1,4 +1,4 @@
-#include "./headers/sound-mixer.hpp"
+#include "sound-mixer.hpp"
 
 Napi::Object InitAll(Napi::Env env, Napi::Object exports)
 {

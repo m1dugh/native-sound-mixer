@@ -1,0 +1,39 @@
+name: Deploy Documentation
+
+on:
+  push:
+    branches:
+      - develop
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  deploy-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+
+      - name: Install dependencies
+        run: |
+          npm ci
+
+      - name: Build Docs
+        run: |
+          npm run docs
+      - name: Set output docs folder to dev
+        if: endsWith(github.ref, '/develop')
+        run: |
+          echo "TARGET_FOLDER=dev" >> $GITHUB_ENV
+      - name: Set output docs folder to master
+        if: endsWith(github.ref, '/master')
+        run: |
+          echo "TARGET_FOLDER=master" >> $GITHUB_ENV
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: docs
+          target-folder: ${{env.TARGET_FOLDER}}

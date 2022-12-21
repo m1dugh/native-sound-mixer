@@ -1,5 +1,7 @@
+// clang-format off
 #include <mmdeviceapi.h>
 #include <Functiondiscoverykeys_devpkey.h>
+// clang-format on
 #include <WinUser.h>
 #include <sstream>
 #include <string>
