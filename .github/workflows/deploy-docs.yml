@@ -1,6 +1,9 @@
 name: Deploy Documentation
 
-on: push
+on:
+  push:
+    branches:
+      - '27**'
 
 permissions:
   contents: write
@@ -19,6 +22,12 @@ jobs:
       - name: Build Docs
         run: |
           npm run docs
+      - name: Move docs to dev folder
+        shell: bash
+        run: |
+          mv docs dev
+          mkdir docs
+          mv dev docs/
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4
