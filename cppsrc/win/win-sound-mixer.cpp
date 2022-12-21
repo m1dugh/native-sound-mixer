@@ -172,16 +172,53 @@ vector<Device *> SoundMixer::GetDevices()
     return res;
 }
 
+Device *SoundMixer::getDeviceById(LPWSTR _id)
+{
+    filterDevices();
+    std::string id = toString(_id);
+    if (devices.count(id) > 0)
+        return devices[id];
+    return NULL;
+}
+
 Device *SoundMixer::GetDefaultDevice(DeviceType type)
 {
-    IMMDevice *dev;
+    IMMDevice *windev;
+    HRESULT res;
     if (type == DeviceType::OUTPUT)
-        pEnumerator->GetDefaultAudioEndpoint(
-            EDataFlow::eRender, ERole::eConsole, &dev);
+    {
+        res = pEnumerator->GetDefaultAudioEndpoint(
+            EDataFlow::eRender, ERole::eConsole, &windev);
+    }
     else
-        pEnumerator->GetDefaultAudioEndpoint(
-            EDataFlow::eCapture, ERole::eConsole, &dev);
-    return new Device(dev, deviceCallback);
+    {
+
+        res = pEnumerator->GetDefaultAudioEndpoint(
+            EDataFlow::eCapture, ERole::eConsole, &windev);
+    }
+
+    if (res != S_OK)
+        return NULL;
+
+    LPWSTR id;
+    res = windev->GetId(&id);
+    if (res != S_OK)
+    {
+        SafeRelease(&windev);
+        return NULL;
+    }
+    Device *dev = getDeviceById(id);
+    if (dev == NULL)
+    {
+        dev = new Device(windev, deviceCallback);
+        devices[toString(id)] = dev;
+    }
+    else
+    {
+        SafeRelease(&windev);
+    }
+    CoTaskMemFree(id);
+    return dev;
 }
 
 Device::Device(IMMDevice *dev, on_device_changed_cb_t cb)

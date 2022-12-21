@@ -25,7 +25,7 @@ void MixerObject::on_device_change_cb(
             NotificationHandler *pData = new NotificationHandler();
             *pData = data;
             cb.Acquire();
-            cb.BlockingCall(pData);
+            cb.NonBlockingCall(pData);
             cb.Release();
         }
     }
