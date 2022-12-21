@@ -25,6 +25,6 @@
         "entryPoints": [
             "src/sound-mixer.ts"
         ],
-        "out": "docs"
+        "out": "docs/ts"
     }
 }

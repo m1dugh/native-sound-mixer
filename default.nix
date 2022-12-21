@@ -7,6 +7,8 @@ stdenv.mkDerivation {
     src = ./.;
 
     nativeBuildInputs = [
+        doxygen
+
         cmake
         clang-tools
         nodejs

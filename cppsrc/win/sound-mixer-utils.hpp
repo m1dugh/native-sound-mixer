@@ -15,11 +15,18 @@
 
 namespace SoundMixerUtils
 {
+
+/**
+ *  \struct NotificationHandler
+ *  \brief  A struct containing necessary information when an audio event is
+ *  triggered.
+ */
 typedef struct
 {
-    int flags;
-    float volume;
-    bool mute;
+    int flags;  /*! The flags indicating which variable was changed. It can
+                  be DEVICE_CHANGE_MASK_MUTE of DEVICE_CHANGE_MASK_VOLUME. */
+    float volume;   /*! The value of the new volume if changed. */
+    bool mute;      /*! The value of the new mute flag if changed. */
 } NotificationHandler;
 
 void CallJs(Napi::Env env, Napi::Function cb,

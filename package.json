@@ -3,7 +3,6 @@
     "version": "3.4.0-win-beta",
     "description": "node js native sound mixer module",
     "main": "dist/sound-mixer.js",
-    "gypfile": true,
     "scripts": {
         "install": "cmake-js install",
         "build:ts": "tsc",
@@ -11,7 +10,9 @@
         "build": "npm run build:ts && npm run build:bin",
         "clean": "cmake-js clean && node scripts/clean.js",
         "test": "jest",
-        "docs": "typedoc",
+        "docs:bin": "doxygen doxygen.conf",
+        "docs:ts": "typedoc",
+        "docs": "npm run docs:bin && npm run docs:ts",
         "format:ts": "eslint --fix 'src/**'",
         "format:win": "sh ./scripts/format.sh ./cppsrc/win ./cppsrc/.clang-format",
         "format:linux": "sh ./scripts/format.sh ./cppsrc/linux ./cppsrc/.clang-format",
