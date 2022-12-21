@@ -3,7 +3,8 @@ name: Deploy Documentation
 on:
   push:
     branches:
-      - '27**'
+      - develop
+      - "27**"
 
 permissions:
   contents: write
@@ -22,12 +23,21 @@ jobs:
       - name: Build Docs
         run: |
           npm run docs
-      - name: Move docs to dev folder
+      - name: Set output docs folder to dev
+        if: endsWith(github.ref, '/develop')
+        run: |
+          echo "TARGET_FOLDER=dev" >> $GITHUB_ENV
+      - name: Set output docs folder to master
+        if: endsWith(github.ref, 'push-event')
+        run: |
+          echo "TARGET_FOLDER=master" >> $GITHUB_ENV
+
+      - name: Move docs to ${{env.TARGET_FOLDER}}
         shell: bash
         run: |
-          mv docs dev
+          mv docs ${{env.TARGET_FOLDER}}
           mkdir docs
-          mv dev docs/
+          mv ${{env.TARGET_FOLDER}} docs/
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4
