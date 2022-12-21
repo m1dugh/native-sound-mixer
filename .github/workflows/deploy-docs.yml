@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - develop
-      - "27**"
+      - master
 
 permissions:
   contents: write
@@ -24,7 +24,7 @@ jobs:
         run: |
           npm run docs
       - name: Set output docs folder to dev
-        if: endsWith(github.ref, 'push-event')
+        if: endsWith(github.ref, '/develop')
         run: |
           echo "TARGET_FOLDER=dev" >> $GITHUB_ENV
       - name: Set output docs folder to master
