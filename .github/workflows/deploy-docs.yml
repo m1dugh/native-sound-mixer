@@ -24,22 +24,16 @@ jobs:
         run: |
           npm run docs
       - name: Set output docs folder to dev
-        if: endsWith(github.ref, '/develop')
+        if: endsWith(github.ref, 'push-event')
         run: |
           echo "TARGET_FOLDER=dev" >> $GITHUB_ENV
       - name: Set output docs folder to master
-        if: endsWith(github.ref, 'push-event')
+        if: endsWith(github.ref, '/master')
         run: |
           echo "TARGET_FOLDER=master" >> $GITHUB_ENV
-
-      - name: Move docs to ${{env.TARGET_FOLDER}}
-        shell: bash
-        run: |
-          mv docs ${{env.TARGET_FOLDER}}
-          mkdir docs
-          mv ${{env.TARGET_FOLDER}} docs/
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: docs
+          target-folder: ${{env.TARGET_FOLDER}}
