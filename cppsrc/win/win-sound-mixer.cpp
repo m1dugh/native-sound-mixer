@@ -172,10 +172,11 @@ vector<Device *> SoundMixer::GetDevices()
     return res;
 }
 
-Device *SoundMixer::getDeviceById(LPWSTR _id) {
+Device *SoundMixer::getDeviceById(LPWSTR _id)
+{
     filterDevices();
     std::string id = toString(_id);
-    if(devices.count(id) > 0)
+    if (devices.count(id) > 0)
         return devices[id];
     return NULL;
 }
@@ -184,30 +185,36 @@ Device *SoundMixer::GetDefaultDevice(DeviceType type)
 {
     IMMDevice *windev;
     HRESULT res;
-    if (type == DeviceType::OUTPUT) {
+    if (type == DeviceType::OUTPUT)
+    {
         res = pEnumerator->GetDefaultAudioEndpoint(
-                EDataFlow::eRender, ERole::eConsole, &windev);
+            EDataFlow::eRender, ERole::eConsole, &windev);
     }
-    else {
+    else
+    {
 
         res = pEnumerator->GetDefaultAudioEndpoint(
-                EDataFlow::eCapture, ERole::eConsole, &windev);
+            EDataFlow::eCapture, ERole::eConsole, &windev);
     }
 
-    if(res != S_OK)
+    if (res != S_OK)
         return NULL;
 
     LPWSTR id;
     res = windev->GetId(&id);
-    if(res != S_OK) {
+    if (res != S_OK)
+    {
         SafeRelease(&windev);
         return NULL;
     }
     Device *dev = getDeviceById(id);
-    if(dev == NULL) {
+    if (dev == NULL)
+    {
         dev = new Device(windev, deviceCallback);
         devices[toString(id)] = dev;
-    } else {
+    }
+    else
+    {
         SafeRelease(&windev);
     }
     CoTaskMemFree(id);
@@ -216,7 +223,7 @@ Device *SoundMixer::GetDefaultDevice(DeviceType type)
 
 Device::Device(IMMDevice *dev, on_device_changed_cb_t cb)
     : device(dev), endpoint(NULL), endpointVolume(NULL), _deviceCallback(cb),
-    device_cb(NULL)
+      device_cb(NULL)
 {
     LPWSTR winId;
     device->GetId(&winId);
@@ -233,7 +240,7 @@ IMMDeviceEnumerator *Device::GetEnumerator()
 
     IMMDeviceEnumerator *enumerator = NULL;
     HRESULT result = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL,
-            CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (LPVOID *)&enumerator);
+        CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (LPVOID *)&enumerator);
     if (result != S_OK)
         return NULL;
     return enumerator;
@@ -296,7 +303,7 @@ bool Device::Update()
     }
 
     device->Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, NULL,
-            (LPVOID *)&endpointVolume);
+        (LPVOID *)&endpointVolume);
 
     if (device_cb == NULL)
         device_cb = new SoundMixerAudioEndpointVolumeCallback(this);
@@ -320,7 +327,7 @@ vector<AudioSession *> Device::GetAudioSessions()
 
     IAudioSessionManager2 *manager;
     device->Activate(
-            __uuidof(IAudioSessionManager2), CLSCTX_ALL, NULL, (LPVOID *)&manager);
+        __uuidof(IAudioSessionManager2), CLSCTX_ALL, NULL, (LPVOID *)&manager);
 
     IAudioSessionEnumerator *pEnumerator;
     manager->GetSessionEnumerator(&pEnumerator);
@@ -335,7 +342,7 @@ vector<AudioSession *> Device::GetAudioSessions()
     for (int i = 0; i < count; i++)
     {
         if (pEnumerator->GetSession(i, &control) == S_OK
-                && control->QueryInterface(&control2) == S_OK)
+            && control->QueryInterface(&control2) == S_OK)
         {
             sessions.push_back(new AudioSession(control2));
         }
@@ -484,7 +491,7 @@ void AudioSession::SetVolumeBalance(const VolumeBalance &balance)
 {
     IChannelAudioVolume *channelVolume;
     control->QueryInterface(
-            __uuidof(IChannelAudioVolume), (LPVOID *)&channelVolume);
+        __uuidof(IChannelAudioVolume), (LPVOID *)&channelVolume);
     UINT count = 0;
     HRESULT res = channelVolume->GetChannelCount(&count);
     if (res != S_OK)
@@ -507,7 +514,7 @@ VolumeBalance AudioSession::GetVolumeBalance()
 
     IChannelAudioVolume *channelVolume;
     control->QueryInterface(
-            __uuidof(IChannelAudioVolume), (LPVOID *)&channelVolume);
+        __uuidof(IChannelAudioVolume), (LPVOID *)&channelVolume);
     VolumeBalance result = {0.F, 0.F, false};
     UINT count = 0;
     HRESULT res = channelVolume->GetChannelCount(&count);
@@ -568,7 +575,7 @@ float AudioSession::GetVolume()
 }
 
 IFACEMETHODIMP SoundMixerAudioEndpointVolumeCallback::OnNotify(
-        PAUDIO_VOLUME_NOTIFICATION_DATA pNotify)
+    PAUDIO_VOLUME_NOTIFICATION_DATA pNotify)
 {
     if (device->_deviceCallback == NULL)
         return S_OK;
@@ -591,12 +598,12 @@ IFACEMETHODIMP SoundMixerAudioEndpointVolumeCallback::OnNotify(
 }
 
 SoundMixerAudioEndpointVolumeCallback::SoundMixerAudioEndpointVolumeCallback(
-        Device *dev)
+    Device *dev)
     : device(dev)
 {
 }
 IFACEMETHODIMP SoundMixerAudioEndpointVolumeCallback::QueryInterface(
-        const IID &iid, void **ppUnk)
+    const IID &iid, void **ppUnk)
 {
     return S_OK;
 }

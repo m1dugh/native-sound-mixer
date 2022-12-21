@@ -101,7 +101,6 @@ class SoundMixer {
     std::vector<Device *> GetDevices();
     Device *GetDefaultDevice(DeviceType);
 
-
   private:
     IMMDeviceEnumerator *pEnumerator = nullptr;
     std::map<std::string, Device *> devices;
