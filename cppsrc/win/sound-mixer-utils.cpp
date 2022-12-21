@@ -92,6 +92,7 @@ std::vector<TSFN> EventPool::GetListeners(
     if (m_events.count(key) <= 0)
         return res;
     std::map<int, TSFN> contained = m_events[key];
+    int i = 0;
     for (auto it = contained.begin(); it != contained.end(); ++it)
     {
         res.push_back(it->second);

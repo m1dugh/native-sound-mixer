@@ -101,11 +101,24 @@ class SoundMixer {
     std::vector<Device *> GetDevices();
     Device *GetDefaultDevice(DeviceType);
 
+
   private:
     IMMDeviceEnumerator *pEnumerator = nullptr;
     std::map<std::string, Device *> devices;
 
   private:
+    /**
+     *  \brief  Returns the corresponding device if already in the list,
+     *  NULL otherwise.
+     *
+     *  \fn     Device *getDeviceById(LPWSTR id);
+     *  \param id   The id of the device to find.
+     *  \returns    The corresponding device if already in the list, NULL
+     *  otherwise.
+     *  \remarks    The caller is responsible for freeing the provided id.
+     */
+    Device *getDeviceById(LPWSTR id);
+
     void filterDevices();
     on_device_changed_cb_t deviceCallback;
 };
