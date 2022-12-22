@@ -232,6 +232,9 @@ Device::Device(IMMDevice *dev, on_device_changed_cb_t cb)
 
     valid = Update();
 
+    _oldVolume = GetVolume();
+    _oldMute = (BOOL) GetMute();
+
     CoTaskMemFree(winId);
 }
 
