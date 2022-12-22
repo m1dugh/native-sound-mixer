@@ -10,7 +10,7 @@ on:
       - master
 
 jobs:
-  lint:
+  ts-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -23,8 +23,8 @@ jobs:
           npm run format:ts
           git diff | tee .ci-temp
           exit $(test -f .ci-temp && cat .ci-temp | wc -l)
-  build:
-    needs: lint
+  ts-build:
+    needs: ts-lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

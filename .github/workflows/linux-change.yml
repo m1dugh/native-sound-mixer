@@ -9,7 +9,7 @@ on:
       - master
 
 jobs:
-  lint:
+  linux-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -22,8 +22,8 @@ jobs:
           npm run format:linux
           git diff | tee .ci-temp
           exit $(test -f .ci-temp && cat .ci-temp | wc -l)
-  build:
-    needs: lint
+  linux-build:
+    needs: linux-lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
