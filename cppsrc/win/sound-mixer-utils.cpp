@@ -147,10 +147,12 @@ void CallJs(Napi::Env env, Napi::Function cb,
         else if (data->flags & DEVICE_CHANGE_MASK_VOLUME)
         {
             value = Napi::Number::New(env, data->volume);
-        } else {
+        }
+        else
+        {
             valid = false;
         }
-        if(valid)
+        if (valid)
             cb.Call(owner->Value(), {value});
 
         delete data;
