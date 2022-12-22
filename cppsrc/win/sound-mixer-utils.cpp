@@ -138,16 +138,20 @@ void CallJs(Napi::Env env, Napi::Function cb,
 
     if (data != nullptr)
     {
+        bool valid = true;
         Napi::Value value;
         if (data->flags & DEVICE_CHANGE_MASK_MUTE)
         {
             value = Napi::Boolean::New(env, data->mute);
         }
-        else /*if (data->flags & DEVICE_CHANGE_MASK_VOLUME) */
+        else if (data->flags & DEVICE_CHANGE_MASK_VOLUME)
         {
             value = Napi::Number::New(env, data->volume);
+        } else {
+            valid = false;
         }
-        cb.Call(owner->Value(), {value});
+        if(valid)
+            cb.Call(owner->Value(), {value});
 
         delete data;
     }
