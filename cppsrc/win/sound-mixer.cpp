@@ -24,6 +24,7 @@ void MixerObject::on_device_change_cb(
         {
             NotificationHandler *pData = new NotificationHandler();
             *pData = data;
+            pData->flags = DEVICE_CHANGE_MASK_MUTE;
             cb.Acquire();
             cb.NonBlockingCall(pData);
             cb.Release();
@@ -39,6 +40,7 @@ void MixerObject::on_device_change_cb(
             NotificationHandler *pData = new NotificationHandler();
             *pData = data;
             cb.Acquire();
+            pData->flags = DEVICE_CHANGE_MASK_VOLUME;
             cb.BlockingCall(pData);
             cb.Release();
         }

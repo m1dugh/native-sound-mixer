@@ -9,7 +9,7 @@ on:
       - develop
 
 jobs:
-  lint:
+  win-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -22,8 +22,8 @@ jobs:
           npm run format:win
           git diff | tee .ci-temp
           exit $(test -f .ci-temp && cat .ci-temp | wc -l)
-  build:
-    needs: lint
+  win-build:
+    needs: win-lint
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
