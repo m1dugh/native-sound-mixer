@@ -26,6 +26,11 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '18'
+      - name: Install dependencies
+        shell: bash
+        run: |
+          sudo apt update
+          sudo apt install libpulse-dev -yq
       - name: Build Linux Binary
         working-directory: ${{github.workspace}}
         shell: bash
