@@ -1,0 +1,85 @@
+name: Publish package to NPM registry
+
+on: push
+
+    
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: lint
+        run: |
+          npm ci
+          npm run format
+          git diff | tee .ci-temp
+          exit $(test -f .ci-temp && cat .ci-temp | wc -l)
+
+  linux-build:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Build Linux Binary
+        working-directory: ${{github.workspace}}
+        shell: bash
+        run: |
+          npm ci
+          npm run build:bin
+      - name: Save Binary
+        uses: actions/upload-artifacts@v3
+          name: linux-binary
+          path: ./dist/addons/linux-sound-mixer.node
+    
+
+  win-build:
+    needs: lint
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Windows API build
+        working-directory: ${{github.workspace}}
+        shell: bash
+        run: |
+          npm ci
+          npm run build:bin
+      - name: Save Binary
+        uses: actions/upload-artifacts@v3
+          name: windows-binary
+          path: ./dist/addons/win-sound-mixer.node
+
+  publish:
+    needs: [win-build, linux-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: TS build
+        run: |
+          npm ci
+          npm run build:ts
+      - name: Create addons folder
+        run: mkdir ./dist/addons
+
+      - name: Download windows addon
+        uses: actions/download@v3
+          key: windows-binary
+      - name: Download linux addon
+        uses: actions/download@v3
+          key: linux-binary
+
+      - name: Publish package to npm registry
+        run: npm publish
+        env: 
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
