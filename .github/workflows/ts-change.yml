@@ -1,0 +1,38 @@
+name: TS change 
+
+on:
+  push:
+    paths:
+      - ./src
+  pull_request:
+    branches:
+      - develop
+      - master
+
+jobs:
+  ts-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: TS lint
+        run: |
+          npm ci
+          npm run format:ts
+          git diff | tee .ci-temp
+          exit $(test -f .ci-temp && cat .ci-temp | wc -l)
+  ts-build:
+    needs: ts-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: TS build
+        run: |
+          npm ci
+          npm run build:ts
+

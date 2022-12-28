@@ -14,7 +14,8 @@
                         "libraries": ["-lpulse"],
                         "defines": ["NAPI_CPP_EXCEPTIONS"],
                         "sources": [
-							"cppsrc/main.cpp",
+							"cppsrc/linux/main.cpp",
+                            "cppsrc/linux/sound-mixer-utils.cpp",
                             "cppsrc/linux/sound-mixer.cpp",
                             "cppsrc/linux/linux-sound-mixer.cpp"
                         ],
@@ -37,10 +38,14 @@
                         "include_dirs": [
                             "<!(node -p \"require('node-addon-api').include_dir\")"
                         ],
+                        "ldflags": [
+                            "-Wl,-z,defs"
+                        ],
                         "libraries": [],
                         "defines": ["NAPI_CPP_EXCEPTIONS", "_HAS_EXCEPTIONS=1"],
                         "sources": [
-							"cppsrc/main.cpp",
+							"cppsrc/win/main.cpp",
+                            "cppsrc/win/sound-mixer-utils.cpp",
                             "cppsrc/win/sound-mixer.cpp",
                             "cppsrc/win/win-sound-mixer.cpp"
                         ],

@@ -1,24 +1,22 @@
 # node config
 node_modules
-package-lock.json
 
 #IDE config
 .vscode/
 .vs/
 *.code-workspace
+*.swp
+*.vim
 
 #build files
 build/
 dist/
 
 #test files
-test/
-jest.config.js
 coverage/
 
 #cpp linux test files
 cppsrc/linux/**/Makefile
-cppsrc/linux/main.cpp
 cppsrc/linux/out
 
 #bin files
@@ -26,3 +24,6 @@ cppsrc/linux/out
 *.a
 *.o
 *.exe
+
+# documentation files
+docs/
