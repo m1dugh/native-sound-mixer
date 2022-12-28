@@ -82,11 +82,11 @@ jobs:
       - name: Download windows addon
         uses: actions/download-artifact@v3
         with:
-          key: windows-binary
+          name: windows-binary
       - name: Download linux addon
         uses: actions/download-artifact@v3
         with:
-          key: linux-binary
+          name: linux-binary
 
       - name: Publish package to npm registry
         run: npm publish
