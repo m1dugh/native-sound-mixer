@@ -74,23 +74,25 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
       - name: TS build
         run: |
           npm ci
           npm run build:ts
       - name: Create addons folder
-        run: mkdir ./dist/addons
-
+        shell: bash
+        run: mkdir -p ./dist/addons
       - name: Download windows addon
         uses: actions/download-artifact@v3
         with:
           name: windows-binary
+          path: ./dist/addons/win-sound-mixer.node
       - name: Download linux addon
         uses: actions/download-artifact@v3
         with:
           name: linux-binary
-
+          path: ./dist/addons/linux-sound-mixer.node
       - name: Publish package to npm registry
         run: npm publish
         env: 
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
