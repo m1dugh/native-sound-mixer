@@ -16,7 +16,7 @@
         "format:win": "sh ./scripts/format.sh ./cppsrc/win ./cppsrc/.clang-format",
         "format:linux": "sh ./scripts/format.sh ./cppsrc/linux ./cppsrc/.clang-format",
         "format": "npm run format:ts && npm run format:win && npm run format:linux",
-        ":prepublishOnly": "npm run build && npm run test && node scripts/check-bins.js"
+        "prepublishOnly": "node scripts/check-bins.js"
     },
     "os": [
         "win32",
