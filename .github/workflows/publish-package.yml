@@ -1,6 +1,8 @@
 name: Publish package to NPM registry
 
-on: push
+on: 
+  release:
+    types: [created]
 
     
 jobs:
