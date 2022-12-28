@@ -33,7 +33,8 @@ jobs:
           npm ci
           npm run build:bin
       - name: Save Binary
-        uses: actions/upload-artifacts@v3
+        uses: actions/upload-artifact@v3
+        with: 
           name: linux-binary
           path: ./dist/addons/linux-sound-mixer.node
     
@@ -53,7 +54,8 @@ jobs:
           npm ci
           npm run build:bin
       - name: Save Binary
-        uses: actions/upload-artifacts@v3
+        uses: actions/upload-artifact@v3
+        with:
           name: windows-binary
           path: ./dist/addons/win-sound-mixer.node
 
@@ -73,10 +75,12 @@ jobs:
         run: mkdir ./dist/addons
 
       - name: Download windows addon
-        uses: actions/download@v3
+        uses: actions/download-artifact@v3
+        with:
           key: windows-binary
       - name: Download linux addon
-        uses: actions/download@v3
+        uses: actions/download-artifact@v3
+        with:
           key: linux-binary
 
       - name: Publish package to npm registry
