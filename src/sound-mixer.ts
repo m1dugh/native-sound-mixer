@@ -131,8 +131,8 @@ export declare class Device {
  *  @enum
  */
 export enum AudioSessionState {
-	ACTIVE = 0,
-	INACTIVE = 1,
+    INACTIVE = 0,
+	ACTIVE = 1,
 	EXPIRED = 2
 }
 
@@ -207,6 +207,12 @@ export declare class AudioSession {
      *  @readonly
      */
 	public readonly appName: string
+
+    /**
+     * The state of the {@link AudioSession}.
+     * @readonly
+     */
+	public readonly state: AudioSessionState
 }
 
 /**
