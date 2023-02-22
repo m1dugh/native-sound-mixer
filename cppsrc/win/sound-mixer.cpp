@@ -376,8 +376,8 @@ Napi::Value AudioSessionObject::GetMute(const Napi::CallbackInfo &info)
 
 Napi::Value AudioSessionObject::GetState(const Napi::CallbackInfo &info)
 {
-    return Napi::Number::New(
-        info.Env(), static_cast<int>(reinterpret_cast<AudioSession *>(pSession)->state()));
+    return Napi::Number::New(info.Env(),
+        static_cast<int>(reinterpret_cast<AudioSession *>(pSession)->state()));
 }
 
 void AudioSessionObject::SetMute(
