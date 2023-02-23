@@ -55,6 +55,7 @@ or using yarn :
 	- [(Attribute) mute](#session-mute): `read-write`
 	- [(Attribute) volume](#session-volume): `read-write`
 	- [(Attribute) balance](#session-balance): `read-write`
+	- [(Attribute) state](#session-state): `readonly`
 
 4. [Data Structures](#4-Data-Structures)
 	- [Volume Scalar](#volumescalar)
@@ -199,6 +200,21 @@ const balance: VolumeBalance = session.balance;
 // sets right VolumeScalar to 1 and left VolumeScalar to .5
 // by default, left and right are equal to the VolumeScalar of the session
 session.balance = {right: 1, left: .5};
+```
+ 
+ - ### session state
+gets the [`AudioSessionState`](#audiosessionstate) for the session.
+
+```TypeScript
+// import ...
+
+// retrieving the state
+let session: AudioSession;
+const state: AudioSessionState = session.state;
+
+if (state === AudioSessionState.ACTIVE) {
+    // do something...
+}
 ```
 
 

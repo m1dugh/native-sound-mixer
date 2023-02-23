@@ -18,6 +18,7 @@ class AudioSessionObject : public Napi::ObjectWrap<AudioSessionObject> {
     AudioSessionObject(const Napi::CallbackInfo &info);
     virtual ~AudioSessionObject();
 
+    Napi::Value GetState(const Napi::CallbackInfo &info);
     Napi::Value GetVolume(const Napi::CallbackInfo &info);
     Napi::Value GetMute(const Napi::CallbackInfo &info);
     void SetVolume(const Napi::CallbackInfo &info, const Napi::Value &value);

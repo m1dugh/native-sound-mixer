@@ -210,6 +210,7 @@ Napi::Value AudioSessionObject::New(Napi::Env env, void *data)
     Napi::ObjectWrap<AudioSessionObject>::Unwrap(result)->pSession = session;
     result.Set("name", session->description());
     result.Set("appName", session->appName());
+    result.Set("state", 1);
 
     return result;
 }

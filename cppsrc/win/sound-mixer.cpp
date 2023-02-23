@@ -328,7 +328,8 @@ Napi::Function AudioSessionObject::GetClass(Napi::Env env)
             InstanceAccessor<&AudioSessionObject::GetVolume,
                 &AudioSessionObject::SetVolume>("volume"),
             InstanceAccessor<&AudioSessionObject::GetChannelVolume,
-                &AudioSessionObject::SetChannelVolume>("balance")});
+                &AudioSessionObject::SetChannelVolume>("balance"),
+            InstanceAccessor<&AudioSessionObject::GetState>("state")});
 }
 
 Napi::Object AudioSessionObject::Init(Napi::Env env, Napi::Object exports)
@@ -371,6 +372,12 @@ Napi::Value AudioSessionObject::GetMute(const Napi::CallbackInfo &info)
 {
     return Napi::Boolean::New(
         info.Env(), reinterpret_cast<AudioSession *>(pSession)->GetMute());
+}
+
+Napi::Value AudioSessionObject::GetState(const Napi::CallbackInfo &info)
+{
+    return Napi::Number::New(info.Env(),
+        static_cast<int>(reinterpret_cast<AudioSession *>(pSession)->state()));
 }
 
 void AudioSessionObject::SetMute(
