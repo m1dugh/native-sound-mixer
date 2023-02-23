@@ -26,7 +26,7 @@
         "x64"
     ],
     "types": "dist/@types/sound-mixer.d.ts",
-    "author": "romlm",
+    "author": "m1dugh",
     "license": "MIT",
     "devDependencies": {
         "@types/jest": "^29.2.4",
