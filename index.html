@@ -98,6 +98,7 @@
 <li><a href="#session-mute">(Attribute) mute</a>: <code>read-write</code></li>
 <li><a href="#session-volume">(Attribute) volume</a>: <code>read-write</code></li>
 <li><a href="#session-balance">(Attribute) balance</a>: <code>read-write</code></li>
+<li><a href="#session-state">(Attribute) state</a>: <code>readonly</code></li>
 </ul>
 </li>
 <li><p><a href="#4-Data-Structures">Data Structures</a></p>
@@ -203,6 +204,15 @@ sets and gets the <a href="#volumescalar"><code>VolumeScalar</code></a> for the 
 gets and sets the <a href="#volumebalance"><code>volume balance</code></a> for the session.</li>
 </ul>
 <pre><code class="language-TypeScript"><span class="hl-8">// import ...</span><br/><br/><span class="hl-8">// retrieving the volume</span><br/><span class="hl-4">let</span><span class="hl-0"> </span><span class="hl-1">session</span><span class="hl-0">: </span><span class="hl-6">AudioSession</span><span class="hl-0">;</span><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">balance</span><span class="hl-0">: </span><span class="hl-6">VolumeBalance</span><span class="hl-0"> = </span><span class="hl-1">session</span><span class="hl-0">.</span><span class="hl-1">balance</span><span class="hl-0">;</span><br/><br/><span class="hl-8">// sets right VolumeScalar to 1 and left VolumeScalar to .5</span><br/><span class="hl-8">// by default, left and right are equal to the VolumeScalar of the session</span><br/><span class="hl-1">session</span><span class="hl-0">.</span><span class="hl-1">balance</span><span class="hl-0"> = {</span><span class="hl-1">right:</span><span class="hl-0"> </span><span class="hl-9">1</span><span class="hl-0">, </span><span class="hl-1">left:</span><span class="hl-0"> </span><span class="hl-9">.5</span><span class="hl-0">};</span>
+</code></pre>
+<ul>
+<li>
+<a href="#session-state" id="session-state" style="color: inherit; text-decoration: none;">
+  <h3>session state</h3>
+</a>
+gets the <a href="#audiosessionstate"><code>AudioSessionState</code></a> for the session.</li>
+</ul>
+<pre><code class="language-TypeScript"><span class="hl-8">// import ...</span><br/><br/><span class="hl-8">// retrieving the state</span><br/><span class="hl-4">let</span><span class="hl-0"> </span><span class="hl-1">session</span><span class="hl-0">: </span><span class="hl-6">AudioSession</span><span class="hl-0">;</span><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">state</span><span class="hl-0">: </span><span class="hl-6">AudioSessionState</span><span class="hl-0"> = </span><span class="hl-1">session</span><span class="hl-0">.</span><span class="hl-1">state</span><span class="hl-0">;</span><br/><br/><span class="hl-2">if</span><span class="hl-0"> (</span><span class="hl-1">state</span><span class="hl-0"> === </span><span class="hl-1">AudioSessionState</span><span class="hl-0">.</span><span class="hl-5">ACTIVE</span><span class="hl-0">) {</span><br/><span class="hl-0">    </span><span class="hl-8">// do something...</span><br/><span class="hl-0">}</span>
 </code></pre>
 
 <a href="#4-data-structures" id="4-data-structures" style="color: inherit; text-decoration: none;">
