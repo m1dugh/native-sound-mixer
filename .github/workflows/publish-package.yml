@@ -86,12 +86,15 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: windows-binary
-          path: ./dist/addons/win-sound-mixer.node
+          path: ./dist/addons/
       - name: Download linux addon
         uses: actions/download-artifact@v3
         with:
           name: linux-binary
-          path: ./dist/addons/linux-sound-mixer.node
+          path: ./dist/addons/
+      - name: Check artifacts are present
+        working-directory: ./dist/addons/
+        run: test -f linux-sound-mixer.node && test -f win-sound-mixer.node
       - name: Publish package to npm registry
         run: npm publish
         env: 
