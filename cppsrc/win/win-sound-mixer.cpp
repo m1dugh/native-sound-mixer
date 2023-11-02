@@ -305,8 +305,12 @@ bool Device::Update()
         SafeRelease(&endpointVolume);
     }
 
-    device->Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, NULL,
+    HRESULT activateRes = device->Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, NULL,
         (LPVOID *)&endpointVolume);
+    if (activateRes != S_OK || endpointVolume == NULL)
+    {
+        return false;
+    }
 
     if (device_cb == NULL)
         device_cb = new SoundMixerAudioEndpointVolumeCallback(this);
