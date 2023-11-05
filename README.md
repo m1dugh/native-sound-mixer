@@ -256,9 +256,9 @@ DeviceType.ALL; // device type is both input and output
 -----
 
 ## Contributing
-As an open-source project, every one is free to modify the codebase. Feel free to open any discussion or issue or PR to improve this project.
+See [CONTRIBUTING.md](https://github.com/romlm/native-sound-mixer/blob/master/CONTRIBUTING.md)
 
 -----
 
 ## License
-This project is under [MIT](https://github.com/romlm/native-sound-mixer/blob/develop/LICENSE) license
+This project is under [MIT](https://github.com/romlm/native-sound-mixer/blob/master/LICENSE) license
