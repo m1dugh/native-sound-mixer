@@ -382,7 +382,8 @@ float Device::GetVolume()
 {
     float volume;
     HRESULT res = endpointVolume->GetMasterVolumeLevelScalar(&volume);
-    if (res != S_OK) {
+    if (res != S_OK)
+    {
         return 0.F;
     }
     return volume;
@@ -392,9 +393,11 @@ bool Device::GetMute()
 {
     BOOL mute;
     HRESULT res = endpointVolume->GetMute(&mute);
-    if (res != S_OK) {
-        // if we can't retrieve the GetMute state, there is probably something wrong with the audio endpoint 
-        // and the user can't hear it anyway, so just return true for the mute state.
+    if (res != S_OK)
+    {
+        // if we can't retrieve the GetMute state, there is probably something
+        // wrong with the audio endpoint and the user can't hear it anyway, so
+        // just return true for the mute state.
         return true;
     }
     return (bool)mute;
@@ -431,14 +434,18 @@ VolumeBalance Device::GetVolumeBalance()
         return result;
     }
     result.stereo = true;
-    HRESULT res1 = endpointVolume->GetChannelVolumeLevelScalar(RIGHT, &result.right);
-    if (res1 != S_OK) {
+    HRESULT res1
+        = endpointVolume->GetChannelVolumeLevelScalar(RIGHT, &result.right);
+    if (res1 != S_OK)
+    {
         result.right = 0.F; // revert right volume
         return result;
     }
 
-    HRESULT res2 = endpointVolume->GetChannelVolumeLevelScalar(LEFT, &result.left);
-    if (res2 != S_OK) {
+    HRESULT res2
+        = endpointVolume->GetChannelVolumeLevelScalar(LEFT, &result.left);
+    if (res2 != S_OK)
+    {
         result.left = 0.F; // revert left volume
         return result;
     }
