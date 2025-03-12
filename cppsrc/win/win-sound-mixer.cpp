@@ -7,6 +7,8 @@
 #include <string>
 #include <wchar.h>
 #include "win-sound-mixer.hpp"
+#include <locale>
+#include <codecvt>
 
 std::string GetProcNameFromId(DWORD id)
 {
@@ -36,8 +38,8 @@ inline LPWSTR toLPWSTR(std::string str)
 inline std::string toString(LPWSTR str)
 {
     std::wstring wstr(str);
-
-    return std::string(wstr.begin(), wstr.end());
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+    return conv.to_bytes(wstr);
 }
 
 HWND GetWindowHandle(DWORD id)
