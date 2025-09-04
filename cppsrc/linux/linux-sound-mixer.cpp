@@ -319,9 +319,10 @@ vector<_AudioSession *> InputDevice::GetAudioSessions()
 {
     vector<_AudioSession *> sessions;
 
-    struct _AudioSessionData data
-    {
-        index, &sessions, pa,
+    struct _AudioSessionData data {
+        index,
+        &sessions,
+        pa,
     };
 
     pa_operation *op = pa_context_get_source_output_info_list(pa.ctx,
@@ -511,9 +512,10 @@ vector<_AudioSession *> OutputDevice::GetAudioSessions()
 {
     vector<_AudioSession *> sessions;
 
-    struct _AudioSessionData data
-    {
-        index, &sessions, pa,
+    struct _AudioSessionData data {
+        index,
+        &sessions,
+        pa,
     };
 
     pa_operation *op = pa_context_get_sink_input_info_list(pa.ctx,
@@ -609,10 +611,7 @@ void _output_session_get_info_cb(pa_context *ctx, pa_source_output_info *info,
 pa_source_output_info *InputAudioSession::GetInfo()
 {
     pa_source_output_info *info;
-    struct _SessionData<pa_source_output_info> data
-    {
-        &info, index
-    };
+    struct _SessionData<pa_source_output_info> data {&info, index};
     pa_operation *op = pa_context_get_source_output_info(pa.ctx, index,
         (pa_source_output_info_cb_t)_output_session_get_info_cb, &data);
     WAIT(op, pa.mainloop);
@@ -771,10 +770,7 @@ void _input_session_get_info_cb(pa_context *ctx, pa_sink_input_info *info,
 pa_sink_input_info *OutputAudioSession::GetInfo()
 {
     pa_sink_input_info *info;
-    struct _SessionData<pa_sink_input_info> data
-    {
-        &info, index
-    };
+    struct _SessionData<pa_sink_input_info> data {&info, index};
     pa_operation *op = pa_context_get_sink_input_info(pa.ctx, index,
         (pa_sink_input_info_cb_t)_input_session_get_info_cb, &data);
     WAIT(op, pa.mainloop);

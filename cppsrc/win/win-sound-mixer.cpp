@@ -3,12 +3,12 @@
 #include <Functiondiscoverykeys_devpkey.h>
 // clang-format on
 #include <WinUser.h>
+#include <codecvt>
+#include <locale>
 #include <sstream>
 #include <string>
 #include <wchar.h>
 #include "win-sound-mixer.hpp"
-#include <locale>
-#include <codecvt>
 
 std::string GetProcNameFromId(DWORD id)
 {
