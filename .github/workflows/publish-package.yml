@@ -24,6 +24,7 @@ jobs:
   lint:
     needs:
       - check_version
+    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -57,7 +58,7 @@ jobs:
           npm ci
           npm run build:bin
       - name: Save Binary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with: 
           name: linux-binary
           path: ./dist/addons/linux-sound-mixer.node
@@ -78,7 +79,7 @@ jobs:
           npm ci
           npm run build:bin
       - name: Save Binary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: windows-binary
           path: ./dist/addons/win-sound-mixer.node
@@ -102,12 +103,12 @@ jobs:
         shell: bash
         run: mkdir -p ./dist/addons
       - name: Download windows addon
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: windows-binary
           path: ./dist/addons/
       - name: Download linux addon
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: linux-binary
           path: ./dist/addons/

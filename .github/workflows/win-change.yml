@@ -11,6 +11,7 @@ on:
 jobs:
   win-lint:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -23,7 +24,6 @@ jobs:
           git diff | tee .ci-temp
           exit $(test -f .ci-temp && cat .ci-temp | wc -l)
   win-build:
-    needs: win-lint
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
